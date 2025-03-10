@@ -18,6 +18,6 @@ public class Credit
     public required decimal      RemainingDebt        { get; set; }
     public required Currency     Currency             { get; set; }
     public          Guid         CurrencyId           { get; set; }
-    public required string       CreditStatus         { get; set; }
+    public required string       CreditStatus         { get; set; } // Mozda enum TODO: 
     public required InterestType InterestType         { get; set; }
 }
