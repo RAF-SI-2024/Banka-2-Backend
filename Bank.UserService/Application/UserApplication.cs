@@ -90,6 +90,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAccountService, AccountService>();
         services.AddScoped<IAccountCurrencyService, AccountCurrencyService>();
         services.AddScoped<IAuthorizationService, AuthorizationService>();
+        services.AddScoped<IExchangeRateRepository, ExchangeRateRepository>();
+        services.AddScoped<IExchangeRateService, ExchangeRateService>();
 
         services.AddHttpContextAccessor();
 

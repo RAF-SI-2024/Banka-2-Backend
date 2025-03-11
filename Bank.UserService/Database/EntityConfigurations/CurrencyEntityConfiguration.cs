@@ -10,6 +10,7 @@ public class CurrencyEntityConfiguration : IEntityTypeConfiguration<Currency>
     public void Configure(EntityTypeBuilder<Currency> builder)
     {
         builder.HasKey(currency => currency.Id);
+        builder.HasAlternateKey(nameof(Currency.Code));
 
         builder.Property(currency => currency.Id)
                .IsRequired()
