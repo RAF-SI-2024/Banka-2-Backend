@@ -78,5 +78,10 @@ public static partial class ValidatorUtilities
         {
             return Regex.IsMatch(value, @"^\d+$");
         }
+
+        public static bool ContainsOnlyLetters(string value)
+        {
+            return Regex.IsMatch(value, @"^[a-zA-Z]+$");
+        }
     }
 }

@@ -69,6 +69,8 @@ public static partial class ValidationErrorMessage
         public const string RoleRequired = "Role is required.";
 
         public const string DepartmentInvalid = "Department name is not valid.";
+
+        public const string AmountInvalid = "Amount for exchange can't be 0.";
     }
 }
 
@@ -91,5 +93,27 @@ public static partial class ValidationErrorMessage
         public const string ActivityCodeNull        = "Activity Code can't be null.";
         public const string ActivityCodeLength      = "Activity Code must be exactly 4 or 5 characters long.";
         public const string ActivityCodeTextInvalid = "Activity Code must contain only . and numbers.";
+    }
+}
+
+public static partial class ValidationErrorMessage
+{
+    public static class Currency
+    {
+        public const string CodeEmpty   = "Code can't be empty.";
+        public const string CodeLenght  = "Code must be exactly 3 characters long.";
+        public const string CodeInvalid = "Code must be contain only letters.";
+
+        public const string IdNull  = "Currency id can't be null.";
+        public const string IdEmpty = "Currency id can't be empty.";
+    }
+}
+
+public static partial class ValidationErrorMessage
+{
+    public static class Account
+    {
+        public const string IdNull  = "Account id can't be null.";
+        public const string IdEmpty = "Account id can't be empty.";
     }
 }

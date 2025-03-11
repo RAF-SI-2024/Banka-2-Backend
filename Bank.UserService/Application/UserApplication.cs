@@ -34,6 +34,7 @@ public class UserApplication
         JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
         builder.Services.AddApplicationAuthentication();
         builder.Services.AddApplicationAuthorization();
+        builder.Services.AddHttpClient();
 
         builder.Services.AddServiceApplication();
         builder.Services.AddApplicationCors();
@@ -97,6 +98,7 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton<TokenProvider>();
         services.AddSingleton<DatabaseHostedService>();
+        services.AddSingleton<ExchangeHostedService>();
 
         services.AddDbContext<ApplicationContext>(options => options.UseNpgsql(Configuration.Database.GetConnectionString()), ServiceLifetime.Scoped, ServiceLifetime.Singleton);
 
