@@ -11,10 +11,10 @@ public static class AccountCurrencyMapper
         return new AccountCurrencyResponse
                {
                    Id      = accountCurrency.Id,
-                   Account = accountCurrency.Account.ToSimpleResponse(),
-                   Employee = accountCurrency.Employee.ToEmployee()
-                                             .ToSimpleResponse(),
-                   Currency         = accountCurrency.Currency.ToResponse(),
+                   Account = accountCurrency.Account?.ToSimpleResponse()!,
+                   Employee = accountCurrency.Employee?.ToEmployee()
+                                             .ToSimpleResponse()!,
+                   Currency         = accountCurrency.Currency?.ToResponse()!,
                    Balance          = accountCurrency.Balance,
                    AvailableBalance = accountCurrency.AvailableBalance,
                    DailyLimit       = accountCurrency.DailyLimit,

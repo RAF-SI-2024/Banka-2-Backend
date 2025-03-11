@@ -23,7 +23,10 @@ public class AccountCurrencyRepository(ApplicationContext context) : IAccountCur
 
     public async Task<Page<AccountCurrency>> FindAll(Pageable pageable)
     {
-        var accountTypeQuery = m_Context.AccountCurrencies.AsQueryable();
+        var accountTypeQuery = m_Context.AccountCurrencies.Include(account => account.Employee)
+                                        .Include(account => account.Currency)
+                                        .Include(account => account.Account)
+                                        .AsQueryable();
 
         var accountTypes = await accountTypeQuery.Skip((pageable.Page - 1) * pageable.Size)
                                                  .Take(pageable.Size)
@@ -36,7 +39,10 @@ public class AccountCurrencyRepository(ApplicationContext context) : IAccountCur
 
     public async Task<AccountCurrency?> FindById(Guid id)
     {
-        return await m_Context.AccountCurrencies.FirstOrDefaultAsync(a => a.Id == id);
+        return await m_Context.AccountCurrencies.Include(account => account.Employee)
+                              .Include(account => account.Currency)
+                              .Include(account => account.Account)
+                              .FirstOrDefaultAsync(a => a.Id == id);
     }
 
     public async Task<AccountCurrency> Add(AccountCurrency accountCurrency)
