@@ -1,0 +1,23 @@
+﻿services:
+    bank.user:
+        image: bank.user
+        build:
+            context: ..
+            dockerfile: Scripts/User/Dockerfile
+        env_file:
+            - Environments/user.env
+        ports:
+            - "${USER_EXPOSE_PORT}:8080"
+        depends_on:
+            - database
+    database:
+        image: postgres:latest
+        env_file:
+            - Environments/database.env
+        ports:
+            - "${DATABASE_EXPOSE_PORT}:5432"
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+
+volumes:
+    postgres_data:

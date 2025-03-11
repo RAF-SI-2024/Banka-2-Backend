@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+
+        <IsPackable>false</IsPackable>
+        <IsTestProject>true</IsTestProject>
+        <RootNamespace>Bank.Test2</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="coverlet.collector" Version="6.0.0"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.2" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0"/>
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.3" />
+        <PackageReference Include="NUnit" Version="3.14.0"/>
+        <PackageReference Include="NUnit.Analyzers" Version="3.9.0"/>
+        <PackageReference Include="NUnit3TestAdapter" Version="4.5.0"/>
+        <PackageReference Include="Reqnroll" Version="2.3.0" />
+        <PackageReference Include="Reqnroll.NUnit" Version="2.3.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Using Include="NUnit.Framework"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Bank.Application\Bank.Application.csproj" />
+      <ProjectReference Include="..\Bank.UserService\Bank.UserService.csproj" />
+    </ItemGroup>
+    
+    <!-- 
+    <ItemGroup>
+      <ReqnrollFeatureFiles Include="Features\UserController.feature">
+          <CodeBehindFile>Features\UserController.feature.cs</CodeBehindFile> 
+           <Visible>true</Visible>
+         </ReqnrollFeatureFiles>
+       </ItemGroup>
+   -->
+   </Project>
