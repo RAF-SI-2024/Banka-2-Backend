@@ -32,9 +32,9 @@ public class CardRepository(ApplicationContext context) : ICardRepository
 
     public async Task<Page<Card>> FindAll(CardFilterQuery cardFilterQuery, Pageable pageable)
     {
-        var cardQuery = m_Context.Cards.Include(c => c.Type)
-                                 .Include(c => c.Account)
-                                 .Include(c => c.Account.Client)
+        var cardQuery = m_Context.Cards.Include(card => card.Type)
+                                 .Include(card => card.Account)
+                                 .Include(card => card.Account!.Client)
                                  .AsQueryable();
 
         if (!string.IsNullOrEmpty(cardFilterQuery.Number))
@@ -54,16 +54,18 @@ public class CardRepository(ApplicationContext context) : ICardRepository
 
     public async Task<Card?> FindById(Guid id)
     {
-        return await m_Context.Cards.Include(c => c.Type)
-                              .Include(c => c.Account)
-                              .Include(c => c.Account.Client)
+        return await m_Context.Cards.Include(card => card.Type)
+                              .Include(card => card.Account)
+                              .Include(card => card.Account!.Client)
                               .FirstOrDefaultAsync(x => x.Id == id);
     }
 
     public async Task<List<Card>> FindByAccountId(Guid accountId)
     {
         return await m_Context.Cards.Include(card => card.Type)
-                              .Where(card => card.Account.Id == accountId)
+                              .Include(card => card.Account)
+                              .Include(card => card.Account!.Client)
+                              .Where(card => card.Account!.Id == accountId)
                               .ToListAsync();
     }
 
@@ -77,14 +79,10 @@ public class CardRepository(ApplicationContext context) : ICardRepository
     public async Task<Card> Add(Card card)
     {
         var addedCard = await m_Context.Cards.AddAsync(card);
+
         await m_Context.SaveChangesAsync();
 
-        var result = await m_Context.Cards.Include(c => c.Account)
-                                    .ThenInclude(a => a.Client)
-                                    .Include(c => c.Type)
-                                    .FirstOrDefaultAsync(c => c.Id == card.Id);
-
-        return result;
+        return addedCard.Entity;
     }
 
     public async Task<Card> Update(Card oldCard, Card card)

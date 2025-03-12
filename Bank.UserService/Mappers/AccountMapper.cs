@@ -13,14 +13,14 @@ public static class AccountMapper
                    Id            = account.Id,
                    AccountNumber = account.Number,
                    Name          = account.Name,
-                   Client = account.Client.ToClient()
-                                   .ToSimpleResponse(),
+                   Client = account.Client?.ToClient()
+                                   .ToSimpleResponse()!,
                    Balance          = account.Balance,
                    AvailableBalance = account.AvailableBalance,
-                   Employee = account.Employee.ToEmployee()
-                                     .ToSimpleResponse(),
-                   Currency          = account.Currency.ToResponse(),
-                   Type              = account.Type.ToResponse(),
+                   Employee = account.Employee?.ToEmployee()
+                                     .ToSimpleResponse()!,
+                   Currency          = account.Currency?.ToResponse()!,
+                   Type              = account.Type?.ToResponse()!,
                    AccountCurrencies = MapAccountCurrencies(account.AccountCurrencies),
                    DailyLimit        = 0,
                    MonthlyLimit      = 0,
