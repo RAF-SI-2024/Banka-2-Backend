@@ -11,6 +11,8 @@ public interface IAccountRepository
 {
     Task<Page<Account>> FindAll(AccountFilterQuery accountFilterQuery, Pageable pageable);
 
+    Task<Page<Account>> FindAllByClientId(Guid clientId, Pageable pageable);
+
     Task<Account?> FindById(Guid id);
 
     Task<Account> Add(Account account);
@@ -60,6 +62,23 @@ public class AccountRepository(ApplicationContext context) : IAccountRepository
                                          .ToListAsync();
 
         var totalElements = await accountQuery.CountAsync();
+
+        return new Page<Account>(accounts, pageable.Page, pageable.Size, totalElements);
+    }
+
+    public async Task<Page<Account>> FindAllByClientId(Guid clientId, Pageable pageable)
+    {
+        var accounts = await m_Context.Accounts.Include(account => account.Client)
+                                      .Include(account => account.Employee)
+                                      .Include(account => account.Currency)
+                                      .Include(account => account.AccountCurrencies)
+                                      .Include(account => account.Type)
+                                      .Where(account => account.ClientId == clientId)
+                                      .Skip((pageable.Page - 1) * pageable.Size)
+                                      .Take(pageable.Size)
+                                      .ToListAsync();
+
+        var totalElements = await m_Context.Accounts.CountAsync();
 
         return new Page<Account>(accounts, pageable.Page, pageable.Size, totalElements);
     }

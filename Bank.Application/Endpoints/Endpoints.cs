@@ -41,10 +41,11 @@ public static partial class Endpoints
     {
         public const string Base = $"{ApiBase}/clients";
 
-        public const string GetAll = $"{Base}";
-        public const string Create = $"{Base}";
-        public const string GetOne = $"{Base}/{{id:guid}}";
-        public const string Update = $"{Base}/{{id:guid}}";
+        public const string GetAll         = $"{Base}";
+        public const string GetAllAccounts = $"{Base}/{{id:guid}}/accounts";
+        public const string Create         = $"{Base}";
+        public const string GetOne         = $"{Base}/{{id:guid}}";
+        public const string Update         = $"{Base}/{{id:guid}}";
     }
 }
 
@@ -98,6 +99,7 @@ public static partial class Endpoints
     {
         public const string Base           = $"{ApiBase}/accounts";
         public const string GetAll         = $"{Base}";
+        public const string GetAllCards    = $"{Base}/{{id:guid}}/cards";
         public const string GetOne         = $"{Base}/{{id:guid}}";
         public const string Create         = $"{Base}";
         public const string UpdateEmployee = $"{Base}/employee/{{id:guid}}";
@@ -113,7 +115,7 @@ public static partial class Endpoints
         public const string GetAll       = $"{Base}";
         public const string GetOne       = $"{Base}/{{id:guid}}";
         public const string Create       = $"{Base}";
-        public const string UpdateClient = $"{Base}/client/{{id:guid}}";
+        public const string UpdateClient = $"{Base}/{{id:guid}}/client";
     }
 }
 
@@ -121,12 +123,12 @@ public static partial class Endpoints
 {
     public static class Card
     {
-        public const string Base         = $"{ApiBase}/cards";
-        public const string GetOne       = $"{Base}/{{id:guid}}";
-        public const string GetAll       = $"{Base}";
-        public const string Create       = $"{Base}";
-        public const string UpdateStatus = $"{Base}/status/{{id:guid}}";
-        public const string UpdateLimit  = $"{Base}/limit/{{id:guid}}";
+        public const string Base           = $"{ApiBase}/cards";
+        public const string GetOne         = $"{Base}/{{id:guid}}";
+        public const string GetAll         = $"{Base}";
+        public const string Create         = $"{Base}";
+        public const string UpdateEmployee = $"{Base}/{{id:guid}}/employee";
+        public const string UpdateClient   = $"{Base}/{{id:guid}}/client";
     }
 }
 

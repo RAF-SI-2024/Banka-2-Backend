@@ -74,7 +74,7 @@ public static partial class Seeder
         public static readonly AccountTypeModel BusinessJointStockCompanyAccount = new()
                                                                                    {
                                                                                        Id         = Guid.Parse("69a5c811-e024-4d73-863a-7c7e4eabcff5"),
-                                                                                       Name       = "LLC",
+                                                                                       Name       = "Joint-Stock Company",
                                                                                        Code       = "22",
                                                                                        CreatedAt  = DateTime.UtcNow,
                                                                                        ModifiedAt = DateTime.UtcNow,
