@@ -19,9 +19,10 @@ public class ApplicationContext(DbContextOptions options) : DbContext(options)
     public DbSet<Company>      Companies     { init; get; }
     public DbSet<ExchangeRate> ExchangeRates { init; get; }
 
-    public DbSet<Credit> Credits { init; get; }
+    public DbSet<Loan> Loans { init; get; }
 
-    public DbSet<CreditInstallment> CreditInstallments { init; get; }
+    public DbSet<Installment> Installments { init; get; }
+    public DbSet<LoanType> LoanTypes     { init; get; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -34,8 +35,9 @@ public class ApplicationContext(DbContextOptions options) : DbContext(options)
         builder.ApplyConfiguration(new CountryEntityConfiguration());
         builder.ApplyConfiguration(new CurrencyEntityConfiguration());
         builder.ApplyConfiguration(new CompanyEntityConfiguration());
-        builder.ApplyConfiguration(new CreditInstallmentEntityConfiguration());
-        builder.ApplyConfiguration(new CreditEntityConfiguration());
+        builder.ApplyConfiguration(new LoanEntityConfiguration());
+        builder.ApplyConfiguration(new InstallmentEntityConfiguration());
+        builder.ApplyConfiguration(new LoanTypeEntityConfiguration());
         builder.ApplyConfiguration(new ExchangeRateEntityConfiguration());
     }
 }

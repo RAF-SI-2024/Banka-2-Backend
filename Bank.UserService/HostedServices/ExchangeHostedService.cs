@@ -32,7 +32,6 @@ public class ExchangeHostedService(IServiceProvider serviceProvider, IHttpClient
         m_Timer = new Timer(async _ => await FetchExchangeRates(), this, timeLeftUntilNext, TimeSpan.FromDays(1));
     }
 
-
     private async Task FetchExchangeRates()
     {
         using var scope      = m_ServiceProvider.CreateScope();

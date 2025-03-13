@@ -1,10 +1,10 @@
 ﻿namespace Bank.Application.Queries;
 
-public class CreditFilterQuery
+public class LoanFilterQuery
 {
-    public Guid?     CreditTypeId  { get; set; }
+    public Guid?     LoanTypeId  { get; set; }
     public string?   AccountNumber { get; set; }
-    public string?   CreditStatus  { get; set; }
+    public string?   LoanStatus  { get; set; }
     public DateTime? FromDate      { get; set; }
     public DateTime? ToDate        { get; set; }
 }
