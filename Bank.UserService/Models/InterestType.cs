@@ -2,6 +2,6 @@
 
 public enum InterestType
 {
-    Fiksna,
-    Varijabilna
+    Fixed,
+    Variable
 }
