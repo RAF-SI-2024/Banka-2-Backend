@@ -27,7 +27,7 @@ public class LoanTypeRepository(ApplicationContext context) : ILoanTypeRepositor
 
         var total = await query.CountAsync();
 
-        var items = await query.Skip(pageable.Page * pageable.Size)
+        var items = await query.Skip((pageable.Page - 1) * pageable.Size)
                                .Take(pageable.Size)
                                .ToListAsync();
 
