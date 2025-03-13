@@ -56,16 +56,6 @@ public class AccountValidator
         }
     }
 
-    public class UpdateEmployee : AbstractValidator<AccountUpdateEmployeeRequest>
-    {
-        public UpdateEmployee()
-        {
-            RuleFor(accountRequest => accountRequest.Status)
-            .NotEmpty()
-            .WithMessage(ValidationErrorMessage.Global.FieldIsRequired("Status"));
-        }
-    }
-
     public class UpdateClient : AbstractValidator<AccountUpdateClientRequest>
     {
         public UpdateClient()
