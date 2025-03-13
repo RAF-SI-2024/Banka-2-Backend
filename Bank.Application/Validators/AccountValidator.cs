@@ -65,7 +65,7 @@ public class AccountValidator
             .WithMessage(ValidationErrorMessage.Global.FieldIsRequired("Status"));
         }
     }
-    
+
     public class UpdateClient : AbstractValidator<AccountUpdateClientRequest>
     {
         public UpdateClient()
