@@ -54,6 +54,9 @@ public class DatabaseHostedService(IServiceProvider serviceProvider)
 
         Context.SeedCard()
                .Wait();
+
+        Context.SeedTransactionCode()
+               .Wait();
     }
 
     public void OnApplicationStopped() { }
