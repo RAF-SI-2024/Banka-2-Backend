@@ -1,4 +1,6 @@
-﻿using Bank.UserService.Database;
+﻿using Bank.Application.Endpoints;
+using Bank.Application.Responses;
+using Bank.UserService.Database;
 using Bank.UserService.Database.Seeders;
 
 namespace Bank.UserService.HostedServices;

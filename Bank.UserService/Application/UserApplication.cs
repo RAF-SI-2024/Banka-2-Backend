@@ -93,6 +93,15 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAuthorizationService, AuthorizationService>();
         services.AddScoped<IExchangeRepository, ExchangeRepository>();
         services.AddScoped<IExchangeService, ExchangeService>();
+        services.AddScoped<ILoanRepository, LoanRepository>();
+        services.AddScoped<ILoanTypeRepository, LoanTypeRepository>();
+        services.AddScoped<IInstallmentRepository, InstallmentRepository>();
+        services.AddScoped<ITransactionCodeRepository, TransactionCodeRepository>();
+        services.AddScoped<ITransactionCodeService, TransactionCodeService>();
+        services.AddScoped<ITransactionTemplateRepository, TransactionTemplateRepository>();
+        services.AddScoped<ITransactionTemplateService, TransactionTemplateService>();
+        services.AddScoped<ITransactionRepository, TransactionRepository>();
+        services.AddScoped<ITransactionService, TransactionService>();
 
         services.AddHttpContextAccessor();
 

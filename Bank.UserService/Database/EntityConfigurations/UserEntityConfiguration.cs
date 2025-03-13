@@ -79,5 +79,10 @@ public class UserEntityConfiguration : IEntityTypeConfiguration<User>
                .WithOne(account => account.Client)
                .HasForeignKey(account => account.ClientId)
                .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(user => user.TransactionTemplates)
+               .WithOne(transactionTemplate => transactionTemplate.Client)
+               .HasForeignKey(transactionTemplate => transactionTemplate.ClientId)
+               .OnDelete(DeleteBehavior.Cascade);
     }
 }

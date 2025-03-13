@@ -46,7 +46,7 @@ public class CurrencyRepository(ApplicationContext context) : ICurrencyRepositor
     public async Task<Currency?> FindByCode(string currencyCode)
     {
         return await m_Context.Currencies.Include(c => c.Countries)
-                              .FirstOrDefaultAsync(x => x.Code == currencyCode);
+                              .FirstOrDefaultAsync(x => x.Code.ToLower() == currencyCode.ToLower());
     }
 
     public async Task<Currency> Add(Currency currency)
