@@ -22,6 +22,11 @@ public class ApplicationContext(DbContextOptions options) : DbContext(options)
     public DbSet<TransactionTemplate> TransactionTemplates { init; get; }
     public DbSet<Transaction>         Transactions         { init; get; }
 
+    public DbSet<Loan> Loans { init; get; }
+
+    public DbSet<Installment> Installments { init; get; }
+    public DbSet<LoanType>    LoanTypes    { init; get; }
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         builder.ApplyConfiguration(new UserEntityConfiguration());
@@ -33,6 +38,9 @@ public class ApplicationContext(DbContextOptions options) : DbContext(options)
         builder.ApplyConfiguration(new CountryEntityConfiguration());
         builder.ApplyConfiguration(new CurrencyEntityConfiguration());
         builder.ApplyConfiguration(new CompanyEntityConfiguration());
+        builder.ApplyConfiguration(new LoanEntityConfiguration());
+        builder.ApplyConfiguration(new InstallmentEntityConfiguration());
+        builder.ApplyConfiguration(new LoanTypeEntityConfiguration());
         builder.ApplyConfiguration(new ExchangeRateEntityConfiguration());
         builder.ApplyConfiguration(new TransactionCodeEntityConfiguration());
         builder.ApplyConfiguration(new TransactionTemplateEntityConfiguration());
