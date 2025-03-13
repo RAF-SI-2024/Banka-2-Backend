@@ -178,4 +178,16 @@ public static partial class Endpoints
     }
 }
 
+public static partial class Endpoints
+{
+    public static class Transaction
+    {
+        public const string Base   = $"{ApiBase}/transaction";
+        public const string GetOne = $"{Base}/{{id:guid}}";
+        public const string GetAll = $"{Base}";
+        public const string Create = $"{Base}";
+        public const string Update = $"{Base}/{{id:guid}}";
+    }
+}
+
 #endregion
