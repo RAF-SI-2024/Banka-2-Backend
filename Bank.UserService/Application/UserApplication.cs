@@ -94,6 +94,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IExchangeRateRepository, ExchangeRateRepository>();
         services.AddScoped<IExchangeRateService, ExchangeRateService>();
         services.AddScoped<ITransactionCodeRepository, TransactionCodeRepository>();
+        services.AddScoped<ITransactionTemplateRepository, TransactionTemplateRepository>();
 
         services.AddHttpContextAccessor();
 
