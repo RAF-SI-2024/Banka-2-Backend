@@ -69,5 +69,3 @@ public class LoanEntityConfiguration : IEntityTypeConfiguration<Loan>
                .OnDelete(DeleteBehavior.Cascade);
     }
 }
-
-

@@ -93,6 +93,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAuthorizationService, AuthorizationService>();
         services.AddScoped<IExchangeRateRepository, ExchangeRateRepository>();
         services.AddScoped<IExchangeRateService, ExchangeRateService>();
+        services.AddScoped<ILoanRepository, LoanRepository>();
+        services.AddScoped<ILoanTypeRepository, LoanTypeRepository>();
+        services.AddScoped<IInstallmentRepository, InstallmentRepository>();
 
         services.AddHttpContextAccessor();
 
@@ -211,9 +214,8 @@ public static class ServiceCollectionExtensions
                 .AddJwtBearer(jwtOptions => jwtOptions.TokenValidationParameters = new TokenValidationParameters
                                                                                    {
                                                                                        IssuerSigningKey =
-                                                                                       new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration
-                                                                                                                                       .Jwt
-                                                                                                                                       .SecretKey)),
+                                                                                       new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration.Jwt
+                                                                                                                                                    .SecretKey)),
                                                                                        ValidateIssuerSigningKey = true,
                                                                                        ValidateLifetime         = true,
                                                                                        ValidateIssuer           = false,
