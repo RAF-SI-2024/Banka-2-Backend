@@ -1,5 +1,6 @@
 ﻿using Bank.UserService.Configurations;
 using Bank.UserService.Database;
+using Bank.UserService.Database.Seeders;
 
 namespace Bank.UserService.HostedServices;
 
@@ -20,17 +21,11 @@ public class DatabaseHostedService(IServiceProvider serviceProvider)
         Context.Database.EnsureCreatedAsync()
                .Wait();
 
-        Context.SeedUsers()
+        Context.SeedClient()
                .Wait();
 
-        Context.SeedAccounts()
+        Context.SeedEmployee()
                .Wait();
-
-        Context.SeedCardTypes()
-               .Wait();
-
-        // Context.SeedCards()
-        // .Wait();
 
         Context.SeedCurrency()
                .Wait();
@@ -39,6 +34,21 @@ public class DatabaseHostedService(IServiceProvider serviceProvider)
                .Wait();
 
         Context.SeedCompany()
+               .Wait();
+
+        Context.SeedAccountType()
+               .Wait();
+
+        Context.SeedAccount()
+               .Wait();
+
+        Context.SeedAccountCurrency()
+               .Wait();
+
+        Context.SeedCadType()
+               .Wait();
+
+        Context.SeedCard()
                .Wait();
     }
 

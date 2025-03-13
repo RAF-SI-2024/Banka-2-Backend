@@ -21,3 +21,4 @@
 
 volumes:
     postgres_data:
+        name: user_database

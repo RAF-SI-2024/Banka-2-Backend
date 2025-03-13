@@ -34,6 +34,7 @@ public class UserApplication
         JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
         builder.Services.AddApplicationAuthentication();
         builder.Services.AddApplicationAuthorization();
+        builder.Services.AddHttpClient();
 
         builder.Services.AddServiceApplication();
         builder.Services.AddApplicationCors();
@@ -90,11 +91,14 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAccountService, AccountService>();
         services.AddScoped<IAccountCurrencyService, AccountCurrencyService>();
         services.AddScoped<IAuthorizationService, AuthorizationService>();
+        services.AddScoped<IExchangeRateRepository, ExchangeRateRepository>();
+        services.AddScoped<IExchangeRateService, ExchangeRateService>();
 
         services.AddHttpContextAccessor();
 
         services.AddSingleton<TokenProvider>();
         services.AddSingleton<DatabaseHostedService>();
+        services.AddSingleton<ExchangeHostedService>();
 
         services.AddDbContext<ApplicationContext>(options => options.UseNpgsql(Configuration.Database.GetConnectionString()), ServiceLifetime.Scoped, ServiceLifetime.Singleton);
 

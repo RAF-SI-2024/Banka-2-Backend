@@ -51,6 +51,7 @@ public static class CardMapper
                    ExpiresAt  = DateOnly.FromDateTime(DateTime.UtcNow.AddYears(1)),
                    Account    = account, // TODO: ADD USER TO REQUEST 
                    Type       = type,
+                   AccountId  = account.Id,
                };
     }
 
@@ -65,10 +66,12 @@ public static class CardMapper
                    CVV        = oldCard.CVV,
                    Status     = card.Status,
                    Type       = oldCard.Type,
+                   TypeId     = oldCard.Type.Id,
                    ExpiresAt  = oldCard.ExpiresAt,
                    Account    = oldCard.Account,
+                   AccountId  = oldCard.Account.Id,
                    Limit      = oldCard.Limit,
-                   Number     = oldCard.Number,
+                   Number     = oldCard.Number
                };
     }
 
@@ -83,10 +86,12 @@ public static class CardMapper
                    CVV        = oldCard.CVV,
                    Status     = oldCard.Status,
                    Type       = oldCard.Type,
+                   TypeId     = oldCard.Type.Id,
                    ExpiresAt  = oldCard.ExpiresAt,
                    Account    = oldCard.Account,
+                   AccountId  = oldCard.Account.Id,
                    Limit      = card.Limit,
-                   Number     = oldCard.Number,
+                   Number     = oldCard.Number
                };
     }
 

@@ -13,6 +13,8 @@ public interface ICurrencyRepository
 
     Task<Currency?> FindById(Guid id);
 
+    Task<Currency?> FindByCode(string currencyCode);
+
     Task<Currency> Add(Currency currency);
 
     Task<Currency> Update(Currency oldCurrency, Currency currency);
@@ -46,6 +48,12 @@ public class CurrencyRepository(ApplicationContext context) : ICurrencyRepositor
     {
         return await m_Context.Currencies.Include(c => c.Countries)
                               .FirstOrDefaultAsync(x => x.Id == id);
+    }
+
+    public async Task<Currency?> FindByCode(string currencyCode)
+    {
+        return await m_Context.Currencies.Include(c => c.Countries)
+                              .FirstOrDefaultAsync(x => x.Code == currencyCode);
     }
 
     public async Task<Currency> Add(Currency currency)
