@@ -142,15 +142,14 @@ public static partial class Endpoints
 
 public static partial class Endpoints
 {
-    public static class ExchangeRate
+    public static class Exchange
     {
-        public const string Base             = $"{ApiBase}/exchange-rates";
-        public const string GetOne           = $"{Base}/{{id:guid}}";
-        public const string GetAll           = $"{Base}";
-        public const string GetByCurrencies  = $"{Base}/currencies";
-        public const string Exchange         = $"{Base}/exchange";
-        public const string Update           = $"{Base}/{{id:guid}}";
-        public const string FetchRatesApiRsd = "https://www.floatrates.com/daily/rsd.json";
+        public const string Base            = $"{ApiBase}/exchange";
+        public const string GetOne          = $"{Base}/{{id:guid}}";
+        public const string GetAll          = $"{Base}";
+        public const string GetByCurrencies = $"{Base}/currencies";
+        public const string MakeExchange    = $"{Base}";
+        public const string Update          = $"{Base}/{{id:guid}}";
     }
 }
 

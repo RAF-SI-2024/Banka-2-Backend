@@ -1,5 +1,4 @@
-﻿using Bank.Application.Domain;
-using Bank.Application.Queries;
+﻿using Bank.Application.Queries;
 using Bank.UserService.Database;
 using Bank.UserService.Models;
 
@@ -9,7 +8,7 @@ namespace Bank.UserService.Repositories;
 
 public interface ICurrencyRepository
 {
-    Task<Page<Currency>> FindAll(CurrencyFilterQuery currencyFilterQuery, Pageable pageable);
+    Task<List<Currency>> FindAll(CurrencyFilterQuery currencyFilterQuery);
 
     Task<Currency?> FindById(Guid id);
 
@@ -24,7 +23,7 @@ public class CurrencyRepository(ApplicationContext context) : ICurrencyRepositor
 {
     private readonly ApplicationContext m_Context = context;
 
-    public async Task<Page<Currency>> FindAll(CurrencyFilterQuery currencyFilterQuery, Pageable pageable)
+    public async Task<List<Currency>> FindAll(CurrencyFilterQuery currencyFilterQuery)
     {
         var currencyQuery = m_Context.Currencies.Include(c => c.Countries)
                                      .AsQueryable();
@@ -35,13 +34,7 @@ public class CurrencyRepository(ApplicationContext context) : ICurrencyRepositor
         if (!string.IsNullOrEmpty(currencyFilterQuery.Code))
             currencyQuery = currencyQuery.Where(currency => EF.Functions.ILike(currency.Code, $"%{currencyFilterQuery.Code}%"));
 
-        int totalElements = await currencyQuery.CountAsync();
-
-        var currencies = await currencyQuery.Skip((pageable.Page - 1) * pageable.Size)
-                                            .Take(pageable.Size)
-                                            .ToListAsync();
-
-        return new Page<Currency>(currencies, pageable.Page, pageable.Size, totalElements);
+        return await currencyQuery.ToListAsync();
     }
 
     public async Task<Currency?> FindById(Guid id)

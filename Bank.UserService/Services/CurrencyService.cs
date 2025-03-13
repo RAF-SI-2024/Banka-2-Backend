@@ -1,5 +1,4 @@
-﻿using Bank.Application.Domain;
-using Bank.Application.Endpoints;
+﻿using Bank.Application.Endpoints;
 using Bank.Application.Queries;
 using Bank.Application.Responses;
 using Bank.UserService.Mappers;
@@ -9,7 +8,7 @@ namespace Bank.UserService.Services;
 
 public interface ICurrencyService
 {
-    Task<Result<Page<CurrencyResponse>>> FindAll(CurrencyFilterQuery currencyFilterQuery, Pageable pageable);
+    Task<Result<List<CurrencyResponse>>> FindAll(CurrencyFilterQuery currencyFilterQuery);
 
     Task<Result<CurrencyResponse>> FindById(Guid id);
 }
@@ -18,14 +17,14 @@ public class CurrencyService(ICurrencyRepository currencyRepository) : ICurrency
 {
     private readonly ICurrencyRepository m_CurrencyRepository = currencyRepository;
 
-    public async Task<Result<Page<CurrencyResponse>>> FindAll(CurrencyFilterQuery currencyFilterQuery, Pageable pageable)
+    public async Task<Result<List<CurrencyResponse>>> FindAll(CurrencyFilterQuery currencyFilterQuery)
     {
-        var page = await m_CurrencyRepository.FindAll(currencyFilterQuery, pageable);
+        var currencies = await m_CurrencyRepository.FindAll(currencyFilterQuery);
 
-        var currencyResponses = page.Items.Select(currency => currency.ToResponse())
-                                    .ToList();
+        var currencyResponses = currencies.Select(currency => currency.ToResponse())
+                                          .ToList();
 
-        return Result.Ok(new Page<CurrencyResponse>(currencyResponses, page.PageNumber, page.PageSize, page.TotalElements));
+        return Result.Ok(currencyResponses);
     }
 
     public async Task<Result<CurrencyResponse>> FindById(Guid id)

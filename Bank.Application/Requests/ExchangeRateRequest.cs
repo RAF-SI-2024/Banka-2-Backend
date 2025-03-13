@@ -1,17 +1,17 @@
 ﻿namespace Bank.Application.Requests;
 
-public class ExchangeRateBetweenRequest
+public class ExchangeBetweenRequest
 {
     public required string CurrencyFromCode { set; get; }
     public required string CurrencyToCode   { set; get; }
 }
 
-public class ExchangeRateUpdateRequest
+public class ExchangeUpdateRequest
 {
     public required decimal Commission { set; get; }
 }
 
-public class ExchangeRateMakeExchangeRequest
+public class ExchangeMakeExchangeRequest
 {
     public required Guid    CurrencyFromId { set; get; }
     public required Guid    CurrencyToId   { set; get; }

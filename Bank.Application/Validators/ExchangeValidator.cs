@@ -5,11 +5,11 @@ using FluentValidation;
 
 namespace Bank.Application.Validators;
 
-public static class ExchangeRateValidator
+public static class ExchangeValidator
 {
-    public class ExchangeRateBetween : AbstractValidator<ExchangeRateBetweenRequest>
+    public class ExchangeBetween : AbstractValidator<ExchangeBetweenRequest>
     {
-        public ExchangeRateBetween()
+        public ExchangeBetween()
         {
             RuleFor(request => request.CurrencyFromCode)
             .NotEmpty()
@@ -29,12 +29,12 @@ public static class ExchangeRateValidator
         }
     }
 
-    public class Update : AbstractValidator<ExchangeRateUpdateRequest>
+    public class Update : AbstractValidator<ExchangeUpdateRequest>
     {
         public Update() { }
     }
 
-    public class MakeExchange : AbstractValidator<ExchangeRateMakeExchangeRequest>
+    public class MakeExchange : AbstractValidator<ExchangeMakeExchangeRequest>
     {
         public MakeExchange()
         {

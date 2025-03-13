@@ -1,6 +1,6 @@
 ﻿namespace Bank.Application.Responses;
 
-public class ExchangeRateResponse
+public class ExchangeResponse
 {
     public required Guid                   Id           { set; get; }
     public required CurrencySimpleResponse CurrencyFrom { set; get; }
@@ -12,7 +12,7 @@ public class ExchangeRateResponse
     public required DateTime               ModifiedAt   { set; get; }
 }
 
-public class ExchangeRateFetchResponse
+public class ExchangeFetchResponse
 {
     public required string  Code { set; get; }
     public required decimal Rate { set; get; }

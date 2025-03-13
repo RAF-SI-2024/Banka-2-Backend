@@ -1,6 +1,6 @@
 ﻿namespace Bank.UserService.Models;
 
-public class ExchangeRate
+public class Exchange
 {
     public required Guid     Id             { set; get; }
     public required Guid     CurrencyFromId { set; get; }
