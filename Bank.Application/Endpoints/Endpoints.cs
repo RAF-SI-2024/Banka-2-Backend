@@ -154,4 +154,14 @@ public static partial class Endpoints
     }
 }
 
+public static partial class Endpoints
+{
+    public static class TransactionCode
+    {
+        public const string Base   = $"{ApiBase}/transaction/codes";
+        public const string GetOne = $"{Base}/{{id:guid}}";
+        public const string GetAll = $"{Base}";
+    }
+}
+
 #endregion
