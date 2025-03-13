@@ -99,6 +99,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ITransactionCodeRepository, TransactionCodeRepository>();
         services.AddScoped<ITransactionCodeService, TransactionCodeService>();
         services.AddScoped<ITransactionTemplateRepository, TransactionTemplateRepository>();
+        services.AddScoped<ITransactionTemplateService, TransactionTemplateService>();
         services.AddScoped<ITransactionRepository, TransactionRepository>();
 
         services.AddHttpContextAccessor();
