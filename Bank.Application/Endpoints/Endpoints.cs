@@ -189,4 +189,46 @@ public static partial class Endpoints
     }
 }
 
+public static partial class Endpoints
+{
+    public static class LoanType
+    {
+        public const string Base = $"{ApiBase}/loans/types";
+
+        public const string GetAll = $"{Base}";
+        public const string GetOne = $"{Base}/{{id:guid}}";
+        public const string Create = $"{Base}";
+        public const string Update = $"{Base}/{{id:guid}}";
+    }
+}
+
+public static partial class Endpoints
+{
+    public static class Loan
+    {
+        public const string Base = $"{ApiBase}/loans";
+
+        public const string GetAll          = $"{Base}";
+        public const string GetOne          = $"{Base}/{{id:guid}}";
+        public const string Create          = $"{Base}";
+        public const string Update          = $"{Base}/{{id:guid}}";
+        public const string GetByAccount    = $"{Base}/account/{{accountId:guid}}";
+        public const string GetInstallments = $"{Base}/{{id:guid}}/installments";
+    }
+}
+
+public static partial class Endpoints
+{
+    public static class Installment
+    {
+        public const string Base = $"{ApiBase}/installments";
+
+        public const string GetAll       = $"{Base}";
+        public const string GetOne       = $"{Base}/{{id:guid}}";
+        public const string Create       = $"{Base}";
+        public const string Update       = $"{Base}/{{id:guid}}";
+        public const string UpdateStatus = $"{Base}/{{id:guid}}/status";
+    }
+}
+
 #endregion

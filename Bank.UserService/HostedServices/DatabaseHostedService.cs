@@ -7,8 +7,8 @@ namespace Bank.UserService.HostedServices;
 
 public class DatabaseHostedService(IServiceProvider serviceProvider, IHttpClientFactory httpClientFactory)
 {
-    private readonly IServiceProvider   m_ServiceProvider   = serviceProvider;
     private readonly IHttpClientFactory m_HttpClientFactory = httpClientFactory;
+    private readonly IServiceProvider   m_ServiceProvider   = serviceProvider;
 
     private ApplicationContext Context =>
     m_ServiceProvider.CreateScope()
@@ -45,6 +45,12 @@ public class DatabaseHostedService(IServiceProvider serviceProvider, IHttpClient
                .Wait();
 
         Context.SeedLoanTypes()
+               .Wait();
+
+        Context.SeedLoans()
+               .Wait();
+
+        Context.SeedInstallments()
                .Wait();
 
         Context.SeedAccountCurrency()
