@@ -1,4 +1,5 @@
 ﻿using Bank.Application.Extensions;
+using Bank.Application.Requests;
 using Bank.Application.Responses;
 
 using Microsoft.OpenApi.Any;
@@ -18,6 +19,18 @@ file static class Example
         public static readonly DateTime CreatedAt  = new(2024, 3, 5, 10, 30, 0);
         public static readonly DateTime ModifiedAt = new(2025, 3, 5, 12, 45, 0);
 
+        public static readonly AccountTypeCreateRequest CreateRequest = new()
+                                                                        {
+                                                                            Name = Name,
+                                                                            Code = Code
+                                                                        };
+
+        public static readonly AccountTypeUpdateRequest UpdateRequest = new()
+                                                                        {
+                                                                            Name = Name,
+                                                                            Code = Code
+                                                                        };
+
         public static readonly AccountTypeResponse Response = new()
                                                               {
                                                                   Id         = Id,
@@ -33,6 +46,34 @@ public static partial class SwaggerSchemaFilter
 {
     public static class AccountType
     {
+        public class CreateRequest() : SwaggerSchemaFilter<AccountTypeCreateRequest>(SchemeFilters.Example.AccountType.CreateRequest)
+        {
+            protected override IOpenApiAny CreateExample(OpenApiSchema schema, SchemaFilterContext context)
+            {
+                return new OpenApiObject()
+                       {
+                           [nameof(Example.Name)
+                            .ToCamelCase()] = new OpenApiString(Example.Name),
+                           [nameof(Example.Code)
+                            .ToCamelCase()] = new OpenApiString(Example.Code)
+                       };
+            }
+        }
+
+        public class UpdateRequest() : SwaggerSchemaFilter<AccountTypeUpdateRequest>(SchemeFilters.Example.AccountType.UpdateRequest)
+        {
+            protected override IOpenApiAny CreateExample(OpenApiSchema schema, SchemaFilterContext context)
+            {
+                return new OpenApiObject()
+                       {
+                           [nameof(Example.Name)
+                            .ToCamelCase()] = new OpenApiString(Example.Name),
+                           [nameof(Example.Code)
+                            .ToCamelCase()] = new OpenApiString(Example.Code)
+                       };
+            }
+        }
+
         public class Response() : SwaggerSchemaFilter<AccountTypeResponse>(SchemeFilters.Example.AccountType.Response)
         {
             protected override IOpenApiAny CreateExample(OpenApiSchema schema, SchemaFilterContext context)

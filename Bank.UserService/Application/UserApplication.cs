@@ -136,6 +136,8 @@ public static class ServiceCollectionExtensions
                                    config.SchemaFilter<SwaggerSchemaFilter.AccountCurrency.UpdateRequest>();
                                    config.SchemaFilter<SwaggerSchemaFilter.AccountCurrency.Response>();
 
+                                   config.SchemaFilter<SwaggerSchemaFilter.AccountType.CreateRequest>();
+                                   config.SchemaFilter<SwaggerSchemaFilter.AccountType.UpdateRequest>();
                                    config.SchemaFilter<SwaggerSchemaFilter.AccountType.Response>();
 
                                    config.SchemaFilter<SwaggerSchemaFilter.Card.CreateRequest>();
@@ -165,6 +167,23 @@ public static class ServiceCollectionExtensions
                                    config.SchemaFilter<SwaggerSchemaFilter.Employee.UpdateRequest>();
                                    config.SchemaFilter<SwaggerSchemaFilter.Employee.Response>();
                                    config.SchemaFilter<SwaggerSchemaFilter.Employee.SimpleResponse>();
+
+                                   config.SchemaFilter<SwaggerSchemaFilter.Exchange.MakeExchangeRequest>();
+                                   config.SchemaFilter<SwaggerSchemaFilter.Exchange.UpdateRequest>();
+                                   config.SchemaFilter<SwaggerSchemaFilter.Exchange.BetweenRequest>();
+                                   config.SchemaFilter<SwaggerSchemaFilter.Exchange.Response>();
+
+                                   config.SchemaFilter<SwaggerSchemaFilter.TransactionCode.Response>();
+
+                                   config.SchemaFilter<SwaggerSchemaFilter.Transaction.CreateRequest>();
+                                   config.SchemaFilter<SwaggerSchemaFilter.Transaction.UpdateRequest>();
+                                   config.SchemaFilter<SwaggerSchemaFilter.Transaction.Response>();
+                                   config.SchemaFilter<SwaggerSchemaFilter.Transaction.CreateResponse>();
+
+                                   config.SchemaFilter<SwaggerSchemaFilter.TransactionTemplate.CreateRequest>();
+                                   config.SchemaFilter<SwaggerSchemaFilter.TransactionTemplate.UpdateRequest>();
+                                   config.SchemaFilter<SwaggerSchemaFilter.TransactionTemplate.Response>();
+                                   config.SchemaFilter<SwaggerSchemaFilter.TransactionTemplate.SimpleResponse>();
 
                                    config.SchemaFilter<SwaggerSchemaFilter.User.ActivationRequest>();
                                    config.SchemaFilter<SwaggerSchemaFilter.User.LoginRequest>();
@@ -220,8 +239,9 @@ public static class ServiceCollectionExtensions
                 .AddJwtBearer(jwtOptions => jwtOptions.TokenValidationParameters = new TokenValidationParameters
                                                                                    {
                                                                                        IssuerSigningKey =
-                                                                                       new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration.Jwt
-                                                                                                                                                    .SecretKey)),
+                                                                                       new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration
+                                                                                                                                       .Jwt
+                                                                                                                                       .SecretKey)),
                                                                                        ValidateIssuerSigningKey = true,
                                                                                        ValidateLifetime         = true,
                                                                                        ValidateIssuer           = false,
