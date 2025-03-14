@@ -39,11 +39,16 @@ public static partial class SwaggerSchemaFilter
             {
                 return new OpenApiObject()
                        {
-                           [nameof(Example.Id).ToCamelCase()]         = new OpenApiString(Example.Id.ToString()),
-                           [nameof(Example.Code).ToCamelCase()]       = new OpenApiString(Example.Code),
-                           [nameof(Example.Name).ToCamelCase()]       = new OpenApiString(Example.Name),
-                           [nameof(Example.CreatedAt).ToCamelCase()]  = new OpenApiDateTime(Example.CreatedAt),
-                           [nameof(Example.ModifiedAt).ToCamelCase()] = new OpenApiDateTime(Example.ModifiedAt)
+                           [nameof(Example.Id)
+                            .ToCamelCase()] = new OpenApiString(Example.Id.ToString()),
+                           [nameof(Example.Code)
+                            .ToCamelCase()] = new OpenApiString(Example.Code),
+                           [nameof(Example.Name)
+                            .ToCamelCase()] = new OpenApiString(Example.Name),
+                           [nameof(Example.CreatedAt)
+                            .ToCamelCase()] = new OpenApiDateTime(Example.CreatedAt),
+                           [nameof(Example.ModifiedAt)
+                            .ToCamelCase()] = new OpenApiDateTime(Example.ModifiedAt)
                        };
             }
         }

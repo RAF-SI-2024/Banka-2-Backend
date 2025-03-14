@@ -43,14 +43,14 @@ file static class Example
                                                                           CreatedAt     = CreatedAt,
                                                                           ModifiedAt    = ModifiedAt
                                                                       };
-        
+
         public static readonly TransactionTemplateSimpleResponse SimpleResponse = new()
-                                                                                {
-                                                                                    Id            = Id,
-                                                                                    Name          = Name,
-                                                                                    AccountNumber = AccountNumber,
-                                                                                    Deleted       = Deleted
-                                                                                };
+                                                                                  {
+                                                                                      Id            = Id,
+                                                                                      Name          = Name,
+                                                                                      AccountNumber = AccountNumber,
+                                                                                      Deleted       = Deleted
+                                                                                  };
     }
 }
 
@@ -113,7 +113,7 @@ public static partial class SwaggerSchemaFilter
                        };
             }
         }
-        
+
         public class SimpleResponse() : SwaggerSchemaFilter<TransactionTemplateSimpleResponse>(SchemeFilters.Example.TransactionTemplate.SimpleResponse)
         {
             protected override IOpenApiAny CreateExample(OpenApiSchema schema, SchemaFilterContext context)
