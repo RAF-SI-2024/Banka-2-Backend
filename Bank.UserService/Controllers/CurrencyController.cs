@@ -1,5 +1,4 @@
-﻿using Bank.Application.Domain;
-using Bank.Application.Endpoints;
+﻿using Bank.Application.Endpoints;
 using Bank.Application.Queries;
 using Bank.Application.Responses;
 using Bank.UserService.Services;
@@ -16,9 +15,9 @@ public class CurrencyController(ICurrencyService currencyService) : ControllerBa
 
     [Authorize]
     [HttpGet(Endpoints.Currency.GetAll)]
-    public async Task<ActionResult<Page<CurrencyResponse>>> GetAll([FromQuery] CurrencyFilterQuery currencyFilterQuery, [FromQuery] Pageable pageable)
+    public async Task<ActionResult<List<CurrencyResponse>>> GetAll([FromQuery] CurrencyFilterQuery currencyFilterQuery)
     {
-        var result = await m_CurrencyService.FindAll(currencyFilterQuery, pageable);
+        var result = await m_CurrencyService.FindAll(currencyFilterQuery);
         return result.ActionResult;
     }
 

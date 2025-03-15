@@ -14,3 +14,12 @@ public enum Gender
     Male,
     Female
 }
+
+public enum TransactionStatus
+{
+    Invalid,
+    Pending,
+    Canceled,
+    Completed,
+    Failed
+}

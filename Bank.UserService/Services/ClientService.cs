@@ -12,6 +12,8 @@ public interface IClientService
 {
     Task<Result<Page<ClientResponse>>> FindAll(UserFilterQuery userFilterQuery, Pageable pageable);
 
+    Task<Result<Page<AccountResponse>>> FindAllAccounts(Guid clientId, AccountFilterQuery filter, Pageable pageable);
+
     Task<Result<ClientResponse>> GetOne(Guid id);
 
     Task<Result<ClientResponse>> Create(ClientCreateRequest clientCreateRequest);
@@ -19,10 +21,11 @@ public interface IClientService
     Task<Result<ClientResponse>> Update(ClientUpdateRequest clientUpdateRequest, Guid id);
 }
 
-public class ClientService(IUserRepository repository, IEmailService emailService) : IClientService
+public class ClientService(IUserRepository repository, IEmailService emailService, IAccountRepository accountRepository) : IClientService
 {
-    private readonly IUserRepository m_UserRepository = repository;
-    private readonly IEmailService   m_EmailService   = emailService;
+    private readonly IUserRepository    m_UserRepository    = repository;
+    private readonly IEmailService      m_EmailService      = emailService;
+    private readonly IAccountRepository m_AccountRepository = accountRepository;
 
     public async Task<Result<Page<ClientResponse>>> FindAll(UserFilterQuery userFilterQuery, Pageable pageable)
     {
@@ -36,6 +39,16 @@ public class ClientService(IUserRepository repository, IEmailService emailServic
                                   .ToList();
 
         return Result.Ok(new Page<ClientResponse>(clientResponses, page.PageNumber, page.PageSize, page.TotalElements));
+    }
+
+    public async Task<Result<Page<AccountResponse>>> FindAllAccounts(Guid clientId, AccountFilterQuery filter, Pageable pageable)
+    {
+        var page = await m_AccountRepository.FindAllByClientId(clientId, pageable);
+
+        var accountResponses = page.Items.Select(account => account.ToResponse())
+                                   .ToList();
+
+        return Result.Ok(new Page<AccountResponse>(accountResponses, page.PageNumber, page.PageSize, page.TotalElements));
     }
 
     public async Task<Result<ClientResponse>> GetOne(Guid id)

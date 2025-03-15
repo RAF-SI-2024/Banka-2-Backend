@@ -11,6 +11,8 @@ public interface IAccountRepository
 {
     Task<Page<Account>> FindAll(AccountFilterQuery accountFilterQuery, Pageable pageable);
 
+    Task<Page<Account>> FindAllByClientId(Guid clientId, Pageable pageable);
+
     Task<Account?> FindById(Guid id);
 
     Task<Account> Add(Account account);
@@ -24,25 +26,30 @@ public class AccountRepository(ApplicationContext context) : IAccountRepository
 
     public async Task<Page<Account>> FindAll(AccountFilterQuery accountFilterQuery, Pageable pageable)
     {
-        var accountQuery = m_Context.Accounts.AsQueryable();
+        var accountQuery = m_Context.Accounts.Include(account => account.Client)
+                                    .Include(account => account.Employee)
+                                    .Include(account => account.Currency)
+                                    .Include(account => account.AccountCurrencies)
+                                    .Include(account => account.Type)
+                                    .AsQueryable();
 
         if (!string.IsNullOrEmpty(accountFilterQuery.ClientEmail))
-            accountQuery = accountQuery.Where(account => EF.Functions.ILike(account.Client.Email, $"%{accountFilterQuery.ClientEmail}%"));
+            accountQuery = accountQuery.Where(account => account.Client != null && EF.Functions.ILike(account.Client.Email, $"%{accountFilterQuery.ClientEmail}%"));
 
         if (!string.IsNullOrEmpty(accountFilterQuery.ClientFirstName))
-            accountQuery = accountQuery.Where(account => EF.Functions.ILike(account.Client.FirstName, $"%{accountFilterQuery.ClientFirstName}%"));
+            accountQuery = accountQuery.Where(account => account.Client != null && EF.Functions.ILike(account.Client.FirstName, $"%{accountFilterQuery.ClientFirstName}%"));
 
         if (!string.IsNullOrEmpty(accountFilterQuery.ClientLastName))
-            accountQuery = accountQuery.Where(account => EF.Functions.ILike(account.Client.LastName, $"%{accountFilterQuery.ClientLastName}%"));
+            accountQuery = accountQuery.Where(account => account.Client != null && EF.Functions.ILike(account.Client.LastName, $"%{accountFilterQuery.ClientLastName}%"));
 
         if (!string.IsNullOrEmpty(accountFilterQuery.AccountTypeName))
-            accountQuery = accountQuery.Where(account => EF.Functions.ILike(account.Type.Name, $"%{accountFilterQuery.AccountTypeName}%"));
+            accountQuery = accountQuery.Where(account => account.Type != null && EF.Functions.ILike(account.Type.Name, $"%{accountFilterQuery.AccountTypeName}%"));
 
         if (!string.IsNullOrEmpty(accountFilterQuery.CurrencyName))
-            accountQuery = accountQuery.Where(account => EF.Functions.ILike(account.Currency.Name, $"%{accountFilterQuery.CurrencyName}%"));
+            accountQuery = accountQuery.Where(account => account.Currency != null && EF.Functions.ILike(account.Currency.Name, $"%{accountFilterQuery.CurrencyName}%"));
 
         if (!string.IsNullOrEmpty(accountFilterQuery.EmployeeEmail))
-            accountQuery = accountQuery.Where(account => EF.Functions.ILike(account.Employee.Email, $"%{accountFilterQuery.EmployeeEmail}%"));
+            accountQuery = accountQuery.Where(account => account.Employee != null && EF.Functions.ILike(account.Employee.Email, $"%{accountFilterQuery.EmployeeEmail}%"));
 
         if (!string.IsNullOrEmpty(accountFilterQuery.Number))
             accountQuery = accountQuery.Where(account => EF.Functions.ILike(account.Number, $"%{accountFilterQuery.Number}%"));
@@ -59,9 +66,31 @@ public class AccountRepository(ApplicationContext context) : IAccountRepository
         return new Page<Account>(accounts, pageable.Page, pageable.Size, totalElements);
     }
 
+    public async Task<Page<Account>> FindAllByClientId(Guid clientId, Pageable pageable)
+    {
+        var accounts = await m_Context.Accounts.Include(account => account.Client)
+                                      .Include(account => account.Employee)
+                                      .Include(account => account.Currency)
+                                      .Include(account => account.AccountCurrencies)
+                                      .Include(account => account.Type)
+                                      .Where(account => account.ClientId == clientId)
+                                      .Skip((pageable.Page - 1) * pageable.Size)
+                                      .Take(pageable.Size)
+                                      .ToListAsync();
+
+        var totalElements = await m_Context.Accounts.CountAsync();
+
+        return new Page<Account>(accounts, pageable.Page, pageable.Size, totalElements);
+    }
+
     public async Task<Account?> FindById(Guid id)
     {
-        return await m_Context.Accounts.FirstOrDefaultAsync(a => a.Id == id);
+        return await m_Context.Accounts.Include(account => account.Client)
+                              .Include(account => account.Employee)
+                              .Include(account => account.Currency)
+                              .Include(account => account.AccountCurrencies)
+                              .Include(account => account.Type)
+                              .FirstOrDefaultAsync(a => a.Id == id);
     }
 
     public async Task<Account> Add(Account account)

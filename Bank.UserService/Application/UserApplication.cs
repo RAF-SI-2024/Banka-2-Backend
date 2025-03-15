@@ -34,6 +34,7 @@ public class UserApplication
         JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
         builder.Services.AddApplicationAuthentication();
         builder.Services.AddApplicationAuthorization();
+        builder.Services.AddHttpClient();
 
         builder.Services.AddServiceApplication();
         builder.Services.AddApplicationCors();
@@ -90,11 +91,23 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAccountService, AccountService>();
         services.AddScoped<IAccountCurrencyService, AccountCurrencyService>();
         services.AddScoped<IAuthorizationService, AuthorizationService>();
+        services.AddScoped<IExchangeRepository, ExchangeRepository>();
+        services.AddScoped<IExchangeService, ExchangeService>();
+        services.AddScoped<ILoanRepository, LoanRepository>();
+        services.AddScoped<ILoanTypeRepository, LoanTypeRepository>();
+        services.AddScoped<IInstallmentRepository, InstallmentRepository>();
+        services.AddScoped<ITransactionCodeRepository, TransactionCodeRepository>();
+        services.AddScoped<ITransactionCodeService, TransactionCodeService>();
+        services.AddScoped<ITransactionTemplateRepository, TransactionTemplateRepository>();
+        services.AddScoped<ITransactionTemplateService, TransactionTemplateService>();
+        services.AddScoped<ITransactionRepository, TransactionRepository>();
+        services.AddScoped<ITransactionService, TransactionService>();
 
         services.AddHttpContextAccessor();
 
         services.AddSingleton<TokenProvider>();
         services.AddSingleton<DatabaseHostedService>();
+        services.AddSingleton<ExchangeHostedService>();
 
         services.AddDbContext<ApplicationContext>(options => options.UseNpgsql(Configuration.Database.GetConnectionString()), ServiceLifetime.Scoped, ServiceLifetime.Singleton);
 
@@ -123,6 +136,8 @@ public static class ServiceCollectionExtensions
                                    config.SchemaFilter<SwaggerSchemaFilter.AccountCurrency.UpdateRequest>();
                                    config.SchemaFilter<SwaggerSchemaFilter.AccountCurrency.Response>();
 
+                                   config.SchemaFilter<SwaggerSchemaFilter.AccountType.CreateRequest>();
+                                   config.SchemaFilter<SwaggerSchemaFilter.AccountType.UpdateRequest>();
                                    config.SchemaFilter<SwaggerSchemaFilter.AccountType.Response>();
 
                                    config.SchemaFilter<SwaggerSchemaFilter.Card.CreateRequest>();
@@ -152,6 +167,23 @@ public static class ServiceCollectionExtensions
                                    config.SchemaFilter<SwaggerSchemaFilter.Employee.UpdateRequest>();
                                    config.SchemaFilter<SwaggerSchemaFilter.Employee.Response>();
                                    config.SchemaFilter<SwaggerSchemaFilter.Employee.SimpleResponse>();
+
+                                   config.SchemaFilter<SwaggerSchemaFilter.Exchange.MakeExchangeRequest>();
+                                   config.SchemaFilter<SwaggerSchemaFilter.Exchange.UpdateRequest>();
+                                   config.SchemaFilter<SwaggerSchemaFilter.Exchange.BetweenRequest>();
+                                   config.SchemaFilter<SwaggerSchemaFilter.Exchange.Response>();
+
+                                   config.SchemaFilter<SwaggerSchemaFilter.TransactionCode.Response>();
+
+                                   config.SchemaFilter<SwaggerSchemaFilter.Transaction.CreateRequest>();
+                                   config.SchemaFilter<SwaggerSchemaFilter.Transaction.UpdateRequest>();
+                                   config.SchemaFilter<SwaggerSchemaFilter.Transaction.Response>();
+                                   config.SchemaFilter<SwaggerSchemaFilter.Transaction.CreateResponse>();
+
+                                   config.SchemaFilter<SwaggerSchemaFilter.TransactionTemplate.CreateRequest>();
+                                   config.SchemaFilter<SwaggerSchemaFilter.TransactionTemplate.UpdateRequest>();
+                                   config.SchemaFilter<SwaggerSchemaFilter.TransactionTemplate.Response>();
+                                   config.SchemaFilter<SwaggerSchemaFilter.TransactionTemplate.SimpleResponse>();
 
                                    config.SchemaFilter<SwaggerSchemaFilter.User.ActivationRequest>();
                                    config.SchemaFilter<SwaggerSchemaFilter.User.LoginRequest>();

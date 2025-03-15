@@ -41,6 +41,7 @@ public class CompanyEntityConfiguration : IEntityTypeConfiguration<Company>
 
         builder.HasOne(company => company.MajorityOwner)
                .WithMany()
-               .HasForeignKey(company => company.MajorityOwnerId);
+               .HasForeignKey(company => company.MajorityOwnerId)
+               .OnDelete(DeleteBehavior.Restrict);
     }
 }
