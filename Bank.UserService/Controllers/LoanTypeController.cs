@@ -3,6 +3,7 @@ using Bank.Application.Endpoints;
 using Bank.UserService.Configurations;
 using Bank.UserService.Models;
 using Bank.UserService.Repositories;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
