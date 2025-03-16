@@ -1,9 +1,9 @@
 ﻿using Bank.Application.Domain;
-using Bank.UserService.Repositories;
 using Bank.Application.Endpoints;
 using Bank.Application.Requests;
 using Bank.Application.Responses;
 using Bank.UserService.Mappers;
+using Bank.UserService.Repositories;
 
 namespace Bank.UserService.Services;
 

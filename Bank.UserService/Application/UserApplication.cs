@@ -176,6 +176,15 @@ public static class ServiceCollectionExtensions
                                    config.SchemaFilter<SwaggerSchemaFilter.Exchange.BetweenRequest>();
                                    config.SchemaFilter<SwaggerSchemaFilter.Exchange.Response>();
 
+                                   config.SchemaFilter<SwaggerSchemaFilter.Installment.Request>();
+                                   config.SchemaFilter<SwaggerSchemaFilter.Installment.Response>();
+
+                                   config.SchemaFilter<SwaggerSchemaFilter.Loan.Request>();
+                                   config.SchemaFilter<SwaggerSchemaFilter.Loan.Response>();
+
+                                   config.SchemaFilter<SwaggerSchemaFilter.LoanType.Request>();
+                                   config.SchemaFilter<SwaggerSchemaFilter.LoanType.Response>();
+
                                    config.SchemaFilter<SwaggerSchemaFilter.TransactionCode.Response>();
 
                                    config.SchemaFilter<SwaggerSchemaFilter.Transaction.CreateRequest>();
@@ -242,9 +251,8 @@ public static class ServiceCollectionExtensions
                 .AddJwtBearer(jwtOptions => jwtOptions.TokenValidationParameters = new TokenValidationParameters
                                                                                    {
                                                                                        IssuerSigningKey =
-                                                                                       new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration
-                                                                                                                                       .Jwt
-                                                                                                                                       .SecretKey)),
+                                                                                       new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration.Jwt
+                                                                                                                                                    .SecretKey)),
                                                                                        ValidateIssuerSigningKey = true,
                                                                                        ValidateLifetime         = true,
                                                                                        ValidateIssuer           = false,

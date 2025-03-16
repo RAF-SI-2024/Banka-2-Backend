@@ -28,8 +28,8 @@ public static class ExchangeSeederExtension
             return;
 
         var dayOldExchangeDictionary = await context.Exchanges.OrderByDescending(exchange => exchange.CreatedAt)
-                                                     .Take(currenciesTask.Result.Count - 1)
-                                                     .ToDictionaryAsync(exchange => exchange.CurrencyTo.Code, exchange => exchange.Commission);
+                                                    .Take(currenciesTask.Result.Count - 1)
+                                                    .ToDictionaryAsync(exchange => exchange.CurrencyTo.Code, exchange => exchange.Commission);
 
         var exchangeApiCurrencies = exchangeApiResponse.Values.Where(exchangeApiEntity => currencyDictionary.ContainsKey(exchangeApiEntity.Code));
 
