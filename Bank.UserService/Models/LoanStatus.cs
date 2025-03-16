@@ -5,5 +5,6 @@ public enum LoanStatus
     Active,
     Closed,
     DefaultWarning,
-    Default
+    Default,
+    Pending
 }

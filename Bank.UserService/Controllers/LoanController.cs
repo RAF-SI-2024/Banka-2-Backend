@@ -1,8 +1,10 @@
 ﻿using Bank.Application.Domain;
 using Bank.Application.Endpoints;
 using Bank.Application.Queries;
-using Bank.UserService.Models;
-using Bank.UserService.Repositories;
+using Bank.Application.Requests;
+using Bank.Application.Responses;
+using Bank.UserService.Services;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,101 +15,65 @@ namespace Bank.UserService.Controllers;
 [ApiController]
 public class LoanController : ControllerBase
 {
-    private readonly ILoanRepository _loanRepository;
+    private readonly ILoanService m_LoanService;
 
-    public LoanController(ILoanRepository loanRepository)
+    public LoanController(ILoanService loanService)
     {
-        _loanRepository = loanRepository;
+        m_LoanService = loanService;
     }
 
     [Authorize]
     [HttpGet(Endpoints.Loan.GetAll)]
-    public async Task<ActionResult<Page<Loan>>> GetAll([FromQuery] LoanFilterQuery loanFilterQuery, [FromQuery] Pageable pageable)
+    public async Task<ActionResult<Page<LoanResponse>>> GetAll([FromQuery] LoanFilterQuery loanFilterQuery, [FromQuery] Pageable pageable)
     {
-        try
-        {
-            var loans = await _loanRepository.FindAll(loanFilterQuery, pageable);
-            return Ok(loans);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, $"Internal server error: {ex.Message}");
-        }
+        var result = await m_LoanService.GetAll(loanFilterQuery, pageable);
+
+        return result.ActionResult;
     }
 
     [Authorize]
     [HttpGet(Endpoints.Loan.GetOne)]
-    public async Task<ActionResult<Loan>> GetOne([FromRoute] Guid id)
+    public async Task<ActionResult<LoanResponse>> GetOne([FromRoute] Guid id)
     {
-        try
-        {
-            var loan = await _loanRepository.FindById(id);
+        var result = await m_LoanService.GetOne(id);
 
-            if (loan == null)
-                return NotFound($"Loan with ID {id} not found");
-
-            return Ok(loan);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, $"Internal server error: {ex.Message}");
-        }
+        return result.ActionResult;
     }
 
     [Authorize]
     [HttpGet(Endpoints.Loan.GetByAccount)]
-    public async Task<ActionResult<Page<Loan>>> GetByAccount([FromRoute] Guid accountId, [FromQuery] Pageable pageable)
+    public async Task<ActionResult<Page<LoanResponse>>> GetByAccount([FromRoute] Guid accountId, [FromQuery] Pageable pageable)
     {
-        try
-        {
-            var loanFilterQuery = new LoanFilterQuery { AccountNumber = accountId.ToString() };
-            var loans           = await _loanRepository.FindAll(loanFilterQuery, pageable);
-            return Ok(loans);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, $"Internal server error: {ex.Message}");
-        }
+        var loanFilterQuery = new LoanFilterQuery { AccountNumber = accountId.ToString() };
+        var result          = await m_LoanService.GetAll(loanFilterQuery, pageable);
+
+        return result.ActionResult;
     }
 
     [HttpPost(Endpoints.Loan.Create)]
     [Authorize(Roles = $"{Role.Admin}, {Role.Employee}")]
-    public async Task<ActionResult<Loan>> Create([FromBody] Loan loan)
+    public async Task<ActionResult<LoanResponse>> Create([FromBody] LoanRequest loanRequest)
     {
-        try
-        {
-            loan.Id         = Guid.NewGuid();
-            loan.CreatedAt  = DateTime.UtcNow;
-            loan.ModifiedAt = DateTime.UtcNow;
+        var result = await m_LoanService.Create(loanRequest);
 
-            var createdLoan = await _loanRepository.Add(loan);
-            return CreatedAtAction(nameof(GetOne), new { id = createdLoan.Id }, createdLoan);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, $"Internal server error: {ex.Message}");
-        }
+        return result.ActionResult;
     }
 
     [HttpPut(Endpoints.Loan.Update)]
     [Authorize(Roles = $"{Role.Admin}, {Role.Employee}")]
-    public async Task<ActionResult<Loan>> Update([FromBody] Loan loan, [FromRoute] Guid id)
+    public async Task<ActionResult<LoanResponse>> Update([FromBody] LoanRequest loanRequest, [FromRoute] Guid id)
     {
-        try
-        {
-            var existingLoan = await _loanRepository.FindById(id);
+        var result = await m_LoanService.Update(loanRequest, id);
 
-            if (existingLoan == null)
-                return NotFound($"Loan with ID {id} not found");
+        return result.ActionResult;
+    }
 
-            loan.ModifiedAt = DateTime.UtcNow;
+    [Authorize]
+    [HttpGet(Endpoints.Loan.GetInstallments)]
+    public async Task<ActionResult<Page<InstallmentResponse>>> GetInstallments([FromRoute] Guid loanId, [FromQuery] Pageable pageable)
+    {
+        var result = await m_LoanService.GetAllInstallments(loanId, pageable);
 
-            var updatedLoan = await _loanRepository.Update(existingLoan, loan);
-            return Ok(updatedLoan);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, $"Internal server error: {ex.Message}");
-        }
+        return result.ActionResult;
     }
 }

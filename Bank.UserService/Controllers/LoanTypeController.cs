@@ -1,97 +1,56 @@
 ﻿using Bank.Application.Domain;
 using Bank.Application.Endpoints;
 using Bank.UserService.Configurations;
-using Bank.UserService.Models;
-using Bank.UserService.Repositories;
+using Bank.UserService.Services;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+
+using Bank.Application.Requests;
+using Bank.Application.Responses;
 
 namespace Bank.UserService.Controllers;
 
 using Role = Configuration.Policy.Role;
 
 [ApiController]
-public class LoanTypeController : ControllerBase
+public class LoanTypeController(ILoanTypeService loanTypeService) : ControllerBase
 {
-    private readonly ILoanTypeRepository _loanTypeRepository;
-
-    public LoanTypeController(ILoanTypeRepository loanTypeRepository)
-    {
-        _loanTypeRepository = loanTypeRepository;
-    }
+    private readonly ILoanTypeService m_LoanTypeService = loanTypeService;
 
     [Authorize]
     [HttpGet(Endpoints.LoanType.GetAll)]
-    public async Task<ActionResult<Page<LoanType>>> GetAll([FromQuery] Pageable pageable)
+    public async Task<ActionResult<Page<LoanTypeResponse>>> GetAll([FromQuery] Pageable pageable)
     {
-        try
-        {
-            var loanTypes = await _loanTypeRepository.FindAll(pageable);
-            return Ok(loanTypes);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, $"Internal server error: {ex.Message}");
-        }
+        var result = await m_LoanTypeService.GetAll(pageable);
+
+        return result.ActionResult;
     }
 
     [Authorize]
     [HttpGet(Endpoints.LoanType.GetOne)]
-    public async Task<ActionResult<LoanType>> GetOne([FromRoute] Guid id)
+    public async Task<ActionResult<LoanTypeResponse>> GetOne([FromRoute] Guid id)
     {
-        try
-        {
-            var loanType = await _loanTypeRepository.FindById(id);
+        var result = await m_LoanTypeService.GetOne(id);
 
-            if (loanType == null)
-                return NotFound($"Loan type with ID {id} not found");
-
-            return Ok(loanType);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, $"Internal server error: {ex.Message}");
-        }
+        return result.ActionResult;
     }
 
     [HttpPost(Endpoints.LoanType.Create)]
-    [Authorize(Roles = $"{Role.Admin}")]
-    public async Task<ActionResult<LoanType>> Create([FromBody] LoanType loanType)
+    [Authorize(Roles = $"{Role.Admin}, {Role.Employee}")]
+    public async Task<ActionResult<LoanTypeResponse>> Create([FromBody] LoanTypeRequest request)
     {
-        try
-        {
-            loanType.Id         = Guid.NewGuid();
-            loanType.CreatedAt  = DateTime.UtcNow;
-            loanType.ModifiedAt = DateTime.UtcNow;
+        var result = await m_LoanTypeService.Create(request);
 
-            var createdLoanType = await _loanTypeRepository.Add(loanType);
-            return CreatedAtAction(nameof(GetOne), new { id = createdLoanType.Id }, createdLoanType);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, $"Internal server error: {ex.Message}");
-        }
+        return result.ActionResult;
     }
 
     [HttpPut(Endpoints.LoanType.Update)]
-    [Authorize(Roles = $"{Role.Admin}")]
-    public async Task<ActionResult<LoanType>> Update([FromBody] LoanType loanType, [FromRoute] Guid id)
+    [Authorize(Roles = $"{Role.Admin}, {Role.Employee}")]
+    public async Task<ActionResult<LoanTypeResponse>> Update([FromBody] LoanTypeRequest request, [FromRoute] Guid id)
     {
-        try
-        {
-            var existingLoanType = await _loanTypeRepository.FindById(id);
+        var result = await m_LoanTypeService.Update(request, id);
 
-            if (existingLoanType == null)
-                return NotFound($"Loan type with ID {id} not found");
-
-            loanType.ModifiedAt = DateTime.UtcNow;
-
-            var updatedLoanType = await _loanTypeRepository.Update(existingLoanType, loanType);
-            return Ok(updatedLoanType);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, $"Internal server error: {ex.Message}");
-        }
+        return Ok(result.Value);
     }
 }
