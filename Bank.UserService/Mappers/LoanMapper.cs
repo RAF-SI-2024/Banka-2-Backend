@@ -1,6 +1,4 @@
-﻿using System.Runtime.CompilerServices;
-
-using Bank.Application.Requests;
+﻿using Bank.Application.Requests;
 using Bank.Application.Responses;
 using Bank.UserService.Models;
 
@@ -11,7 +9,7 @@ public static class LoanMapper
     public static Loan ToLoan(this LoanRequest request)
     {
         var now = DateTime.UtcNow;
-        
+
         return new Loan
                {
                    Id           = Guid.NewGuid(),
@@ -28,19 +26,19 @@ public static class LoanMapper
                    ModifiedAt   = now
                };
     }
-    
+
     public static LoanResponse ToLoanResponse(this Loan loan)
     {
         return new LoanResponse
                {
-                   Id   = loan.Id,
-                   Type = loan.LoanType.ToResponse(),
-                   Account = loan.Account.ToResponse(),
+                   Id           = loan.Id,
+                   Type         = loan.LoanType.ToResponse(),
+                   Account      = loan.Account.ToResponse(),
                    Amount       = loan.Amount,
                    Period       = loan.Period,
                    CreationDate = DateOnly.FromDateTime(loan.CreationDate),
                    MaturityDate = DateOnly.FromDateTime(loan.MaturityDate),
-                   Currency = loan.Currency.ToResponse(),
+                   Currency     = loan.Currency.ToResponse(),
                    Status       = (int)loan.Status,
                    InterestType = (int)loan.InterestType,
                    CreatedAt    = loan.CreatedAt,
@@ -62,6 +60,4 @@ public static class LoanMapper
     {
         return creationDate.AddMonths(periodInMonths);
     }
-    
-    
 }

@@ -21,95 +21,93 @@ public interface ILoanService
     Task<Result<LoanResponse>> Update(LoanRequest loanRequest, Guid id);
 }
 
-
 public class LoanService(
-   ILoanRepository loanRepository,
-   ILoanTypeRepository loanTypeRepository,
-   IAccountRepository accountRepository,
-   ICurrencyRepository currencyRepository,
-   IInstallmentRepository installmentRepository
+    ILoanRepository        loanRepository,
+    ILoanTypeRepository    loanTypeRepository,
+    IAccountRepository     accountRepository,
+    ICurrencyRepository    currencyRepository,
+    IInstallmentRepository installmentRepository
 ) : ILoanService
 {
-   private readonly ILoanRepository loanRepository = loanRepository;
-   private readonly ILoanTypeRepository loanTypeRepository = loanTypeRepository;
-   private readonly IAccountRepository accountRepository = accountRepository;
-   private readonly ICurrencyRepository currencyRepository = currencyRepository;
-   private readonly IInstallmentRepository installmentRepository = installmentRepository;
+    private readonly ILoanRepository        m_LoanRepository        = loanRepository;
+    private readonly ILoanTypeRepository    m_LoanTypeRepository    = loanTypeRepository;
+    private readonly IAccountRepository     m_AccountRepository     = accountRepository;
+    private readonly ICurrencyRepository    m_CurrencyRepository    = currencyRepository;
+    private readonly IInstallmentRepository m_InstallmentRepository = installmentRepository;
 
-   public async Task<Result<Page<LoanResponse>>> GetAll(LoanFilterQuery loanFilterQuery, Pageable pageable)
-   {
-       var page = await loanRepository.FindAll(loanFilterQuery, pageable);
+    public async Task<Result<Page<LoanResponse>>> GetAll(LoanFilterQuery loanFilterQuery, Pageable pageable)
+    {
+        var page = await m_LoanRepository.FindAll(loanFilterQuery, pageable);
 
-       var loanResponses = page.Items.Select(loan => loan.ToLoanResponse())
-                              .ToList();
+        var loanResponses = page.Items.Select(loan => loan.ToLoanResponse())
+                                .ToList();
 
-       return Result.Ok(new Page<LoanResponse>(loanResponses, page.PageNumber, page.PageSize, page.TotalElements));
-   }
+        return Result.Ok(new Page<LoanResponse>(loanResponses, page.PageNumber, page.PageSize, page.TotalElements));
+    }
 
-   public async Task<Result<Page<InstallmentResponse>>> GetAllInstallments(Guid loanId, Pageable pageable)
-   {
-       var loan = await loanRepository.FindById(loanId);
-       
-       if (loan is null)
-           return Result.NotFound<Page<InstallmentResponse>>($"No Loan found with Id: {loanId}");
-           
-       var page = await installmentRepository.FindAllByLoanId(loanId, pageable);
+    public async Task<Result<Page<InstallmentResponse>>> GetAllInstallments(Guid loanId, Pageable pageable)
+    {
+        var loan = await m_LoanRepository.FindById(loanId);
 
-       var installmentResponses = page.Items.Select(installment => installment.ToResponse())
-                                     .ToList();
+        if (loan is null)
+            return Result.NotFound<Page<InstallmentResponse>>($"No Loan found with Id: {loanId}");
 
-       return Result.Ok(new Page<InstallmentResponse>(installmentResponses, page.PageNumber, page.PageSize, page.TotalElements));
-   }
+        var page = await m_InstallmentRepository.FindAllByLoanId(loanId, pageable);
 
-   public async Task<Result<LoanResponse>> GetOne(Guid id)
-   {
-       var loan = await loanRepository.FindById(id);
+        var installmentResponses = page.Items.Select(installment => installment.ToResponse())
+                                       .ToList();
 
-       if (loan is null)
-           return Result.NotFound<LoanResponse>($"No Loan found with Id: {id}");
+        return Result.Ok(new Page<InstallmentResponse>(installmentResponses, page.PageNumber, page.PageSize, page.TotalElements));
+    }
 
-       return Result.Ok(loan.ToLoanResponse());
-   }
+    public async Task<Result<LoanResponse>> GetOne(Guid id)
+    {
+        var loan = await m_LoanRepository.FindById(id);
 
-   public async Task<Result<LoanResponse>> Create(LoanRequest loanRequest)
-   {
-       var loanType = await loanTypeRepository.FindById(loanRequest.TypeId);
-       var account = await accountRepository.FindById(loanRequest.AccountId);
-       var currency = await currencyRepository.FindById(loanRequest.CurrencyId);
+        if (loan is null)
+            return Result.NotFound<LoanResponse>($"No Loan found with Id: {id}");
 
-       if (loanType == null || account == null || currency == null)
-           return Result.BadRequest<LoanResponse>("Invalid data. Loan type, account, or currency not found.");
+        return Result.Ok(loan.ToLoanResponse());
+    }
 
-       var loan = loanRequest.ToLoan();
-       loan = await loanRepository.Add(loan);
+    public async Task<Result<LoanResponse>> Create(LoanRequest loanRequest)
+    {
+        var loanType = await m_LoanTypeRepository.FindById(loanRequest.TypeId);
+        var account  = await m_AccountRepository.FindById(loanRequest.AccountId);
+        var currency = await m_CurrencyRepository.FindById(loanRequest.CurrencyId);
 
-       return Result.Ok(loan.ToLoanResponse());
-   }
+        if (loanType == null || account == null || currency == null)
+            return Result.BadRequest<LoanResponse>("Invalid data. Loan type, account, or currency not found.");
 
-   public async Task<Result<LoanResponse>> Update(LoanRequest loanRequest, Guid id)
-   {
-       var oldLoan = await loanRepository.FindById(id);
+        var loan = loanRequest.ToLoan();
+        loan = await m_LoanRepository.Add(loan);
 
-       if (oldLoan is null)
-           return Result.NotFound<LoanResponse>($"No Loan found with Id: {id}");
+        return Result.Ok(loan.ToLoanResponse());
+    }
 
-       // Validate that the references exist
-       var loanType = await loanTypeRepository.FindById(loanRequest.TypeId);
-       var account = await accountRepository.FindById(loanRequest.AccountId);
-       var currency = await currencyRepository.FindById(loanRequest.CurrencyId);
+    public async Task<Result<LoanResponse>> Update(LoanRequest loanRequest, Guid id)
+    {
+        var oldLoan = await m_LoanRepository.FindById(id);
 
-       if (loanType == null || account == null || currency == null)
-           return Result.BadRequest<LoanResponse>("Invalid data. Loan type, account, or currency not found.");
+        if (oldLoan is null)
+            return Result.NotFound<LoanResponse>($"No Loan found with Id: {id}");
 
-       var updatedLoan = loanRequest.ToLoan();
-       updatedLoan.Id = oldLoan.Id;
-       updatedLoan.CreationDate = oldLoan.CreationDate;
-       updatedLoan.CreatedAt = oldLoan.CreatedAt;
-       updatedLoan.ModifiedAt = DateTime.UtcNow;
+        // Validate that the references exist
+        var loanType = await m_LoanTypeRepository.FindById(loanRequest.TypeId);
+        var account  = await m_AccountRepository.FindById(loanRequest.AccountId);
+        var currency = await m_CurrencyRepository.FindById(loanRequest.CurrencyId);
 
-       var loan = await loanRepository.Update(oldLoan, updatedLoan);
+        if (loanType == null || account == null || currency == null)
+            return Result.BadRequest<LoanResponse>("Invalid data. Loan type, account, or currency not found.");
 
-       return Result.Ok(loan.ToLoanResponse());
-   }
+        var updatedLoan = loanRequest.ToLoan();
+        updatedLoan.Id           = oldLoan.Id;
+        updatedLoan.CreationDate = oldLoan.CreationDate;
+        updatedLoan.CreatedAt    = oldLoan.CreatedAt;
+        updatedLoan.ModifiedAt   = DateTime.UtcNow;
+
+        var loan = await m_LoanRepository.Update(oldLoan, updatedLoan);
+
+        return Result.Ok(loan.ToLoanResponse());
+    }
 }
-
