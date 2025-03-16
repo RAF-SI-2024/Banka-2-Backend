@@ -56,6 +56,18 @@ public static class LoanMapper
                };
     }
 
+    public static LoanType ToLoanType(this LoanTypeRequest request)
+    {
+        return new LoanType
+               {
+                   Id         = Guid.NewGuid(),
+                   Name       = request.Name,
+                   Margin     = request.Margin,
+                   CreatedAt  = DateTime.UtcNow,
+                   ModifiedAt = DateTime.UtcNow
+               };
+    }
+
     private static DateTime CalculateMaturityDate(DateTime creationDate, int periodInMonths)
     {
         return creationDate.AddMonths(periodInMonths);
