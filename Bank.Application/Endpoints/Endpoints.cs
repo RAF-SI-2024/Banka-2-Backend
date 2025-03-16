@@ -146,7 +146,7 @@ public static partial class Endpoints
 {
     public static class Exchange
     {
-        public const string Base            = $"{ApiBase}/exchange";
+        public const string Base            = $"{ApiBase}/exchanges";
         public const string GetOne          = $"{Base}/{{id:guid}}";
         public const string GetAll          = $"{Base}";
         public const string GetByCurrencies = $"{Base}/currencies";
@@ -159,7 +159,7 @@ public static partial class Endpoints
 {
     public static class TransactionCode
     {
-        public const string Base   = $"{ApiBase}/transaction/codes";
+        public const string Base   = $"{ApiBase}/transactions/codes";
         public const string GetOne = $"{Base}/{{id:guid}}";
         public const string GetAll = $"{Base}";
     }
@@ -169,7 +169,7 @@ public static partial class Endpoints
 {
     public static class TransactionTemplate
     {
-        public const string Base   = $"{ApiBase}/transaction/templates";
+        public const string Base   = $"{ApiBase}/transactions/templates";
         public const string GetOne = $"{Base}/{{id:guid}}";
         public const string GetAll = $"{Base}";
         public const string Create = $"{Base}";
@@ -181,7 +181,7 @@ public static partial class Endpoints
 {
     public static class Transaction
     {
-        public const string Base   = $"{ApiBase}/transaction";
+        public const string Base   = $"{ApiBase}/transactions";
         public const string GetOne = $"{Base}/{{id:guid}}";
         public const string GetAll = $"{Base}";
         public const string Create = $"{Base}";
