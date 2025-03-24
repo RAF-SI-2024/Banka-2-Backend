@@ -47,7 +47,9 @@ presubmits:
               set -euo pipefail
 
               start-docker.sh
-              
+
+              sleep 120
+
               cp /banka-3-backend-env/env Scripts/.env
               cp /banka-3-backend-env/database.env Scripts/Environemts/database.env
               cp /banka-3-backend-env/user.env Scripts/Environemts/user.env
