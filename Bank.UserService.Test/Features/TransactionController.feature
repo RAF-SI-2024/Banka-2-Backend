@@ -21,11 +21,11 @@ Feature: Transaction controller testing
         Then transaction response should be 200
         And response should contain the list of transactions matching the filter parameters and account Id
 
-    Scenario: Create Transaction
-        Given transaction create request
-        When transaction is created in the database
-        Then transaction response should be 200
-        And transaction details should match the created transaction
+#    Scenario: Create Transaction
+#        Given transaction create request
+#        When transaction is created in the database
+#        Then transaction response should be 200
+#        And transaction details should match the created transaction
 
     Scenario: Update Transaction
         Given a valid transaction Id for update

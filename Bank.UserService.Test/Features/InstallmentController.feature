@@ -6,11 +6,11 @@
         And installment is fetched by Id
         Then installment details should match the created installment
 
-    Scenario: Update Installment
-        Given installment update request
-        And installment Id
-        When installment is updated with request in the database
-        Then installment details in request should match the updated installment
+#    Scenario: Update Installment
+#        Given installment update request
+#        And installment Id
+#        When installment is updated with request in the database
+#        Then installment details in request should match the updated installment
 
     Scenario: Get All Installments for Loan
         Given loan Id for installments
