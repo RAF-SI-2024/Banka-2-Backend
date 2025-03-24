@@ -56,8 +56,8 @@ presubmits:
               # Promeniti ovu komandu da pokreće one servise koji vam trebaju za vaše
               # testove. Moguće je više puta pokrenuti "docker compose up" za različite
               # Docker Compose servise.
-              docker compose up -d --wait user_database
-              docker compose up -d --wait user_service
+              docker compose up -d ./Scripts/compose.yml --wait user_database
+              docker compose up -d ./Scripts/compose.yml --wait user_service
               
               # Ovaj sleep obezbeđuje služi da obezbedi dovoljno vremena da se svi
               # kontejneri pokrenuti iznad pokrenu u potpunosti. Po potreba možete
