@@ -26,6 +26,8 @@ presubmits:
     # npr. "user-service/".
     run_if_changed: "(Bank.UserService/|Scripts/compose.yaml|.prow/)"
     decorate: true
+    labels:
+      preset-banka-3-backend-env: "true"
     spec:
       containers:
         # "image" koji se koristi ovde je specijalan tip image-a, tzv. "build image"
@@ -45,35 +47,15 @@ presubmits:
               set -euo pipefail
 
               start-docker.sh
-
-              # PROMENITI PRI KOPIRANJU
-              # Ovde treba da pokrenete sve mikroservise i dependency-e koji vam trebaju
-              # za integracione i end to end testove (npr. baze podataka i vaše druge
-              # mikroservise).
-              # Naredna komanda pokreće servis definisan u "docker-compose.yml" fajlu
-              # pod nazivom "postgres-user" (PostgreSQL baza podataka koja se koristi za 
-              # user-service u okviru ovog projekta).
-              # Promeniti ovu komandu da pokreće one servise koji vam trebaju za vaše
-              # testove. Moguće je više puta pokrenuti "docker compose up" za različite
-              # Docker Compose servise.
+              
+              cp /banka-3-backend-env/env Scripts/.env
+              cp /banka-3-backend-env/database.env Scripts/Environemts/database.env
+              cp /banka-3-backend-env/user.env Scripts/Environemts/user.env
+            
               docker compose -f ./Scripts/compose.yaml up -d --wait user_database
               docker compose -f ./Scripts/compose.yaml up -d --wait user_service
-              
-              # Ovaj sleep obezbeđuje služi da obezbedi dovoljno vremena da se svi
-              # kontejneri pokrenuti iznad pokrenu u potpunosti. Po potreba možete
-              # povećati ili smanjiti interval, ili čak zameniti ovaj sleep nekim
-              # boljim mehanizmom (npr. healthcheck).
-              # sleep 120
 
-              # PROMENITI PRI KOPIRANJU
-              # Naziv direktorijuma u kom se nalazi mikroservis koji testirate.
-              # SERVICE_NAME="Bank.UserService.Test"
               cd "Bank.UserService.Test"
-
-              # Pokreće sledeće Maven target-e:
-              #   - "clean": čisti projekat, npr. ukoliko ste greškom commit-ovali target/ direktorijum
-              #   - "test": pokreće sve testove u okviru vaših projekata
-              #   - "verify": verifikuje rezultate integracionih testova
               dotnet test
           securityContext:
             privileged: true
