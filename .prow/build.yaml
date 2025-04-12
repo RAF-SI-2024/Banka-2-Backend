@@ -1,0 +1,35 @@
+﻿postsubmit:
+  - name: post-banka-2-backend-build
+    always_run: true
+    decorate: true
+    max_concurrency: 1
+    
+    labels:
+      preset-harbor-robot-push: "true"
+    spec:
+      containers:
+
+        - image: harbor.k8s.elab.rs/base-images/base:dotnet-9-node-22-docker
+          command:
+            - /bin/bash
+            - -c
+            - |
+              set -euo pipefail
+              TEAM_NAME="banka-2"
+              
+              start-docker.sh
+              docker login -u $HARBOR_USERNAME -p $HARBOR_PASSWORD harbor.k8s.elab.rs
+              commit_hash=$(git rev-parse HEAD)
+              
+              for serviceName in User; do
+                imageName=$(echo "$serviceName" | tr '[:upper:]' '[:lower:]')
+                docker build -t harbor.k8s.elab.rs/${TEAM_NAME}/${imageName}:latest -f "Scripts/${serviceName}/Dockerfile" "."
+              
+                docker tag harbor.k8s.elab.rs/${TEAM_NAME}/${imageName}:latest harbor.k8s.elab.rs/${TEAM_NAME}/${imageName}:${commit_hash}
+              
+                docker push harbor.k8s.elab.rs/${TEAM_NAME}/${imageName}:latest
+                docker push harbor.k8s.elab.rs/${TEAM_NAME}/${imageName}:${commit_hash}
+              done
+          securityContext:
+            privileged: true
+          imagePullPolicy: Always
