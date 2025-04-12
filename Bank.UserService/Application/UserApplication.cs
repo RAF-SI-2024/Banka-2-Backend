@@ -3,6 +3,7 @@ using System.Text;
 
 using Bank.Application;
 using Bank.Application.Domain;
+using Bank.UserService.BackgroundServices;
 using Bank.UserService.Configurations;
 using Bank.UserService.Database;
 using Bank.UserService.HostedServices;
@@ -17,9 +18,12 @@ using FluentValidation;
 using FluentValidation.AspNetCore;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+
+using IAuthorizationService = Bank.UserService.Services.IAuthorizationService;
 
 namespace Bank.UserService.Application;
 
@@ -32,14 +36,21 @@ public class UserApplication
         Env.Load();
 
         JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
-        builder.Services.AddApplicationAuthentication();
-        builder.Services.AddApplicationAuthorization();
 
-        builder.Services.AddServiceApplication();
-        builder.Services.AddApplicationCors();
+        builder.Services.AddValidation();
+        builder.Services.AddServices();
+        builder.Services.AddDatabase();
+        builder.Services.AddHostedServices();
+        builder.Services.AddBackgroundServices();
+        builder.Services.AddHttpServices();
+
+        builder.Services.AddCors();
+        builder.Services.AddAuthenticationServices();
+        builder.Services.AddAuthorizationServices();
+
         builder.Services.AddControllers();
         builder.Services.AddEndpointsApiExplorer();
-        builder.Services.AddApplicationSwagger();
+        builder.Services.AddSwagger();
 
         var app = builder.Build();
 
@@ -62,11 +73,10 @@ public class UserApplication
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddServiceApplication(this IServiceCollection services)
+    public static IServiceCollection AddServices(this IServiceCollection services)
     {
-        services.AddFluentValidationAutoValidation();
-        services.AddValidatorsFromAssemblyContaining<AssemblyInfo>();
-
+        services.AddScoped<IBankRepository, BankRepository>();
+        services.AddScoped<IBankService, BankService>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IAccountRepository, AccountRepository>();
         services.AddScoped<IUserService, Services.UserService>();
@@ -90,24 +100,118 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAccountService, AccountService>();
         services.AddScoped<IAccountCurrencyService, AccountCurrencyService>();
         services.AddScoped<IAuthorizationService, AuthorizationService>();
+        services.AddScoped<IExchangeRepository, ExchangeRepository>();
+        services.AddScoped<IExchangeService, ExchangeService>();
+        services.AddScoped<ILoanRepository, LoanRepository>();
+        services.AddScoped<ILoanTypeRepository, LoanTypeRepository>();
+        services.AddScoped<IInstallmentRepository, InstallmentRepository>();
+        services.AddScoped<ITransactionCodeRepository, TransactionCodeRepository>();
+        services.AddScoped<ITransactionCodeService, TransactionCodeService>();
+        services.AddScoped<ITransactionTemplateRepository, TransactionTemplateRepository>();
+        services.AddScoped<ITransactionTemplateService, TransactionTemplateService>();
+        services.AddScoped<ITransactionRepository, TransactionRepository>();
+        services.AddScoped<ITransactionService, TransactionService>();
+        services.AddScoped<ILoanService, LoanService>();
+        services.AddScoped<IInstallmentService, InstallmentService>();
+        services.AddScoped<ILoanTypeService, LoanTypeService>();
+        services.AddScoped<IOrderRepository, OrderRepository>();
+        services.AddScoped<IOrderService, OrderService>();
+        services.AddScoped<Lazy<ITransactionService>>(provider => new Lazy<ITransactionService>(provider.GetRequiredService<ITransactionService>));
 
-        services.AddHttpContextAccessor();
+        return services;
+    }
 
-        services.AddSingleton<TokenProvider>();
-        services.AddSingleton<DatabaseHostedService>();
+    public static IServiceCollection AddBackgroundServices(this IServiceCollection services)
+    {
+        services.AddSingleton<TransactionBackgroundService>();
 
+        return services;
+    }
+
+    public static IServiceCollection AddDatabase(this IServiceCollection services)
+    {
         services.AddDbContext<ApplicationContext>(options => options.UseNpgsql(Configuration.Database.GetConnectionString()), ServiceLifetime.Scoped, ServiceLifetime.Singleton);
+        services.AddDbContextFactory<ApplicationContext>(options => options.UseNpgsql(Configuration.Database.GetConnectionString()));
+
+        return services;
+    }
+
+    public static IServiceCollection AddHostedServices(this IServiceCollection services)
+    {
+        services.AddSingleton<DatabaseHostedService>();
+        services.AddSingleton<ExchangeHostedService>();
+        services.AddSingleton<LoanHostedService>();
 
         services.AddHostedService<ApplicationHostedService>();
 
         return services;
     }
 
-    public static IServiceCollection AddApplicationSwagger(this IServiceCollection services)
+    public static IServiceCollection AddHttpServices(this IServiceCollection services)
+    {
+        services.AddHttpClient();
+        services.AddHttpContextAccessor();
+
+        return services;
+    }
+
+    public static IServiceCollection AddValidation(this IServiceCollection services)
+    {
+        ValidatorOptions.Global.DefaultClassLevelCascadeMode = CascadeMode.Continue;
+        ValidatorOptions.Global.DefaultRuleLevelCascadeMode  = CascadeMode.Stop;
+
+        services.AddFluentValidationAutoValidation();
+        services.AddValidatorsFromAssemblyContaining<AssemblyInfo>();
+
+        return services;
+    }
+
+    public static IServiceCollection AddCors(this IServiceCollection services)
+    {
+        services.AddCors(options => options.AddPolicy(Configuration.Policy.FrontendApplication, policy => policy.WithOrigins(Configuration.Frontend.BaseUrl)
+                                                                                                                .AllowAnyHeader()
+                                                                                                                .AllowAnyMethod()));
+
+        return services;
+    }
+
+    public static IServiceCollection AddAuthenticationServices(this IServiceCollection services)
+    {
+        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(jwtOptions => jwtOptions.TokenValidationParameters = new TokenValidationParameters
+                                                                                   {
+                                                                                       IssuerSigningKey =
+                                                                                       new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration
+                                                                                                                                       .Jwt
+                                                                                                                                       .SecretKey)),
+                                                                                       ValidateIssuerSigningKey = true,
+                                                                                       ValidateLifetime         = true,
+                                                                                       ValidateIssuer           = false,
+                                                                                       ValidateAudience         = false,
+                                                                                       ClockSkew                = TimeSpan.Zero
+                                                                                   });
+
+        return services;
+    }
+
+    public static IServiceCollection AddAuthorizationServices(this IServiceCollection services)
+    {
+        services.AddAuthorizationBuilder()
+                .AddPolicy(Configuration.Policy.Role.Admin,    policy => policy.RequireRole(nameof(Role.Admin)))
+                .AddPolicy(Configuration.Policy.Role.Employee, policy => policy.RequireRole(nameof(Role.Employee)))
+                .AddPolicy(Configuration.Policy.Role.Client,   policy => policy.RequireRole(nameof(Role.Client)));
+
+        services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+        services.AddScoped<IAuthorizationHandler, PermissionHandler>();
+
+        return services;
+    }
+
+    public static IServiceCollection AddSwagger(this IServiceCollection services)
     {
         services.AddSwaggerGen(config =>
                                {
-                                   config.SwaggerDoc("v1", new OpenApiInfo() { Title = "UserService", Version = "v1" });
+                                   config.SwaggerDoc("v1", new OpenApiInfo { Title = "UserService", Version = "v1" });
 
                                    config.SchemaFilter<SwaggerSchemaFilter.AccountCurrency.CreateRequest>();
                                    config.SchemaFilter<SwaggerSchemaFilter.AccountCurrency.UpdateRequest>();
@@ -123,6 +227,8 @@ public static class ServiceCollectionExtensions
                                    config.SchemaFilter<SwaggerSchemaFilter.AccountCurrency.UpdateRequest>();
                                    config.SchemaFilter<SwaggerSchemaFilter.AccountCurrency.Response>();
 
+                                   config.SchemaFilter<SwaggerSchemaFilter.AccountType.CreateRequest>();
+                                   config.SchemaFilter<SwaggerSchemaFilter.AccountType.UpdateRequest>();
                                    config.SchemaFilter<SwaggerSchemaFilter.AccountType.Response>();
 
                                    config.SchemaFilter<SwaggerSchemaFilter.Card.CreateRequest>();
@@ -152,6 +258,35 @@ public static class ServiceCollectionExtensions
                                    config.SchemaFilter<SwaggerSchemaFilter.Employee.UpdateRequest>();
                                    config.SchemaFilter<SwaggerSchemaFilter.Employee.Response>();
                                    config.SchemaFilter<SwaggerSchemaFilter.Employee.SimpleResponse>();
+
+                                   config.SchemaFilter<SwaggerSchemaFilter.Exchange.MakeExchangeRequest>();
+                                   config.SchemaFilter<SwaggerSchemaFilter.Exchange.UpdateRequest>();
+                                   config.SchemaFilter<SwaggerSchemaFilter.Exchange.BetweenRequest>();
+                                   config.SchemaFilter<SwaggerSchemaFilter.Exchange.Response>();
+
+                                   config.SchemaFilter<SwaggerSchemaFilter.Installment.Request>();
+                                   config.SchemaFilter<SwaggerSchemaFilter.Installment.UpdateRequest>();
+                                   config.SchemaFilter<SwaggerSchemaFilter.Installment.Response>();
+
+                                   config.SchemaFilter<SwaggerSchemaFilter.Loan.Request>();
+                                   config.SchemaFilter<SwaggerSchemaFilter.Loan.UpdateRequest>();
+                                   config.SchemaFilter<SwaggerSchemaFilter.Loan.Response>();
+
+                                   config.SchemaFilter<SwaggerSchemaFilter.LoanType.Request>();
+                                   config.SchemaFilter<SwaggerSchemaFilter.LoanType.UpdateRequest>();
+                                   config.SchemaFilter<SwaggerSchemaFilter.LoanType.Response>();
+
+                                   config.SchemaFilter<SwaggerSchemaFilter.TransactionCode.Response>();
+
+                                   config.SchemaFilter<SwaggerSchemaFilter.Transaction.CreateRequest>();
+                                   config.SchemaFilter<SwaggerSchemaFilter.Transaction.UpdateRequest>();
+                                   config.SchemaFilter<SwaggerSchemaFilter.Transaction.Response>();
+                                   config.SchemaFilter<SwaggerSchemaFilter.Transaction.CreateResponse>();
+
+                                   config.SchemaFilter<SwaggerSchemaFilter.TransactionTemplate.CreateRequest>();
+                                   config.SchemaFilter<SwaggerSchemaFilter.TransactionTemplate.UpdateRequest>();
+                                   config.SchemaFilter<SwaggerSchemaFilter.TransactionTemplate.Response>();
+                                   config.SchemaFilter<SwaggerSchemaFilter.TransactionTemplate.SimpleResponse>();
 
                                    config.SchemaFilter<SwaggerSchemaFilter.User.ActivationRequest>();
                                    config.SchemaFilter<SwaggerSchemaFilter.User.LoginRequest>();
@@ -188,43 +323,6 @@ public static class ServiceCollectionExtensions
                                                                      }
                                                                  });
                                });
-
-        return services;
-    }
-
-    public static IServiceCollection AddApplicationCors(this IServiceCollection services)
-    {
-        services.AddCors(options => options.AddPolicy(Configuration.Policy.FrontendApplication, policy => policy.WithOrigins(Configuration.Frontend.BaseUrl)
-                                                                                                                .AllowAnyHeader()
-                                                                                                                .AllowAnyMethod()));
-
-        return services;
-    }
-
-    public static IServiceCollection AddApplicationAuthentication(this IServiceCollection services)
-    {
-        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(jwtOptions => jwtOptions.TokenValidationParameters = new TokenValidationParameters
-                                                                                   {
-                                                                                       IssuerSigningKey =
-                                                                                       new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration.Jwt
-                                                                                                                                                    .SecretKey)),
-                                                                                       ValidateIssuerSigningKey = true,
-                                                                                       ValidateLifetime         = true,
-                                                                                       ValidateIssuer           = false,
-                                                                                       ValidateAudience         = false,
-                                                                                       ClockSkew                = TimeSpan.Zero
-                                                                                   });
-
-        return services;
-    }
-
-    public static IServiceCollection AddApplicationAuthorization(this IServiceCollection services)
-    {
-        services.AddAuthorizationBuilder()
-                .AddPolicy(Configuration.Policy.Role.Admin,    policy => policy.RequireRole(nameof(Role.Admin)))
-                .AddPolicy(Configuration.Policy.Role.Employee, policy => policy.RequireRole(nameof(Role.Employee)))
-                .AddPolicy(Configuration.Policy.Role.Client,   policy => policy.RequireRole(nameof(Role.Client)));
 
         return services;
     }

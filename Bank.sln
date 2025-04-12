@@ -5,9 +5,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bank.Application", "Bank.Application\Bank.Application.csproj", "{0A0F59FF-1E22-4681-88CA-7B3EA96B5957}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bank.UserService.Test.Unit", "Bank.UserService.Test.Unit\Bank.UserService.Test.Unit.csproj", "{41B48A49-14E0-4544-9954-BB72CF58F762}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bank.UserService.Test", "Bank.UserService.Test\Bank.UserService.Test.csproj", "{FE650BCC-6638-4D6C-8742-786345A37BA7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bank.Test", "Bank.Test\Bank.Test.csproj", "{C328B3D2-9265-42A4-81F5-CF9D941F8234}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bank.ExchangeService", "Bank.ExchangeService\Bank.ExchangeService.csproj", "{537A9809-E52F-4EDD-966C-16412649BC85}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bank.ExchangeService.Test", "Bank.ExchangeService.Test\Bank.ExchangeService.Test.csproj", "{5E48CD2B-3AFD-4986-A388-4F706B5C078A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bank.Database", "Bank.Database\Bank.Database.csproj", "{32BB9DC7-8BCF-4737-9F37-E5AF97236E54}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bank.OpenApi", "Bank.OpenApi\Bank.OpenApi.csproj", "{2F6ECF99-3E2B-4EC2-8E0A-9DC7FB768768}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,12 +29,26 @@ Global
 		{0A0F59FF-1E22-4681-88CA-7B3EA96B5957}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0A0F59FF-1E22-4681-88CA-7B3EA96B5957}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0A0F59FF-1E22-4681-88CA-7B3EA96B5957}.Release|Any CPU.Build.0 = Release|Any CPU
-		{41B48A49-14E0-4544-9954-BB72CF58F762}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{41B48A49-14E0-4544-9954-BB72CF58F762}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{41B48A49-14E0-4544-9954-BB72CF58F762}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{41B48A49-14E0-4544-9954-BB72CF58F762}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C328B3D2-9265-42A4-81F5-CF9D941F8234}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C328B3D2-9265-42A4-81F5-CF9D941F8234}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FE650BCC-6638-4D6C-8742-786345A37BA7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FE650BCC-6638-4D6C-8742-786345A37BA7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FE650BCC-6638-4D6C-8742-786345A37BA7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FE650BCC-6638-4D6C-8742-786345A37BA7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{537A9809-E52F-4EDD-966C-16412649BC85}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{537A9809-E52F-4EDD-966C-16412649BC85}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{537A9809-E52F-4EDD-966C-16412649BC85}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{537A9809-E52F-4EDD-966C-16412649BC85}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5E48CD2B-3AFD-4986-A388-4F706B5C078A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5E48CD2B-3AFD-4986-A388-4F706B5C078A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5E48CD2B-3AFD-4986-A388-4F706B5C078A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5E48CD2B-3AFD-4986-A388-4F706B5C078A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{32BB9DC7-8BCF-4737-9F37-E5AF97236E54}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{32BB9DC7-8BCF-4737-9F37-E5AF97236E54}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{32BB9DC7-8BCF-4737-9F37-E5AF97236E54}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{32BB9DC7-8BCF-4737-9F37-E5AF97236E54}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2F6ECF99-3E2B-4EC2-8E0A-9DC7FB768768}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2F6ECF99-3E2B-4EC2-8E0A-9DC7FB768768}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2F6ECF99-3E2B-4EC2-8E0A-9DC7FB768768}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2F6ECF99-3E2B-4EC2-8E0A-9DC7FB768768}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{C328B3D2-9265-42A4-81F5-CF9D941F8234}.Debug|Any CPU.ActiveCfg = Debug|Any CPU

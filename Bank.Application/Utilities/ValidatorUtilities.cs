@@ -70,6 +70,16 @@ public static partial class ValidatorUtilities
         {
             return Regex.IsMatch(activityCode, @"^\d+(\.\d+)?$");
         }
+
+        public static bool ValidateAccountName(string value)
+        {
+            return Regex.IsMatch(value, @"^[A-Za-zČĆĐŠŽčćđšž\s'-]+$");
+        }
+
+        public static bool ValidateAccountTypeCode(string value)
+        {
+            return Regex.IsMatch(value, @"^\d{2}$");
+        }
     }
 
     public static class Global
@@ -77,6 +87,11 @@ public static partial class ValidatorUtilities
         public static bool ContainsOnlyNumbers(string value)
         {
             return Regex.IsMatch(value, @"^\d+$");
+        }
+
+        public static bool ContainsOnlyLetters(string value)
+        {
+            return Regex.IsMatch(value, @"^[a-zA-Z]+$");
         }
     }
 }

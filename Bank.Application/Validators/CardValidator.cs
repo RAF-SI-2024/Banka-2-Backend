@@ -4,7 +4,7 @@ using FluentValidation;
 
 namespace Bank.Application.Validators
 {
-    public class CardTypeValidator
+    public class CardValidator
     {
         public class Create : AbstractValidator<CardCreateRequest>
         {

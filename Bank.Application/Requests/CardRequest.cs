@@ -12,12 +12,12 @@ public class CardCreateRequest
     public bool Status { get; set; }
 }
 
-public class CardStatusUpdateRequest
+public class CardUpdateStatusRequest
 {
     public bool Status { get; set; }
 }
 
-public class CardLimitUpdateRequest
+public class CardUpdateLimitRequest
 {
     public decimal Limit { get; set; }
 }

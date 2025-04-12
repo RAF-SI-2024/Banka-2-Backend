@@ -1,6 +1,6 @@
 ﻿services:
-    bank.user:
-        image: bank.user
+    user_service:
+        image: user_service
         build:
             context: ..
             dockerfile: Scripts/User/Dockerfile
@@ -9,15 +9,22 @@
         ports:
             - "${USER_EXPOSE_PORT}:8080"
         depends_on:
-            - database
-    database:
-        image: postgres:latest
+            user_database:
+                condition: service_healthy
+    user_database:
+        image: postgres:17.4-alpine
         env_file:
             - Environments/database.env
         ports:
             - "${DATABASE_EXPOSE_PORT}:5432"
         volumes:
             - postgres_data:/var/lib/postgresql/data
+        healthcheck:
+            test: "pg_isready -d $$POSTGRES_DB -U $$POSTGRES_USER"
+            start_period: 1s
+            interval: 1s
+            retries: 8 # lazarev omiljeni broj
 
 volumes:
     postgres_data:
+        name: user_database

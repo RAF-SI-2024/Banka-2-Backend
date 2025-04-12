@@ -1,9 +1,12 @@
-﻿using Bank.Application.Domain;
+﻿using System.Linq.Expressions;
+
+using Bank.Application.Domain;
 using Bank.Application.Queries;
 using Bank.UserService.Database;
 using Bank.UserService.Models;
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query;
 
 namespace Bank.UserService.Repositories;
 
@@ -65,5 +68,28 @@ public class CardTypeRepository(ApplicationContext context) : ICardTypeRepositor
         var updatedCardType = m_Context.CardTypes.Update(cardType);
         await m_Context.SaveChangesAsync();
         return updatedCardType.Entity;
+    }
+}
+
+public static partial class RepositoryExtensions
+{
+    [Obsolete("This method does not have implementation.", true)]
+    public static IIncludableQueryable<CardType, object?> IncludeAll(this DbSet<CardType> set)
+    {
+        return set.Include(cardType => cardType);
+    }
+
+    public static IIncludableQueryable<TEntity, object?> ThenIncludeAll<TEntity>(this IIncludableQueryable<TEntity, CardType?> query,
+                                                                                 Expression<Func<TEntity, CardType?>>          navigationExpression, params string[] excludeProperties)
+    where TEntity : class
+    {
+        return query;
+    }
+
+    public static IIncludableQueryable<TEntity, object?> ThenIncludeAll<TEntity>(this IIncludableQueryable<TEntity, List<CardType>> query,
+                                                                                 Expression<Func<TEntity, List<CardType>>> navigationExpression, params string[] excludeProperties)
+    where TEntity : class
+    {
+        return query;
     }
 }

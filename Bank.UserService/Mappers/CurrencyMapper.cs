@@ -36,10 +36,6 @@ public static class CurrencyMapper
                };
     }
 
-    private static List<CountryResponse> MapToCountryResponses(List<Country> countries) =>
-    countries.Select(country => country.ToResponse())
-             .ToList();
-
     private static List<CountrySimpleResponse> MapToCountrySimpleResponses(List<Country> countries) =>
     countries.Select(country => country.ToSimpleResponse())
              .ToList();

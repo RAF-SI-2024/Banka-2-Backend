@@ -1,9 +1,12 @@
-﻿using Bank.Application.Domain;
+﻿using System.Linq.Expressions;
+
+using Bank.Application.Domain;
 using Bank.Application.Queries;
 using Bank.UserService.Database;
 using Bank.UserService.Models;
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query;
 
 namespace Bank.UserService.Repositories;
 
@@ -15,7 +18,7 @@ public interface IAccountTypeRepository
 
     Task<AccountType> Add(AccountType accountType);
 
-    Task<AccountType> Update(AccountType oldAccountType, AccountType accountType);
+    Task<AccountType> Update(AccountType accountType);
 }
 
 public class AccountTypeRepository(ApplicationContext context) : IAccountTypeRepository
@@ -55,15 +58,36 @@ public class AccountTypeRepository(ApplicationContext context) : IAccountTypeRep
         return addedAccountType.Entity;
     }
 
-    public async Task<AccountType> Update(AccountType oldAccountType, AccountType accountType)
+    public async Task<AccountType> Update(AccountType accountType)
     {
-        m_Context.AccountTypes.Entry(oldAccountType)
-                 .State = EntityState.Detached;
+        await m_Context.AccountTypes.Where(dbAccountType => dbAccountType.Id == accountType.Id)
+                       .ExecuteUpdateAsync(setters => setters.SetProperty(dbAccountType => dbAccountType.Name, accountType.Name)
+                                                             .SetProperty(dbAccountType => dbAccountType.Code,       accountType.Code)
+                                                             .SetProperty(dbAccountType => dbAccountType.ModifiedAt, accountType.ModifiedAt));
 
-        var updatedAccountType = m_Context.AccountTypes.Update(accountType);
+        return accountType;
+    }
+}
 
-        await m_Context.SaveChangesAsync();
+public static partial class RepositoryExtensions
+{
+    [Obsolete("This method does not have implementation.", true)]
+    public static IIncludableQueryable<AccountType, object?> IncludeAll(this DbSet<AccountType> set)
+    {
+        return set.Include(accountType => accountType);
+    }
 
-        return updatedAccountType.Entity;
+    public static IIncludableQueryable<TEntity, object?> ThenIncludeAll<TEntity>(this IIncludableQueryable<TEntity, AccountType?> value,
+                                                                                 Expression<Func<TEntity, AccountType?>>          navigationExpression, params string[] excludeProperties)
+    where TEntity : class
+    {
+        return value;
+    }
+
+    public static IIncludableQueryable<TEntity, object?> ThenIncludeAll<TEntity>(this IIncludableQueryable<TEntity, List<AccountType>> value,
+                                                                                 Expression<Func<TEntity, List<AccountType>>> navigationExpression, params string[] excludeProperties)
+    where TEntity : class
+    {
+        return value;
     }
 }

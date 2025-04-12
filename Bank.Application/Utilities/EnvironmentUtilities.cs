@@ -21,4 +21,9 @@ public static class EnvironmentUtilities
         return Environment.GetEnvironmentVariable(variableName)
                           .ParseBoolOrDefault(defaultValue);
     }
+
+    public static TEnum GetEnumVariable<TEnum>(string variableName, TEnum defaultValue = default) where TEnum : struct, Enum
+    {
+        return Enum.TryParse(Environment.GetEnvironmentVariable(variableName), out TEnum result) ? result : defaultValue;
+    }
 }

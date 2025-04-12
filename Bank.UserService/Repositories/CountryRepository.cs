@@ -1,9 +1,12 @@
-﻿using Bank.Application.Domain;
+﻿using System.Linq.Expressions;
+
+using Bank.Application.Domain;
 using Bank.Application.Queries;
 using Bank.UserService.Database;
 using Bank.UserService.Models;
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query;
 
 namespace Bank.UserService.Repositories;
 
@@ -12,10 +15,6 @@ public interface ICountryRepository
     Task<Page<Country>> FindAll(CountryFilterQuery countryFilterQuery, Pageable pageable);
 
     Task<Country?> FindById(Guid id);
-
-    Task<Country> Add(Country country);
-
-    Task<Country> Update(Country oldCountry, Country country);
 }
 
 public class CountryRepository(ApplicationContext context) : ICountryRepository
@@ -24,7 +23,7 @@ public class CountryRepository(ApplicationContext context) : ICountryRepository
 
     public async Task<Page<Country>> FindAll(CountryFilterQuery countryFilterQuery, Pageable pageable)
     {
-        var countryQuery = m_Context.Countries.Include(c => c.Currency)
+        var countryQuery = m_Context.Countries.IncludeAll()
                                     .AsQueryable();
 
         if (!string.IsNullOrEmpty(countryFilterQuery.Name))
@@ -49,28 +48,42 @@ public class CountryRepository(ApplicationContext context) : ICountryRepository
 
     public async Task<Country?> FindById(Guid id)
     {
-        return await m_Context.Countries.Include(c => c.Currency)
+        return await m_Context.Countries.IncludeAll()
                               .FirstOrDefaultAsync(x => x.Id == id);
     }
+}
 
-    public async Task<Country> Add(Country country)
+public static partial class RepositoryExtensions
+{
+    public static IIncludableQueryable<Country, object?> IncludeAll(this DbSet<Country> set)
     {
-        var addedCountry = await m_Context.Countries.AddAsync(country);
-
-        await m_Context.SaveChangesAsync();
-
-        return addedCountry.Entity;
+        return set.Include(country => country.Currency)
+                  .ThenIncludeAll(country => country.Currency, nameof(Currency.Countries));
     }
 
-    public async Task<Country> Update(Country oldCountry, Country country)
+    public static IIncludableQueryable<TEntity, object?> ThenIncludeAll<TEntity>(this IIncludableQueryable<TEntity, Country?> value,
+                                                                                 Expression<Func<TEntity, Country?>>          navigationExpression, params string[] excludeProperties)
+    where TEntity : class
     {
-        m_Context.Countries.Entry(oldCountry)
-                 .State = EntityState.Detached;
+        IIncludableQueryable<TEntity, object?> query = value;
 
-        var updatedCountry = m_Context.Countries.Update(country);
+        if (!excludeProperties.Contains(nameof(Country.Currency)))
+            query = query.Include(navigationExpression)
+                         .ThenInclude(country => country!.Currency);
 
-        await m_Context.SaveChangesAsync();
+        return query;
+    }
 
-        return updatedCountry.Entity;
+    public static IIncludableQueryable<TEntity, object?> ThenIncludeAll<TEntity>(this IIncludableQueryable<TEntity, List<Country>> value,
+                                                                                 Expression<Func<TEntity, List<Country>>> navigationExpression, params string[] excludeProperties)
+    where TEntity : class
+    {
+        IIncludableQueryable<TEntity, object?> query = value;
+
+        if (!excludeProperties.Contains(nameof(Country.Currency)))
+            query = query.Include(navigationExpression)
+                         .ThenInclude(country => country.Currency);
+
+        return query;
     }
 }

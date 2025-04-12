@@ -1,6 +1,7 @@
 ﻿using Bank.Application.Extensions;
 using Bank.Application.Requests;
 using Bank.Application.Responses;
+using Bank.UserService.Database.Sample;
 
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
@@ -13,65 +14,28 @@ file static class Example
 {
     public static class Account
     {
-        public static readonly Guid     Id               = Guid.Parse("3f4b1e6e-a2f5-4e3b-8f88-2f70a6b42b19");
-        public static readonly Guid     ClientId         = Guid.Parse("f39d319e-db3e-4af5-bada-6bcb908b29e3");
-        public static readonly Guid     CurrencyId       = Guid.Parse("e8ea1dd5-45a4-4837-9bd6-f41b049217f5");
-        public static readonly Guid     AccountTypeId    = Guid.Parse("1e94b664-de60-490c-94c2-c2952b9e9e22");
-        public const           string   AccountNumber    = "1234567890123456";
-        public const           string   Name             = "Štedni račun";
-        public static readonly decimal  Balance          = 5000.75m;
-        public static readonly decimal  AvailableBalance = 4500.50m;
-        public static readonly decimal  DailyLimit       = 2000.00m;
-        public static readonly decimal  MonthlyLimit     = 50000.00m;
-        public static readonly DateOnly CreationDate     = new(2023, 5, 15);
-        public static readonly DateOnly ExpirationDate   = new(2033, 5, 15);
-        public const           bool     Status           = true;
-        public static readonly DateTime CreatedAt        = new(2023, 5, 15, 10, 30, 0);
-        public static readonly DateTime ModifiedAt       = new(2025, 3, 1, 15, 45, 0);
-
-        public static readonly AccountCreateRequest CreateRequest = new()
-                                                                    {
-                                                                        Name          = Name,
-                                                                        DailyLimit    = DailyLimit,
-                                                                        MonthlyLimit  = MonthlyLimit,
-                                                                        ClientId      = ClientId,
-                                                                        Balance       = Balance,
-                                                                        CurrencyId    = CurrencyId,
-                                                                        AccountTypeId = AccountTypeId,
-                                                                        Status        = Status
-                                                                    };
-
-        public static readonly AccountUpdateClientRequest UpdateClientRequest = new()
-                                                                                {
-                                                                                    Name         = Name,
-                                                                                    DailyLimit   = DailyLimit,
-                                                                                    MonthlyLimit = MonthlyLimit
-                                                                                };
-
-        public static readonly AccountUpdateEmployeeRequest UpdateEmployeeRequest = new()
-                                                                                    {
-                                                                                        Status = Status
-                                                                                    };
+        public static readonly Guid   Id            = Guid.Parse("3f4b1e6e-a2f5-4e3b-8f88-2f70a6b42b19");
+        public const           string AccountNumber = "222001112345678922";
 
         public static readonly AccountResponse Response = new()
                                                           {
                                                               Id                = Id,
                                                               AccountNumber     = AccountNumber,
-                                                              Name              = Name,
-                                                              Balance           = Balance,
-                                                              AvailableBalance  = AvailableBalance,
+                                                              Name              = Sample.Account.CreateRequest.Name,
+                                                              Balance           = Sample.Account.CreateRequest.Balance,
+                                                              AvailableBalance  = 4500.50m,
                                                               Type              = null!,
                                                               Currency          = null!,
                                                               Employee          = null!,
                                                               Client            = null!,
                                                               AccountCurrencies = [],
-                                                              DailyLimit        = DailyLimit,
-                                                              MonthlyLimit      = MonthlyLimit,
-                                                              CreationDate      = CreationDate,
-                                                              ExpirationDate    = ExpirationDate,
-                                                              Status            = Status,
-                                                              CreatedAt         = CreatedAt,
-                                                              ModifiedAt        = ModifiedAt
+                                                              DailyLimit        = Sample.Account.CreateRequest.DailyLimit,
+                                                              MonthlyLimit      = Sample.Account.CreateRequest.MonthlyLimit,
+                                                              CreationDate      = new(2023, 5, 15),
+                                                              ExpirationDate    = new(2033, 5, 15),
+                                                              Status            = true,
+                                                              CreatedAt         = DateTime.UtcNow,
+                                                              ModifiedAt        = DateTime.UtcNow
                                                           };
 
         public static readonly AccountSimpleResponse SimpleResponse = new()
@@ -86,7 +50,7 @@ public static partial class SwaggerSchemaFilter
 {
     public static class Account
     {
-        public class CreateRequest() : SwaggerSchemaFilter<AccountCreateRequest>(SchemeFilters.Example.Account.CreateRequest)
+        public class CreateRequest() : SwaggerSchemaFilter<AccountCreateRequest>(Sample.Account.CreateRequest)
         {
             protected override IOpenApiAny CreateExample(OpenApiSchema schema, SchemaFilterContext context)
             {
@@ -112,7 +76,7 @@ public static partial class SwaggerSchemaFilter
             }
         }
 
-        public class UpdateClientRequest() : SwaggerSchemaFilter<AccountUpdateClientRequest>(SchemeFilters.Example.Account.UpdateClientRequest)
+        public class UpdateClientRequest() : SwaggerSchemaFilter<AccountUpdateClientRequest>(Sample.Account.UpdateClientRequest)
         {
             protected override IOpenApiAny CreateExample(OpenApiSchema schema, SchemaFilterContext context)
             {
@@ -128,7 +92,7 @@ public static partial class SwaggerSchemaFilter
             }
         }
 
-        public class UpdateEmployeeRequest() : SwaggerSchemaFilter<AccountUpdateEmployeeRequest>(SchemeFilters.Example.Account.UpdateEmployeeRequest)
+        public class UpdateEmployeeRequest() : SwaggerSchemaFilter<AccountUpdateEmployeeRequest>(Sample.Account.UpdateEmployeeRequest)
         {
             protected override IOpenApiAny CreateExample(OpenApiSchema schema, SchemaFilterContext context)
             {

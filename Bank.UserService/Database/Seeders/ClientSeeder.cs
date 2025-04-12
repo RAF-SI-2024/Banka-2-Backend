@@ -17,6 +17,7 @@ public static partial class Seeder
                                                       FirstName                  = "Uwubank",
                                                       LastName                   = "Bankster",
                                                       Role                       = Role.Client,
+                                                      BankId                     = Seeder.Bank.Bank02.Id,
                                                       DateOfBirth                = new DateOnly(2000, 1, 1),
                                                       Gender                     = Gender.Male,
                                                       UniqueIdentificationNumber = "0101000710017",
@@ -27,7 +28,8 @@ public static partial class Seeder
                                                       Salt                       = Guid.NewGuid(),
                                                       CreatedAt                  = DateTime.UtcNow,
                                                       ModifiedAt                 = DateTime.UtcNow,
-                                                      Activated                  = true
+                                                      Activated                  = true,
+                                                      Permissions                = (long)Permission.Client
                                                   };
 
         public static readonly ClientModel Client01 = new()
@@ -36,6 +38,7 @@ public static partial class Seeder
                                                           FirstName                  = "Marko",
                                                           LastName                   = "Petrović",
                                                           Role                       = Role.Client,
+                                                          BankId                     = Seeder.Bank.Bank02.Id,
                                                           DateOfBirth                = new DateOnly(2000, 11, 11),
                                                           Gender                     = Gender.Male,
                                                           UniqueIdentificationNumber = "1111000710024",
@@ -46,7 +49,8 @@ public static partial class Seeder
                                                           Salt                       = Guid.NewGuid(),
                                                           CreatedAt                  = DateTime.UtcNow,
                                                           ModifiedAt                 = DateTime.UtcNow,
-                                                          Activated                  = true
+                                                          Activated                  = true,
+                                                          Permissions                = (long)Permission.Client
                                                       };
 
         public static readonly ClientModel Client02 = new()
@@ -55,6 +59,7 @@ public static partial class Seeder
                                                           FirstName                  = "Andrija",
                                                           LastName                   = "Petrović",
                                                           Role                       = Role.Client,
+                                                          BankId                     = Seeder.Bank.Bank02.Id,
                                                           DateOfBirth                = new DateOnly(2000, 10, 10),
                                                           Gender                     = Gender.Male,
                                                           UniqueIdentificationNumber = "1010000720037",
@@ -65,7 +70,8 @@ public static partial class Seeder
                                                           Salt                       = Guid.NewGuid(),
                                                           CreatedAt                  = DateTime.UtcNow,
                                                           ModifiedAt                 = DateTime.UtcNow,
-                                                          Activated                  = true
+                                                          Activated                  = true,
+                                                          Permissions                = (long)Permission.Client
                                                       };
 
         public static readonly ClientModel Client03 = new()
@@ -74,6 +80,7 @@ public static partial class Seeder
                                                           FirstName                  = "Stefan",
                                                           LastName                   = "Nikolić",
                                                           Role                       = Role.Client,
+                                                          BankId                     = Seeder.Bank.Bank02.Id,
                                                           DateOfBirth                = new DateOnly(1989, 9, 25),
                                                           Gender                     = Gender.Male,
                                                           UniqueIdentificationNumber = "2509989300007",
@@ -84,7 +91,8 @@ public static partial class Seeder
                                                           Salt                       = Guid.NewGuid(),
                                                           CreatedAt                  = DateTime.UtcNow,
                                                           ModifiedAt                 = DateTime.UtcNow,
-                                                          Activated                  = true
+                                                          Activated                  = true,
+                                                          Permissions                = (long)Permission.Client
                                                       };
 
         public static readonly ClientModel Client04 = new()
@@ -93,6 +101,7 @@ public static partial class Seeder
                                                           FirstName                  = "Ivana",
                                                           LastName                   = "Popović",
                                                           Role                       = Role.Client,
+                                                          BankId                     = Seeder.Bank.Bank02.Id,
                                                           DateOfBirth                = new DateOnly(1990, 11, 12),
                                                           Gender                     = Gender.Female,
                                                           UniqueIdentificationNumber = "1211990785019",
@@ -103,7 +112,8 @@ public static partial class Seeder
                                                           Salt                       = Guid.NewGuid(),
                                                           CreatedAt                  = DateTime.UtcNow,
                                                           ModifiedAt                 = DateTime.UtcNow,
-                                                          Activated                  = true
+                                                          Activated                  = true,
+                                                          Permissions                = (long)Permission.Client
                                                       };
 
         public static readonly ClientModel Client05 = new()
@@ -112,6 +122,7 @@ public static partial class Seeder
                                                           FirstName                  = "Ivan",
                                                           LastName                   = "Marić",
                                                           Role                       = Role.Client,
+                                                          BankId                     = Seeder.Bank.Bank02.Id,
                                                           DateOfBirth                = new DateOnly(1985, 7, 7),
                                                           Gender                     = Gender.Male,
                                                           UniqueIdentificationNumber = "0707985120008",
@@ -122,7 +133,8 @@ public static partial class Seeder
                                                           Salt                       = Guid.NewGuid(),
                                                           CreatedAt                  = DateTime.UtcNow,
                                                           ModifiedAt                 = DateTime.UtcNow,
-                                                          Activated                  = true
+                                                          Activated                  = true,
+                                                          Permissions                = (long)Permission.Client
                                                       };
 
         public static readonly ClientModel Client06 = new()
@@ -131,6 +143,7 @@ public static partial class Seeder
                                                           FirstName                  = "Jelena",
                                                           LastName                   = "Kovačević",
                                                           Role                       = Role.Client,
+                                                          BankId                     = Seeder.Bank.Bank02.Id,
                                                           DateOfBirth                = new DateOnly(1994, 3, 18),
                                                           Gender                     = Gender.Male,
                                                           UniqueIdentificationNumber = "1803994430003",
@@ -141,7 +154,8 @@ public static partial class Seeder
                                                           Salt                       = Guid.NewGuid(),
                                                           CreatedAt                  = DateTime.UtcNow,
                                                           ModifiedAt                 = DateTime.UtcNow,
-                                                          Activated                  = true
+                                                          Activated                  = true,
+                                                          Permissions                = (long)Permission.Client
                                                       };
 
         public static readonly ClientModel Client07 = new()
@@ -150,6 +164,7 @@ public static partial class Seeder
                                                           FirstName                  = "Jovana",
                                                           LastName                   = "Ilić",
                                                           Role                       = Role.Client,
+                                                          BankId                     = Seeder.Bank.Bank02.Id,
                                                           DateOfBirth                = new DateOnly(1995, 6, 22),
                                                           Gender                     = Gender.Female,
                                                           UniqueIdentificationNumber = "2206995705014",
@@ -160,7 +175,8 @@ public static partial class Seeder
                                                           Salt                       = Guid.NewGuid(),
                                                           CreatedAt                  = DateTime.UtcNow,
                                                           ModifiedAt                 = DateTime.UtcNow,
-                                                          Activated                  = true
+                                                          Activated                  = true,
+                                                          Permissions                = (long)Permission.Client
                                                       };
 
         public static readonly ClientModel Client08 = new()
@@ -169,6 +185,7 @@ public static partial class Seeder
                                                           FirstName                  = "Aleksandar",
                                                           LastName                   = "Todorović",
                                                           Role                       = Role.Client,
+                                                          BankId                     = Seeder.Bank.Bank02.Id,
                                                           DateOfBirth                = new DateOnly(1987, 9, 3),
                                                           Gender                     = Gender.Male,
                                                           UniqueIdentificationNumber = "0309987350002",
@@ -179,7 +196,8 @@ public static partial class Seeder
                                                           Salt                       = Guid.NewGuid(),
                                                           CreatedAt                  = DateTime.UtcNow,
                                                           ModifiedAt                 = DateTime.UtcNow,
-                                                          Activated                  = true
+                                                          Activated                  = true,
+                                                          Permissions                = (long)Permission.Client
                                                       };
 
         public static readonly ClientModel Client09 = new()
@@ -188,6 +206,7 @@ public static partial class Seeder
                                                           FirstName                  = "Milica",
                                                           LastName                   = "Pavlović",
                                                           Role                       = Role.Client,
+                                                          BankId                     = Seeder.Bank.Bank02.Id,
                                                           DateOfBirth                = new DateOnly(1996, 2, 28),
                                                           Gender                     = Gender.Female,
                                                           UniqueIdentificationNumber = "2802996735018",
@@ -198,7 +217,8 @@ public static partial class Seeder
                                                           Salt                       = Guid.NewGuid(),
                                                           CreatedAt                  = DateTime.UtcNow,
                                                           ModifiedAt                 = DateTime.UtcNow,
-                                                          Activated                  = true
+                                                          Activated                  = true,
+                                                          Permissions                = (long)Permission.Client
                                                       };
 
         public static readonly ClientModel Client10 = new()
@@ -207,6 +227,7 @@ public static partial class Seeder
                                                           FirstName                  = "Dragan",
                                                           LastName                   = "Simić",
                                                           Role                       = Role.Client,
+                                                          BankId                     = Seeder.Bank.Bank02.Id,
                                                           DateOfBirth                = new DateOnly(1983, 12, 5),
                                                           Gender                     = Gender.Male,
                                                           UniqueIdentificationNumber = "0512983290007",
@@ -217,7 +238,8 @@ public static partial class Seeder
                                                           Salt                       = Guid.NewGuid(),
                                                           CreatedAt                  = DateTime.UtcNow,
                                                           ModifiedAt                 = DateTime.UtcNow,
-                                                          Activated                  = true
+                                                          Activated                  = true,
+                                                          Permissions                = (long)Permission.Client
                                                       };
     }
 }

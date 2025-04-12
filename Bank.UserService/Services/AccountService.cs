@@ -12,6 +12,8 @@ public interface IAccountService
 {
     Task<Result<Page<AccountResponse>>> GetAll(AccountFilterQuery accountFilterQuery, Pageable pageable);
 
+    Task<Result<Page<CardResponse>>> GetAllCards(Guid id, CardFilterQuery filter, Pageable pageable);
+
     Task<Result<AccountResponse>> GetOne(Guid id);
 
     Task<Result<AccountResponse>> Create(AccountCreateRequest accountCreateRequest);
@@ -26,12 +28,14 @@ public class AccountService(
     IAccountTypeRepository accountTypeRepository,
     ICurrencyRepository    currencyRepository,
     IUserRepository        userRepository,
-    IAuthorizationService  authorizationService
+    IAuthorizationService  authorizationService,
+    ICardRepository        cardRepository
 ) : IAccountService
 {
     private readonly IAccountRepository     m_AccountRepository     = accountRepository;
     private readonly IAccountTypeRepository m_AccountTypeRepository = accountTypeRepository;
     private readonly IUserRepository        m_UserRepository        = userRepository;
+    private readonly ICardRepository        m_CardRepository        = cardRepository;
     private readonly ICurrencyRepository    m_CurrencyRepository    = currencyRepository;
     private readonly IAuthorizationService  m_AuthorizationService  = authorizationService;
 
@@ -43,6 +47,16 @@ public class AccountService(
                                    .ToList();
 
         return Result.Ok(new Page<AccountResponse>(accountResponses, page.PageNumber, page.PageSize, page.TotalElements));
+    }
+
+    public async Task<Result<Page<CardResponse>>> GetAllCards(Guid id, CardFilterQuery filter, Pageable pageable)
+    {
+        var page = await m_CardRepository.FindAllByAccountId(id, pageable);
+
+        var cardResponses = page.Items.Select(card => card.ToResponse())
+                                .ToList();
+
+        return Result.Ok(new Page<CardResponse>(cardResponses, page.PageNumber, page.PageSize, page.TotalElements));
     }
 
     public async Task<Result<AccountResponse>> GetOne(Guid id)
@@ -65,32 +79,37 @@ public class AccountService(
         if (accountType == null || client == null || currency == null || employee == null)
             return Result.BadRequest<AccountResponse>("Invalid data.");
 
-        var account = await m_AccountRepository.Add(accountCreateRequest.ToAccount(employee, client, currency, accountType));
+        var account = await m_AccountRepository.Add(accountCreateRequest.ToAccount(m_AuthorizationService.UserId));
 
+        account.Type     = accountType;
+        account.Client   = client;
+        account.Currency = currency;
+        account.Employee = employee;
+        
         return Result.Ok(account.ToResponse());
     }
 
-    public async Task<Result<AccountResponse>> Update(AccountUpdateClientRequest accountUpdateRequest, Guid id)
+    public async Task<Result<AccountResponse>> Update(AccountUpdateClientRequest request, Guid id)
     {
-        var oldAccount = await m_AccountRepository.FindById(id);
-
-        if (oldAccount is null)
+        var dbAccount = await m_AccountRepository.FindById(id);
+    
+        if (dbAccount is null)
             return Result.NotFound<AccountResponse>($"No Account found with Id: {id}");
-
-        var account = await m_AccountRepository.Update(oldAccount, accountUpdateRequest.ToAccount(oldAccount));
-
+    
+        var account = await m_AccountRepository.Update(dbAccount.ToAccount(request));
+    
         return Result.Ok(account.ToResponse());
     }
 
-    public async Task<Result<AccountResponse>> Update(AccountUpdateEmployeeRequest accountUpdateRequest, Guid id)
+    public async Task<Result<AccountResponse>> Update(AccountUpdateEmployeeRequest request, Guid id)
     {
-        var oldAccount = await m_AccountRepository.FindById(id);
-
-        if (oldAccount is null)
+        var dbAccount = await m_AccountRepository.FindById(id);
+    
+        if (dbAccount is null)
             return Result.NotFound<AccountResponse>($"No Account found with Id: {id}");
-
-        var account = await m_AccountRepository.Update(oldAccount, accountUpdateRequest.ToAccount(oldAccount));
-
+    
+        var account = await m_AccountRepository.Update(dbAccount.ToAccount(request));
+    
         return Result.Ok(account.ToResponse());
     }
 }

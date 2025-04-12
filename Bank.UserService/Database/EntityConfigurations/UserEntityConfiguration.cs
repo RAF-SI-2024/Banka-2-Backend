@@ -75,9 +75,17 @@ public class UserEntityConfiguration : IEntityTypeConfiguration<User>
         builder.Property(user => user.Activated)
                .IsRequired();
 
+        builder.Property(user => user.Permissions)
+               .IsRequired();
+
         builder.HasMany(user => user.Accounts)
                .WithOne(account => account.Client)
                .HasForeignKey(account => account.ClientId)
+               .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(user => user.TransactionTemplates)
+               .WithOne(transactionTemplate => transactionTemplate.Client)
+               .HasForeignKey(transactionTemplate => transactionTemplate.ClientId)
                .OnDelete(DeleteBehavior.Cascade);
     }
 }

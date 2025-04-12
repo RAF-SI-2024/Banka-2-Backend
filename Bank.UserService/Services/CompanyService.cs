@@ -56,24 +56,24 @@ public class CompanyService(ICompanyRepository companyRepository, IUserRepositor
                                                       $"{nameof(companyCreateRequest.RegistrationNumber)}: {companyCreateRequest.RegistrationNumber} or " +
                                                       $"{nameof(companyCreateRequest.TaxIdentificationNumber)}: {companyCreateRequest.TaxIdentificationNumber}");
 
-        var company = await m_CompanyRepository.Add(companyCreateRequest.ToCompany(user));
+        var company = await m_CompanyRepository.Add(companyCreateRequest.ToCompany());
 
         return Result.Ok(company.ToResponse());
     }
 
     public async Task<Result<CompanyResponse>> Update(CompanyUpdateRequest companyUpdateRequest, Guid id)
     {
-        var oldCompany = await m_CompanyRepository.FindById(id);
+        var dbCompany = await m_CompanyRepository.FindById(id);
 
-        if (oldCompany is null)
+        if (dbCompany is null)
             return Result.NotFound<CompanyResponse>($"No Company found with Id: {id}");
 
-        var user = await m_UserRepository.FindById(companyUpdateRequest.MajorityOwnerId);
+        var userMajorityOwner = await m_UserRepository.FindById(companyUpdateRequest.MajorityOwnerId);
 
-        if (user is null)
+        if (userMajorityOwner is null)
             return Result.NotFound<CompanyResponse>($"No User found with Id: {companyUpdateRequest.MajorityOwnerId}");
 
-        var company = await m_CompanyRepository.Update(oldCompany, companyUpdateRequest.ToCompany(oldCompany, user));
+        var company = await m_CompanyRepository.Update(dbCompany.Update(companyUpdateRequest));
 
         return Result.Ok(company.ToResponse());
     }

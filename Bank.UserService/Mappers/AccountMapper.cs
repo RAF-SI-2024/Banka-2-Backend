@@ -11,19 +11,19 @@ public static class AccountMapper
         return new AccountResponse
                {
                    Id            = account.Id,
-                   AccountNumber = account.Number,
+                   AccountNumber = account.AccountNumber,
                    Name          = account.Name,
-                   Client = account.Client.ToClient()
-                                   .ToSimpleResponse(),
+                   Client = account.Client?.ToClient()
+                                   .ToSimpleResponse()!,
                    Balance          = account.Balance,
                    AvailableBalance = account.AvailableBalance,
-                   Employee = account.Employee.ToEmployee()
-                                     .ToSimpleResponse(),
-                   Currency          = account.Currency.ToResponse(),
-                   Type              = account.Type.ToResponse(),
+                   Employee = account.Employee?.ToEmployee()
+                                     .ToSimpleResponse()!,
+                   Currency          = account.Currency?.ToResponse()!,
+                   Type              = account.Type?.ToResponse()!,
                    AccountCurrencies = MapAccountCurrencies(account.AccountCurrencies),
-                   DailyLimit        = 0,
-                   MonthlyLimit      = 0,
+                   DailyLimit        = account.DailyLimit,
+                   MonthlyLimit      = account.MonthlyLimit,
                    CreationDate      = account.CreationDate,
                    ExpirationDate    = account.ExpirationDate,
                    Status            = account.Status,
@@ -41,96 +41,51 @@ public static class AccountMapper
         return new AccountSimpleResponse
                {
                    Id            = account.Id,
-                   AccountNumber = account.Number
+                   AccountNumber = account.AccountNumber
                };
     }
 
-    public static Account ToAccount(this AccountCreateRequest accountCreateRequest, User employee, User client, Currency currency, AccountType accountType)
+    public static Account ToAccount(this AccountCreateRequest accountCreateRequest, Guid employeeId)
     {
         var account = new Account
                       {
-                          Id                = Guid.NewGuid(),
-                          EmployeeId        = employee.Id,
-                          Employee          = employee,
-                          CurrencyId        = currency.Id,
-                          Currency          = currency,
-                          Balance           = accountCreateRequest.Balance,
-                          AvailableBalance  = accountCreateRequest.Balance,
-                          DailyLimit        = accountCreateRequest.DailyLimit,
-                          MonthlyLimit      = accountCreateRequest.MonthlyLimit,
-                          CreatedAt         = DateTime.UtcNow,
-                          ModifiedAt        = DateTime.UtcNow,
-                          Client            = client,
-                          ClientId          = client.Id,
-                          Name              = accountCreateRequest.Name,
-                          Number            = GenerateAccountNumber(),
-                          Type              = accountType,
-                          AccountTypeId     = accountType.Id,
-                          AccountCurrencies = [],
-                          CreationDate      = DateOnly.FromDateTime(DateTime.UtcNow),
-                          ExpirationDate    = DateOnly.FromDateTime(DateTime.UtcNow.AddYears(5)),
-                          Status            = accountCreateRequest.Status
+                          Id               = Guid.NewGuid(),
+                          EmployeeId       = employeeId,
+                          CurrencyId       = accountCreateRequest.CurrencyId,
+                          Balance          = accountCreateRequest.Balance,
+                          AvailableBalance = accountCreateRequest.Balance,
+                          DailyLimit       = accountCreateRequest.DailyLimit,
+                          MonthlyLimit     = accountCreateRequest.MonthlyLimit,
+                          CreatedAt        = DateTime.UtcNow,
+                          ModifiedAt       = DateTime.UtcNow,
+                          ClientId         = accountCreateRequest.ClientId,
+                          Name             = accountCreateRequest.Name,
+                          Number           = GenerateAccountNumber(),
+                          AccountTypeId    = accountCreateRequest.AccountTypeId,
+                          CreationDate     = DateOnly.FromDateTime(DateTime.UtcNow),
+                          ExpirationDate   = DateOnly.FromDateTime(DateTime.UtcNow.AddYears(5)),
+                          Status           = accountCreateRequest.Status
                       };
 
         return account;
     }
 
-    public static Account ToAccount(this AccountUpdateClientRequest accountUpdate, Account oldAccount)
+    public static Account ToAccount(this Account account, AccountUpdateClientRequest accountUpdate)
     {
-        return new Account
-               {
-                   Id                = oldAccount.Id,
-                   CreatedAt         = oldAccount.CreatedAt,
-                   ModifiedAt        = DateTime.UtcNow,
-                   Employee          = oldAccount.Employee,
-                   EmployeeId        = oldAccount.EmployeeId,
-                   Currency          = oldAccount.Currency,
-                   CurrencyId        = oldAccount.CurrencyId,
-                   Balance           = oldAccount.Balance,
-                   AvailableBalance  = oldAccount.AvailableBalance,
-                   Client            = oldAccount.Client,
-                   ClientId          = oldAccount.ClientId,
-                   Number            = oldAccount.Number,
-                   Name              = accountUpdate.Name,
-                   Type              = oldAccount.Type,
-                   AccountTypeId     = oldAccount.AccountTypeId,
-                   AccountCurrencies = oldAccount.AccountCurrencies,
-                   CreationDate      = oldAccount.CreationDate,
-                   ExpirationDate    = oldAccount.ExpirationDate,
-                   DailyLimit        = accountUpdate.DailyLimit,
-                   MonthlyLimit      = accountUpdate.MonthlyLimit,
-                   Status            = oldAccount.Status
-               };
+        account.ModifiedAt   = DateTime.UtcNow;
+        account.Name         = accountUpdate.Name;
+        account.DailyLimit   = accountUpdate.DailyLimit;
+        account.MonthlyLimit = accountUpdate.MonthlyLimit;
+
+        return account;
     }
 
-    public static Account ToAccount(this AccountUpdateEmployeeRequest accountUpdate, Account oldAccount)
+    public static Account ToAccount(this Account account, AccountUpdateEmployeeRequest accountUpdate)
     {
-        oldAccount.Status = accountUpdate.Status;
+        account.Status     = accountUpdate.Status;
+        account.ModifiedAt = DateTime.UtcNow;
 
-        return new Account
-               {
-                   Id                = oldAccount.Id,
-                   CreatedAt         = oldAccount.CreatedAt,
-                   ModifiedAt        = DateTime.UtcNow,
-                   Employee          = oldAccount.Employee,
-                   EmployeeId        = oldAccount.EmployeeId,
-                   Currency          = oldAccount.Currency,
-                   CurrencyId        = oldAccount.CurrencyId,
-                   Balance           = oldAccount.Balance,
-                   AvailableBalance  = oldAccount.AvailableBalance,
-                   Client            = oldAccount.Client,
-                   ClientId          = oldAccount.ClientId,
-                   Number            = oldAccount.Number,
-                   Name              = oldAccount.Name,
-                   Type              = oldAccount.Type,
-                   AccountTypeId     = oldAccount.AccountTypeId,
-                   AccountCurrencies = oldAccount.AccountCurrencies,
-                   CreationDate      = oldAccount.CreationDate,
-                   ExpirationDate    = oldAccount.ExpirationDate,
-                   DailyLimit        = oldAccount.DailyLimit,
-                   MonthlyLimit      = oldAccount.MonthlyLimit,
-                   Status            = accountUpdate.Status
-               };
+        return account;
     }
 
     private static string GenerateAccountNumber()

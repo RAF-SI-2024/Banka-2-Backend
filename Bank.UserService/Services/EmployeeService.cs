@@ -61,13 +61,12 @@ public class EmployeeService(IUserRepository userRepository, IEmailService email
 
     public async Task<Result<EmployeeResponse>> Update(EmployeeUpdateRequest employeeUpdateRequest, Guid id)
     {
-        var oldUser = await m_UserRepository.FindById(id);
+        var dbUser = await m_UserRepository.FindById(id);
 
-        if (oldUser is null)
+        if (dbUser is null)
             return Result.NotFound<EmployeeResponse>($"No Employee found with Id: {id}");
 
-        var user = await m_UserRepository.Update(oldUser, employeeUpdateRequest.ToEmployee(oldUser.ToEmployee())
-                                                                               .ToUser());
+        var user = await m_UserRepository.Update(dbUser.Update(employeeUpdateRequest));
 
         return Result.Ok(user.ToEmployee()
                              .ToResponse());

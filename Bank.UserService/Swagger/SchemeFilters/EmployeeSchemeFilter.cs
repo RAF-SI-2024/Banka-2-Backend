@@ -1,7 +1,7 @@
-﻿using Bank.Application.Domain;
-using Bank.Application.Extensions;
+﻿using Bank.Application.Extensions;
 using Bank.Application.Requests;
 using Bank.Application.Responses;
+using Bank.UserService.Database.Sample;
 
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
@@ -14,89 +14,46 @@ file static class Example
 {
     public static class Employee
     {
-        public static readonly Guid     Id                         = Guid.Parse("ae45452a-81fa-413b-9a3f-4e044ff13939");
-        public const           string   Email                      = "nikola.jovanovic@example.com";
-        public const           string   FirstName                  = "Nikola";
-        public const           string   LastName                   = "Jovanović";
-        public static readonly DateOnly DateOfBirth                = new(2005, 5, 17);
-        public const           Gender   Gender                     = Bank.Application.Domain.Gender.Male;
-        public const           string   UniqueIdentificationNumber = "1705005710032";
-        public const           string   Username                   = "nikolaj";
-        public const           string   PhoneNumber                = "+381632318592";
-        public const           string   Address                    = "Kneza Miloša 88";
-        public const           Role     Role                       = Bank.Application.Domain.Role.Employee;
-        public const           string   Department                 = "HR";
-        public static readonly DateTime CreatedAt                  = new(2025, 2, 26, 18, 0, 0);
-        public static readonly DateTime ModifiedAt                 = new(2025, 2, 28, 19, 17, 10);
-        public const           bool     Activated                  = true;
-        public const           bool     Employed                   = true;
-
-        public static readonly EmployeeCreateRequest CreateRequest = new()
-                                                                     {
-                                                                         FirstName                  = FirstName,
-                                                                         LastName                   = LastName,
-                                                                         DateOfBirth                = DateOfBirth,
-                                                                         Gender                     = Gender,
-                                                                         UniqueIdentificationNumber = UniqueIdentificationNumber,
-                                                                         Username                   = Username,
-                                                                         Email                      = Email,
-                                                                         PhoneNumber                = PhoneNumber,
-                                                                         Address                    = Address,
-                                                                         Role                       = Role,
-                                                                         Department                 = Department,
-                                                                         Employed                   = Employed
-                                                                     };
-
-        public static readonly EmployeeUpdateRequest UpdateRequest = new()
-                                                                     {
-                                                                         FirstName   = FirstName,
-                                                                         LastName    = LastName,
-                                                                         Username    = Username,
-                                                                         PhoneNumber = PhoneNumber,
-                                                                         Address     = Address,
-                                                                         Role        = Role,
-                                                                         Department  = Department,
-                                                                         Employed    = Employed,
-                                                                         Activated   = false
-                                                                     };
+        public static readonly Guid Id        = Guid.Parse("ae45452a-81fa-413b-9a3f-4e044ff13939");
+        public const           bool Activated = true;
 
         public static readonly EmployeeResponse Response = new()
                                                            {
                                                                Id                         = Id,
-                                                               FirstName                  = FirstName,
-                                                               LastName                   = LastName,
-                                                               DateOfBirth                = DateOfBirth,
-                                                               Gender                     = Gender,
-                                                               UniqueIdentificationNumber = UniqueIdentificationNumber,
-                                                               Username                   = Username,
-                                                               Email                      = Email,
-                                                               PhoneNumber                = PhoneNumber,
-                                                               Address                    = Address,
-                                                               Role                       = Role,
-                                                               Department                 = Department,
-                                                               CreatedAt                  = CreatedAt,
-                                                               ModifiedAt                 = ModifiedAt,
-                                                               Employed                   = Employed,
+                                                               FirstName                  = Sample.Employee.CreateRequest.FirstName,
+                                                               LastName                   = Sample.Employee.CreateRequest.LastName,
+                                                               DateOfBirth                = Sample.Employee.CreateRequest.DateOfBirth,
+                                                               Gender                     = Sample.Employee.CreateRequest.Gender,
+                                                               UniqueIdentificationNumber = Sample.Employee.CreateRequest.UniqueIdentificationNumber,
+                                                               Username                   = Sample.Employee.CreateRequest.Username,
+                                                               Email                      = Sample.Employee.CreateRequest.Email,
+                                                               PhoneNumber                = Sample.Employee.CreateRequest.PhoneNumber,
+                                                               Address                    = Sample.Employee.CreateRequest.Address,
+                                                               Role                       = Sample.Employee.CreateRequest.Role,
+                                                               Department                 = Sample.Employee.CreateRequest.Department,
+                                                               CreatedAt                  = DateTime.UtcNow,
+                                                               ModifiedAt                 = DateTime.UtcNow,
+                                                               Employed                   = Sample.Employee.CreateRequest.Employed,
                                                                Activated                  = Activated
                                                            };
 
         public static readonly EmployeeSimpleResponse SimpleResponse = new()
                                                                        {
                                                                            Id                         = Id,
-                                                                           FirstName                  = FirstName,
-                                                                           LastName                   = LastName,
-                                                                           DateOfBirth                = DateOfBirth,
-                                                                           Gender                     = Gender,
-                                                                           UniqueIdentificationNumber = UniqueIdentificationNumber,
-                                                                           Username                   = Username,
-                                                                           Email                      = Email,
-                                                                           PhoneNumber                = PhoneNumber,
-                                                                           Address                    = Address,
-                                                                           Role                       = Role,
-                                                                           Department                 = Department,
-                                                                           CreatedAt                  = CreatedAt,
-                                                                           ModifiedAt                 = ModifiedAt,
-                                                                           Employed                   = Employed,
+                                                                           FirstName                  = Sample.Employee.CreateRequest.FirstName,
+                                                                           LastName                   = Sample.Employee.CreateRequest.LastName,
+                                                                           DateOfBirth                = Sample.Employee.CreateRequest.DateOfBirth,
+                                                                           Gender                     = Sample.Employee.CreateRequest.Gender,
+                                                                           UniqueIdentificationNumber = Sample.Employee.CreateRequest.UniqueIdentificationNumber,
+                                                                           Username                   = Sample.Employee.CreateRequest.Username,
+                                                                           Email                      = Sample.Employee.CreateRequest.Email,
+                                                                           PhoneNumber                = Sample.Employee.CreateRequest.PhoneNumber,
+                                                                           Address                    = Sample.Employee.CreateRequest.Address,
+                                                                           Role                       = Sample.Employee.CreateRequest.Role,
+                                                                           Department                 = Sample.Employee.CreateRequest.Department,
+                                                                           CreatedAt                  = DateTime.UtcNow,
+                                                                           ModifiedAt                 = DateTime.UtcNow,
+                                                                           Employed                   = Sample.Employee.CreateRequest.Employed,
                                                                            Activated                  = Activated
                                                                        };
     }
@@ -106,7 +63,7 @@ public static partial class SwaggerSchemaFilter
 {
     public static class Employee
     {
-        public class CreateRequest() : SwaggerSchemaFilter<EmployeeCreateRequest>(SchemeFilters.Example.Employee.CreateRequest)
+        public class CreateRequest() : SwaggerSchemaFilter<EmployeeCreateRequest>(Sample.Employee.CreateRequest)
         {
             protected override IOpenApiAny CreateExample(OpenApiSchema schema, SchemaFilterContext context)
             {
@@ -140,7 +97,7 @@ public static partial class SwaggerSchemaFilter
             }
         }
 
-        public class UpdateRequest() : SwaggerSchemaFilter<EmployeeUpdateRequest>(SchemeFilters.Example.Employee.UpdateRequest)
+        public class UpdateRequest() : SwaggerSchemaFilter<EmployeeUpdateRequest>(Sample.Employee.UpdateRequest)
         {
             protected override IOpenApiAny CreateExample(OpenApiSchema schema, SchemaFilterContext context)
             {

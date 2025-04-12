@@ -16,6 +16,7 @@ public class EmployeeCreateRequest
     public required Role     Role                       { set; get; }
     public required string   Department                 { set; get; }
     public required bool     Employed                   { set; get; }
+    public required long     Permissions                { set; get; } = (long)Permission.Employee;
 }
 
 public class EmployeeUpdateRequest

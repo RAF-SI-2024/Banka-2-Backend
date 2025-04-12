@@ -1,10 +1,14 @@
-﻿using Bank.Application.Domain;
+﻿using System.Linq.Expressions;
+
+using Bank.Application.Domain;
 using Bank.Application.Queries;
 using Bank.Application.Utilities;
 using Bank.UserService.Database;
+using Bank.UserService.Database.Seeders;
 using Bank.UserService.Models;
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query;
 
 namespace Bank.UserService.Repositories;
 
@@ -18,7 +22,7 @@ public interface IUserRepository
 
     Task<User> Add(User user);
 
-    Task<User> Update(User oldUser, User user);
+    Task<User> Update(User user);
 
     Task<User> SetPassword(Guid id, string password);
 }
@@ -29,7 +33,10 @@ public class UserRepository(ApplicationContext context) : IUserRepository
 
     public async Task<Page<User>> FindAll(UserFilterQuery userFilterQuery, Pageable pageable)
     {
-        var userQuery = m_Context.Users.AsQueryable();
+        var userQuery = m_Context.Users.IncludeAll()
+                                 .AsQueryable();
+
+        userQuery = userQuery.Where(user => user.BankId == Seeder.Bank.Bank02.Id);
 
         if (!string.IsNullOrEmpty(userFilterQuery.FirstName))
             userQuery = userQuery.Where(user => EF.Functions.ILike(user.FirstName, $"%{userFilterQuery.FirstName}%"));
@@ -54,12 +61,14 @@ public class UserRepository(ApplicationContext context) : IUserRepository
 
     public async Task<User?> FindById(Guid id)
     {
-        return await m_Context.Users.FirstOrDefaultAsync(x => x.Id == id);
+        return await m_Context.Users.IncludeAll()
+                              .FirstOrDefaultAsync(x => x.Id == id);
     }
 
     public async Task<User?> FindByEmail(string email)
     {
-        return await m_Context.Users.FirstOrDefaultAsync(u => u.Email == email);
+        return await m_Context.Users.IncludeAll()
+                              .FirstOrDefaultAsync(u => u.Email == email);
     }
 
     public async Task<User> Add(User user)
@@ -71,16 +80,22 @@ public class UserRepository(ApplicationContext context) : IUserRepository
         return addedUser.Entity;
     }
 
-    public async Task<User> Update(User oldUser, User user)
+    public async Task<User> Update(User user)
     {
-        m_Context.Users.Entry(oldUser)
-                 .State = EntityState.Detached;
+        await m_Context.Users.Where(dbUser => dbUser.Id == user.Id)
+                       .ExecuteUpdateAsync(setters => setters.SetProperty(dbUser => dbUser.FirstName, user.FirstName)
+                                                             .SetProperty(dbUser => dbUser.LastName,    user.LastName)
+                                                             .SetProperty(dbUser => dbUser.Username,    user.Username)
+                                                             .SetProperty(dbUser => dbUser.PhoneNumber, user.PhoneNumber)
+                                                             .SetProperty(dbUser => dbUser.Address,     user.Address)
+                                                             .SetProperty(dbUser => dbUser.Role,        user.Role)
+                                                             .SetProperty(dbUser => dbUser.Department,  user.Department)
+                                                             .SetProperty(dbUser => dbUser.Employed,    user.Employed)
+                                                             .SetProperty(dbUser => dbUser.Activated,   user.Activated)
+                                                             .SetProperty(dbUser => dbUser.ModifiedAt,  user.ModifiedAt)
+                                                             .SetProperty(dbUser => dbUser.Permissions,  user.Permissions));
 
-        var updatedUser = m_Context.Users.Update(user);
-
-        await m_Context.SaveChangesAsync();
-
-        return updatedUser.Entity;
+        return user;
     }
 
     public async Task<User> SetPassword(Guid id, string password)
@@ -96,5 +111,50 @@ public class UserRepository(ApplicationContext context) : IUserRepository
         await m_Context.SaveChangesAsync();
 
         return user;
+    }
+}
+
+public static partial class RepositoryExtensions
+{
+    public static IIncludableQueryable<User, object?> IncludeAll(this DbSet<User> set)
+    {
+        return set.Include(user => user.Bank)
+                  .ThenIncludeAll(user => user.Bank)
+                  .Include(user => user.Accounts)
+                  .ThenIncludeAll(user => user.Accounts, nameof(Account.Employee), nameof(Account.Client));
+    }
+
+    public static IIncludableQueryable<TEntity, object?> ThenIncludeAll<TEntity>(this IIncludableQueryable<TEntity, User?> value,
+                                                                                 Expression<Func<TEntity, User?>>          navigationExpression, params string[] excludeProperties)
+    where TEntity : class
+    {
+        IIncludableQueryable<TEntity, object?> query = value;
+
+        if (!excludeProperties.Contains(nameof(User.Bank)))
+            query = query.Include(navigationExpression)
+                         .ThenInclude(user => user!.Bank);
+        
+        if (!excludeProperties.Contains(nameof(User.Accounts)))
+            query = query.Include(navigationExpression)
+                         .ThenInclude(user => user!.Accounts);
+
+        return query;
+    }
+
+    public static IIncludableQueryable<TEntity, object?> ThenIncludeAll<TEntity>(this IIncludableQueryable<TEntity, List<User>> value,
+                                                                                 Expression<Func<TEntity, List<User>>>          navigationExpression, params string[] excludeProperties)
+    where TEntity : class
+    {
+        IIncludableQueryable<TEntity, object?> query = value;
+
+        if (!excludeProperties.Contains(nameof(User.Bank)))
+            query = query.Include(navigationExpression)
+                         .ThenInclude(user => user.Bank);
+        
+        if (!excludeProperties.Contains(nameof(User.Accounts)))
+            query = query.Include(navigationExpression)
+                         .ThenInclude(user => user.Accounts);
+
+        return query;
     }
 }

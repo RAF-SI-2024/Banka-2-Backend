@@ -1,12 +1,14 @@
-﻿using Bank.UserService.Configurations;
+﻿using Bank.Application.Domain;
+using Bank.UserService.Configurations;
 using Bank.UserService.Database;
 using Bank.UserService.Database.Seeders;
 
 namespace Bank.UserService.HostedServices;
 
-public class DatabaseHostedService(IServiceProvider serviceProvider)
+public class DatabaseHostedService(IServiceProvider serviceProvider, IHttpClientFactory httpClientFactory)
 {
-    private readonly IServiceProvider m_ServiceProvider = serviceProvider;
+    private readonly IHttpClientFactory m_HttpClientFactory = httpClientFactory;
+    private readonly IServiceProvider   m_ServiceProvider   = serviceProvider;
 
     private ApplicationContext Context =>
     m_ServiceProvider.CreateScope()
@@ -19,6 +21,9 @@ public class DatabaseHostedService(IServiceProvider serviceProvider)
                    .Wait();
 
         Context.Database.EnsureCreatedAsync()
+               .Wait();
+
+        Context.SeedBank()
                .Wait();
 
         Context.SeedClient()
@@ -42,6 +47,15 @@ public class DatabaseHostedService(IServiceProvider serviceProvider)
         Context.SeedAccount()
                .Wait();
 
+        Context.SeedLoanTypes()
+               .Wait();
+
+        Context.SeedLoans()
+               .Wait();
+
+        Context.SeedInstallments()
+               .Wait();
+
         Context.SeedAccountCurrency()
                .Wait();
 
@@ -50,6 +64,23 @@ public class DatabaseHostedService(IServiceProvider serviceProvider)
 
         Context.SeedCard()
                .Wait();
+
+        Context.SeedTransactionCode()
+               .Wait();
+
+        Context.SeedTransaction()
+               .Wait();
+
+        Context.SeedTransactionTemplate()
+               .Wait();
+
+        if (Configuration.Application.Profile == Profile.Testing)
+            Context.SeedExchangeHardcoded()
+                   .Wait();
+
+        if (Configuration.Application.Profile != Profile.Testing)
+            Context.SeedExchange(m_HttpClientFactory.CreateClient())
+                   .Wait();
     }
 
     public void OnApplicationStopped() { }

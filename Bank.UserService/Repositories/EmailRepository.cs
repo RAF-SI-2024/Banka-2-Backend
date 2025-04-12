@@ -5,7 +5,8 @@ namespace Bank.UserService.Repositories;
 public enum EmailType
 {
     UserActivateAccount,
-    UserResetPassword
+    UserResetPassword,
+    LoanInstallmentPaid
 }
 
 public interface IEmailRepository
@@ -448,6 +449,28 @@ public class EmailRepository : IEmailRepository
                                                                                                              </html>
                                                                                                              """
                                                                                                   }
+                                                                 },
+                                                                 {
+                                                                     EmailType.LoanInstallmentPaid, new Email()
+                                                                                                    {
+                                                                                                        Subject = "Your Loan Installment Payment",
+                                                                                                        Body = """
+                                                                                                               <!DOCTYPE html>
+                                                                                                               <html>
+                                                                                                               <head>
+                                                                                                                   <meta charset="UTF-8">
+                                                                                                                   <title>Loan Installment Payment</title>
+                                                                                                               </head>
+                                                                                                               <body>
+                                                                                                                   <p>Dear {{0}},</p>
+                                                                                                                   <p>We would like to inform you that your loan installment payment of <strong>{{1}} {{2}}</strong> has been successfully processed.</p>
+                                                                                                                   <p>Your remaining balance for the loan is <strong>{{3}} {{2}}</strong>.</p>
+                                                                                                                   <p>Thank you for banking with us.</p>
+                                                                                                                   <p>Best regards,<br>The Bank Team</p>
+                                                                                                               </body>
+                                                                                                               </html>
+                                                                                                               """
+                                                                                                    }
                                                                  }
                                                              };
 

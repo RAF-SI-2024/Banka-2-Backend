@@ -2,6 +2,7 @@
 using Bank.Application.Extensions;
 using Bank.Application.Requests;
 using Bank.Application.Responses;
+using Bank.UserService.Database.Sample;
 
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
@@ -15,10 +16,8 @@ file static class Example
     public static class User
     {
         public static readonly Guid     Id                         = Guid.Parse("73b8f8ee-ff51-4247-b65b-52b8b9a494e5");
-        public const           string   Email                      = "marko.petrovic@example.com";
         public const           string   FirstName                  = "Marko";
         public const           string   LastName                   = "Petrović";
-        public const           string   Password                   = "M4rk0Petrovic@2024";
         public static readonly DateOnly DateOfBirth                = new(1995, 7, 21);
         public const           Gender   Gender                     = Bank.Application.Domain.Gender.Male;
         public const           string   UniqueIdentificationNumber = "2107953710020";
@@ -31,29 +30,6 @@ file static class Example
         public static readonly DateTime ModifiedAt                 = new(2025, 2, 28, 12, 45, 0);
         public const           bool     Activated                  = true;
 
-        public static readonly UserLoginRequest LoginRequest = new()
-                                                               {
-                                                                   Email    = Email,
-                                                                   Password = Password
-                                                               };
-
-        public static readonly UserActivationRequest ActivationRequest = new()
-                                                                         {
-                                                                             Password        = Password,
-                                                                             ConfirmPassword = Password
-                                                                         };
-
-        public static readonly UserRequestPasswordResetRequest RequestPasswordResetRequest = new()
-                                                                                             {
-                                                                                                 Email = Email
-                                                                                             };
-
-        public static readonly UserPasswordResetRequest PasswordResetRequest = new()
-                                                                               {
-                                                                                   Password        = Password,
-                                                                                   ConfirmPassword = Password
-                                                                               };
-
         public static readonly UserResponse Response = new()
                                                        {
                                                            Id                         = Id,
@@ -63,7 +39,7 @@ file static class Example
                                                            Gender                     = Gender,
                                                            UniqueIdentificationNumber = UniqueIdentificationNumber,
                                                            Username                   = Username,
-                                                           Email                      = Email,
+                                                           Email                      = Sample.User.LoginRequest.Email,
                                                            PhoneNumber                = PhoneNumber,
                                                            Address                    = Address,
                                                            Role                       = Role,
@@ -83,7 +59,7 @@ file static class Example
                                                                        Gender                     = Gender,
                                                                        UniqueIdentificationNumber = UniqueIdentificationNumber,
                                                                        Username                   = Username,
-                                                                       Email                      = Email,
+                                                                       Email                      = Sample.User.LoginRequest.Email,
                                                                        PhoneNumber                = PhoneNumber,
                                                                        Address                    = Address,
                                                                        Role                       = Role,
@@ -106,7 +82,7 @@ public static partial class SwaggerSchemaFilter
 {
     public static class User
     {
-        public class LoginRequest() : SwaggerSchemaFilter<UserLoginRequest>(SchemeFilters.Example.User.LoginRequest)
+        public class LoginRequest() : SwaggerSchemaFilter<UserLoginRequest>(Sample.User.LoginRequest)
         {
             protected override IOpenApiAny CreateExample(OpenApiSchema schema, SchemaFilterContext context)
             {
@@ -120,7 +96,7 @@ public static partial class SwaggerSchemaFilter
             }
         }
 
-        public class ActivationRequest() : SwaggerSchemaFilter<UserActivationRequest>(SchemeFilters.Example.User.ActivationRequest)
+        public class ActivationRequest() : SwaggerSchemaFilter<UserActivationRequest>(Sample.User.ActivationRequest)
         {
             protected override IOpenApiAny CreateExample(OpenApiSchema schema, SchemaFilterContext context)
             {
@@ -134,7 +110,7 @@ public static partial class SwaggerSchemaFilter
             }
         }
 
-        public class RequestPasswordResetRequest() : SwaggerSchemaFilter<UserRequestPasswordResetRequest>(SchemeFilters.Example.User.RequestPasswordResetRequest)
+        public class RequestPasswordResetRequest() : SwaggerSchemaFilter<UserRequestPasswordResetRequest>(Sample.User.RequestPasswordResetRequest)
         {
             protected override IOpenApiAny CreateExample(OpenApiSchema schema, SchemaFilterContext context)
             {
@@ -145,7 +121,7 @@ public static partial class SwaggerSchemaFilter
             }
         }
 
-        public class PasswordResetRequest() : SwaggerSchemaFilter<UserPasswordResetRequest>(SchemeFilters.Example.User.PasswordResetRequest)
+        public class PasswordResetRequest() : SwaggerSchemaFilter<UserPasswordResetRequest>(Sample.User.PasswordResetRequest)
         {
             protected override IOpenApiAny CreateExample(OpenApiSchema schema, SchemaFilterContext context)
             {

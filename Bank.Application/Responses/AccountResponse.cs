@@ -2,17 +2,15 @@
 
 public class AccountResponse
 {
-    public required Guid                   Id               { set; get; }
-    public required string                 AccountNumber    { set; get; }
-    public required string                 Name             { set; get; }
-    public required ClientSimpleResponse   Client           { set; get; }
-    public required decimal                Balance          { set; get; }
-    public required decimal                AvailableBalance { set; get; }
-    public required EmployeeSimpleResponse Employee         { set; get; }
-    public required CurrencyResponse       Currency         { set; get; }
-
-    public required AccountTypeResponse Type { set; get; }
-
+    public required Guid                          Id                { set;  get; }
+    public required string                        AccountNumber     { set;  get; }
+    public required string                        Name              { set;  get; }
+    public required ClientSimpleResponse          Client            { set;  get; }
+    public required decimal                       Balance           { set;  get; }
+    public required decimal                       AvailableBalance  { set;  get; }
+    public required EmployeeSimpleResponse        Employee          { set;  get; }
+    public required CurrencyResponse              Currency          { set;  get; }
+    public required AccountTypeResponse           Type              { set;  get; }
     public required List<AccountCurrencyResponse> AccountCurrencies { init; get; } = [];
     public required decimal                       DailyLimit        { set;  get; }
     public required decimal                       MonthlyLimit      { set;  get; }

@@ -1,0 +1,79 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Using Include="Reqnroll" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.4" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
+        <PackageReference Include="Reqnroll" Version="2.4.0" />
+        <PackageReference Include="Reqnroll.Microsoft.Extensions.DependencyInjection" Version="2.4.0" />
+        <PackageReference Include="Reqnroll.xUnit" Version="2.4.0" />
+        <PackageReference Include="Shouldly" Version="4.3.0" />
+        <PackageReference Include="xunit" Version="2.9.3" />
+        <PackageReference Include="xunit.runner.visualstudio" Version="3.0.2">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Content Include="**/*.feature" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Bank.UserService\Bank.UserService.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Integration\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <UpToDateCheckInput Remove="Features\AccountController.feature" />
+      <UpToDateCheckInput Remove="Features\AccountTypeController.feature" />
+      <UpToDateCheckInput Remove="Features\CardController.feature" />
+      <UpToDateCheckInput Remove="Features\CardTypeController.feature" />
+      <UpToDateCheckInput Remove="Features\ClientController.feature" />
+      <UpToDateCheckInput Remove="Features\CompanyController.feature" />
+      <UpToDateCheckInput Remove="Features\CountryController.feature" />
+      <UpToDateCheckInput Remove="Features\CurrencyController.feature" />
+      <UpToDateCheckInput Remove="Features\EmployeeController.feature" />
+      <UpToDateCheckInput Remove="Features\ExchangeController.feature" />
+      <UpToDateCheckInput Remove="Features\InstallmentController.feature" />
+      <UpToDateCheckInput Remove="Features\LoanController.feature" />
+      <UpToDateCheckInput Remove="Features\LoanTypeController.feature" />
+      <UpToDateCheckInput Remove="Features\TransactionCodeController.feature" />
+      <UpToDateCheckInput Remove="Features\TransactionController.feature" />
+      <UpToDateCheckInput Remove="Features\TransactionTemplateController.feature" />
+      <UpToDateCheckInput Remove="Features\UserController.feature" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <UpToDateCheckBuild Remove="Features\AccountController.feature.cs" />
+      <UpToDateCheckBuild Remove="Features\AccountTypeController.feature.cs" />
+      <UpToDateCheckBuild Remove="Features\CardController.feature.cs" />
+      <UpToDateCheckBuild Remove="Features\CardTypeController.feature.cs" />
+      <UpToDateCheckBuild Remove="Features\ClientController.feature.cs" />
+      <UpToDateCheckBuild Remove="Features\CompanyController.feature.cs" />
+      <UpToDateCheckBuild Remove="Features\CountryController.feature.cs" />
+      <UpToDateCheckBuild Remove="Features\CurrencyController.feature.cs" />
+      <UpToDateCheckBuild Remove="Features\EmployeeController.feature.cs" />
+      <UpToDateCheckBuild Remove="Features\ExchangeController.feature.cs" />
+      <UpToDateCheckBuild Remove="Features\InstallmentController.feature.cs" />
+      <UpToDateCheckBuild Remove="Features\LoanController.feature.cs" />
+      <UpToDateCheckBuild Remove="Features\LoanTypeController.feature.cs" />
+      <UpToDateCheckBuild Remove="Features\TransactionCodeController.feature.cs" />
+      <UpToDateCheckBuild Remove="Features\TransactionController.feature.cs" />
+      <UpToDateCheckBuild Remove="Features\TransactionTemplateController.feature.cs" />
+      <UpToDateCheckBuild Remove="Features\UserController.feature.cs" />
+    </ItemGroup>
+
+</Project>

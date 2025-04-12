@@ -27,9 +27,11 @@ public class AccountEntityConfiguration : IEntityTypeConfiguration<Account>
                .IsRequired();
 
         builder.Property(account => account.Balance)
+               .HasPrecision(28, 12)
                .IsRequired();
 
         builder.Property(account => account.AvailableBalance)
+               .HasPrecision(28, 12)
                .IsRequired();
 
         builder.Property(account => account.EmployeeId)
@@ -42,9 +44,11 @@ public class AccountEntityConfiguration : IEntityTypeConfiguration<Account>
                .IsRequired();
 
         builder.Property(account => account.DailyLimit)
+               .HasPrecision(28, 12)
                .IsRequired();
 
         builder.Property(account => account.MonthlyLimit)
+               .HasPrecision(28, 12)
                .IsRequired();
 
         builder.Property(account => account.Status)

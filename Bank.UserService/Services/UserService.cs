@@ -24,13 +24,15 @@ public interface IUserService
     Task<Result> RequestPasswordReset(UserRequestPasswordResetRequest passwordResetRequest);
 
     Task<Result> PasswordReset(UserPasswordResetRequest userPasswordResetRequest, string token);
+
+    Task<Result> UpdatePermissions(Guid userId, UpdatePermissionsRequest request);
 }
 
 public class UserService(IUserRepository userRepository, IEmailService emailService, IAuthorizationService authorizationService) : IUserService
 {
-    private readonly IUserRepository       m_UserRepository       = userRepository;
-    private readonly IEmailService         m_EmailService         = emailService;
     private readonly IAuthorizationService m_AuthorizationService = authorizationService;
+    private readonly IEmailService         m_EmailService         = emailService;
+    private readonly IUserRepository       m_UserRepository       = userRepository;
 
     public async Task<Result<Page<UserResponse>>> GetAll(UserFilterQuery userFilterQuery, Pageable pageable)
     {
@@ -65,7 +67,7 @@ public class UserService(IUserRepository userRepository, IEmailService emailServ
         if (user.Password != HashingUtilities.HashPassword(userLoginRequest.Password, user.Salt))
             return Result.BadRequest<UserLoginResponse>("The password is incorrect.");
 
-        string token = m_AuthorizationService.GenerateTokenFor(user);
+        var token = m_AuthorizationService.GenerateTokenFor(user);
 
         return Result.Ok(new UserLoginResponse { Token = token, User = user.ToResponse() });
     }
@@ -101,6 +103,20 @@ public class UserService(IUserRepository userRepository, IEmailService emailServ
         await m_EmailService.Send(EmailType.UserResetPassword, user);
 
         return Result.Accepted();
+    }
+
+    public async Task<Result> UpdatePermissions(Guid userId, UpdatePermissionsRequest request)
+    {
+        var user = await m_UserRepository.FindById(userId);
+
+        if (user == null)
+            return Result.BadRequest("User not found");
+
+        user.Permissions = request.Permissions;
+        user.ModifiedAt  = DateTime.UtcNow;
+        await m_UserRepository.Update(user);
+
+        return Result.Ok();
     }
 
     public async Task<Result> PasswordReset(UserPasswordResetRequest userPasswordResetRequest, string token)

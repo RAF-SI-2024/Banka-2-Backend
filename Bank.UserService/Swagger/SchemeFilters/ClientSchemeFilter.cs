@@ -2,6 +2,7 @@
 using Bank.Application.Extensions;
 using Bank.Application.Requests;
 using Bank.Application.Responses;
+using Bank.UserService.Database.Sample;
 
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
@@ -14,74 +15,41 @@ file static class Example
 {
     public static class Client
     {
-        public static readonly Guid     Id                         = Guid.Parse("f39d319e-db3e-4af5-bada-6bcb908b29e3");
-        public const           string   Email                      = "aleksandar.ivanovic@gmail.com";
-        public const           string   FirstName                  = "Aleksandar";
-        public const           string   LastName                   = "Ivanović";
-        public static readonly DateOnly DateOfBirth                = new(1995, 7, 12);
-        public const           Gender   Gender                     = Bank.Application.Domain.Gender.Male;
-        public const           string   UniqueIdentificationNumber = "1207995710029";
-        public const           string   PhoneNumber                = "+381698812321";
-        public const           string   Address                    = "Kralja Petra 12";
-        public const           Role     Role                       = Bank.Application.Domain.Role.Client;
-        public static readonly DateTime CreatedAt                  = new(2025, 1, 22, 13, 15, 12);
-        public static readonly DateTime ModifiedAt                 = new(2025, 1, 29, 10, 24, 13);
-        public const           bool     Activated                  = true;
-
-        public static readonly ClientCreateRequest CreateRequest = new()
-                                                                   {
-                                                                       FirstName                  = FirstName,
-                                                                       LastName                   = LastName,
-                                                                       DateOfBirth                = DateOfBirth,
-                                                                       Gender                     = Gender,
-                                                                       UniqueIdentificationNumber = UniqueIdentificationNumber,
-                                                                       Email                      = Email,
-                                                                       PhoneNumber                = PhoneNumber,
-                                                                       Address                    = Address
-                                                                   };
-
-        public static readonly ClientUpdateRequest UpdateRequest = new()
-                                                                   {
-                                                                       FirstName   = FirstName,
-                                                                       LastName    = LastName,
-                                                                       PhoneNumber = PhoneNumber,
-                                                                       Address     = Address,
-                                                                       Activated   = Activated
-                                                                   };
+        public static readonly Guid Id = Guid.Parse("f39d319e-db3e-4af5-bada-6bcb908b29e3");
 
         public static readonly ClientResponse Response = new()
                                                          {
                                                              Id                         = Id,
-                                                             FirstName                  = FirstName,
-                                                             LastName                   = LastName,
-                                                             DateOfBirth                = DateOfBirth,
-                                                             Gender                     = Gender,
-                                                             UniqueIdentificationNumber = UniqueIdentificationNumber,
-                                                             Email                      = Email,
-                                                             PhoneNumber                = PhoneNumber,
-                                                             Address                    = Address,
-                                                             Role                       = Role,
+                                                             FirstName                  = Sample.Client.CreateRequest.FirstName,
+                                                             LastName                   = Sample.Client.CreateRequest.LastName,
+                                                             DateOfBirth                = Sample.Client.CreateRequest.DateOfBirth,
+                                                             Gender                     = Sample.Client.CreateRequest.Gender,
+                                                             UniqueIdentificationNumber = Sample.Client.CreateRequest.UniqueIdentificationNumber,
+                                                             Email                      = Sample.Client.CreateRequest.Email,
+                                                             PhoneNumber                = Sample.Client.CreateRequest.PhoneNumber,
+                                                             Address                    = Sample.Client.CreateRequest.Address,
+                                                             Role                       = Role.Client,
                                                              Accounts                   = [],
-                                                             CreatedAt                  = CreatedAt,
-                                                             ModifiedAt                 = ModifiedAt,
-                                                             Activated                  = Activated
+                                                             CreatedAt                  = DateTime.UtcNow,
+                                                             ModifiedAt                 = DateTime.UtcNow,
+                                                             Activated                  = Sample.Client.UpdateRequest.Activated
                                                          };
 
         public static readonly ClientSimpleResponse SimpleResponse = new()
                                                                      {
                                                                          Id                         = Id,
-                                                                         FirstName                  = FirstName,
-                                                                         LastName                   = LastName,
-                                                                         DateOfBirth                = DateOfBirth,
-                                                                         Gender                     = Gender,
-                                                                         UniqueIdentificationNumber = UniqueIdentificationNumber,
-                                                                         Email                      = Email,
-                                                                         PhoneNumber                = PhoneNumber,
-                                                                         Address                    = Address,
-                                                                         Role                       = Role,
-                                                                         CreatedAt                  = CreatedAt,
-                                                                         ModifiedAt                 = ModifiedAt,
-                                                                         Activated                  = Activated
+                                                                         FirstName                  = Sample.Client.CreateRequest.FirstName,
+                                                                         LastName                   = Sample.Client.CreateRequest.LastName,
+                                                                         DateOfBirth                = Sample.Client.CreateRequest.DateOfBirth,
+                                                                         Gender                     = Sample.Client.CreateRequest.Gender,
+                                                                         UniqueIdentificationNumber = Sample.Client.CreateRequest.UniqueIdentificationNumber,
+                                                                         Email                      = Sample.Client.CreateRequest.Email,
+                                                                         PhoneNumber                = Sample.Client.CreateRequest.PhoneNumber,
+                                                                         Address                    = Sample.Client.CreateRequest.Address,
+                                                                         Role                       = Role.Client,
+                                                                         CreatedAt                  = DateTime.UtcNow,
+                                                                         ModifiedAt                 = DateTime.UtcNow,
+                                                                         Activated                  = Sample.Client.UpdateRequest.Activated
                                                                      };
     }
 }
@@ -90,7 +58,7 @@ public static partial class SwaggerSchemaFilter
 {
     public static class Client
     {
-        public class CreateRequest() : SwaggerSchemaFilter<ClientCreateRequest>(SchemeFilters.Example.Client.CreateRequest)
+        public class CreateRequest() : SwaggerSchemaFilter<ClientCreateRequest>(Sample.Client.CreateRequest)
         {
             protected override IOpenApiAny CreateExample(OpenApiSchema schema, SchemaFilterContext context)
             {
@@ -116,7 +84,7 @@ public static partial class SwaggerSchemaFilter
             }
         }
 
-        public class UpdateRequest() : SwaggerSchemaFilter<ClientUpdateRequest>(SchemeFilters.Example.Client.UpdateRequest)
+        public class UpdateRequest() : SwaggerSchemaFilter<ClientUpdateRequest>(Sample.Client.UpdateRequest)
         {
             protected override IOpenApiAny CreateExample(OpenApiSchema schema, SchemaFilterContext context)
             {

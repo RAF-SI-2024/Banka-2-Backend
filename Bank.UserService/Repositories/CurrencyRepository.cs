@@ -1,30 +1,35 @@
-﻿using Bank.Application.Domain;
+﻿using System.Linq.Expressions;
+
 using Bank.Application.Queries;
 using Bank.UserService.Database;
 using Bank.UserService.Models;
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query;
 
 namespace Bank.UserService.Repositories;
 
 public interface ICurrencyRepository
 {
-    Task<Page<Currency>> FindAll(CurrencyFilterQuery currencyFilterQuery, Pageable pageable);
+    Task<List<Currency>> FindAll(CurrencyFilterQuery currencyFilterQuery);
 
     Task<Currency?> FindById(Guid id);
 
-    Task<Currency> Add(Currency currency);
+    Task<Currency?> FindByCode(string currencyCode);
 
-    Task<Currency> Update(Currency oldCurrency, Currency currency);
+    Task<bool> Exists(Guid currencyId);
 }
 
-public class CurrencyRepository(ApplicationContext context) : ICurrencyRepository
+public class CurrencyRepository(ApplicationContext context, IDbContextFactory<ApplicationContext> contextFactory) : ICurrencyRepository
 {
-    private readonly ApplicationContext m_Context = context;
+    private readonly ApplicationContext                    m_Context        = context;
+    private readonly IDbContextFactory<ApplicationContext> m_ContextFactory = contextFactory;
 
-    public async Task<Page<Currency>> FindAll(CurrencyFilterQuery currencyFilterQuery, Pageable pageable)
+    private Task<ApplicationContext> CreateContext => m_ContextFactory.CreateDbContextAsync();
+
+    public async Task<List<Currency>> FindAll(CurrencyFilterQuery currencyFilterQuery)
     {
-        var currencyQuery = m_Context.Currencies.Include(c => c.Countries)
+        var currencyQuery = m_Context.Currencies.IncludeAll()
                                      .AsQueryable();
 
         if (!string.IsNullOrEmpty(currencyFilterQuery.Name))
@@ -33,39 +38,85 @@ public class CurrencyRepository(ApplicationContext context) : ICurrencyRepositor
         if (!string.IsNullOrEmpty(currencyFilterQuery.Code))
             currencyQuery = currencyQuery.Where(currency => EF.Functions.ILike(currency.Code, $"%{currencyFilterQuery.Code}%"));
 
-        int totalElements = await currencyQuery.CountAsync();
-
-        var currencies = await currencyQuery.Skip((pageable.Page - 1) * pageable.Size)
-                                            .Take(pageable.Size)
-                                            .ToListAsync();
-
-        return new Page<Currency>(currencies, pageable.Page, pageable.Size, totalElements);
+        return await currencyQuery.ToListAsync();
     }
 
     public async Task<Currency?> FindById(Guid id)
     {
-        return await m_Context.Currencies.Include(c => c.Countries)
-                              .FirstOrDefaultAsync(x => x.Id == id);
+        await using var context = await CreateContext;
+
+        return await FindById(id, context);
     }
 
-    public async Task<Currency> Add(Currency currency)
+    public async Task<Currency?> FindByCode(string currencyCode)
     {
-        var addedCurrency = await m_Context.Currencies.AddAsync(currency);
+        await using var context = await CreateContext;
 
-        await m_Context.SaveChangesAsync();
-
-        return addedCurrency.Entity;
+        return await FindByCode(currencyCode, context);
     }
 
-    public async Task<Currency> Update(Currency oldCurrency, Currency currency)
+    public async Task<bool> Exists(Guid currencyId)
     {
-        m_Context.Currencies.Entry(oldCurrency)
-                 .State = EntityState.Detached;
+        await using var context = await CreateContext;
 
-        var updatedCurrency = m_Context.Currencies.Update(currency);
+        return await Exists(currencyId, context);
+    }
 
-        await m_Context.SaveChangesAsync();
+    #region Static Repository Calls
 
-        return updatedCurrency.Entity;
+    private static async Task<Currency?> FindById(Guid id, ApplicationContext context)
+    {
+        return await context.Currencies.IncludeAll()
+                            .Where(currency => currency.Id == id)
+                            .FirstOrDefaultAsync();
+    }
+
+    private static async Task<Currency?> FindByCode(string currencyCode, ApplicationContext context)
+    {
+        return await context.Currencies.IncludeAll()
+                            .Where(currency => EF.Functions.ILike(currency.Code, $"{currencyCode}"))
+                            .FirstOrDefaultAsync();
+    }
+
+    private static Task<bool> Exists(Guid currencyId, ApplicationContext context)
+    {
+        return context.Currencies.AnyAsync(currency => currency.Id == currencyId);
+    }
+
+    #endregion
+}
+
+public static partial class RepositoryExtensions
+{
+    public static IIncludableQueryable<Currency, object?> IncludeAll(this DbSet<Currency> set)
+    {
+        return set.Include(currency => currency.Countries)
+                  .ThenIncludeAll(currency => currency.Countries, nameof(Country.Currency));
+    }
+
+    public static IIncludableQueryable<TEntity, object?> ThenIncludeAll<TEntity>(this IIncludableQueryable<TEntity, Currency?> value,
+                                                                                 Expression<Func<TEntity, Currency?>>          navigationExpression, params string[] excludeProperties)
+    where TEntity : class
+    {
+        IIncludableQueryable<TEntity, object?> query = value;
+
+        if (!excludeProperties.Contains(nameof(Currency.Countries)))
+            query = query.Include(navigationExpression)
+                         .ThenInclude(currency => currency!.Countries);
+
+        return query;
+    }
+
+    public static IIncludableQueryable<TEntity, object?> ThenIncludeAll<TEntity>(this IIncludableQueryable<TEntity, List<Currency>> value,
+                                                                                 Expression<Func<TEntity, List<Currency>>> navigationExpression, params string[] excludeProperties)
+    where TEntity : class
+    {
+        IIncludableQueryable<TEntity, object?> query = value;
+
+        if (!excludeProperties.Contains(nameof(Currency.Countries)))
+            query = query.Include(navigationExpression)
+                         .ThenInclude(currency => currency.Countries);
+
+        return query;
     }
 }

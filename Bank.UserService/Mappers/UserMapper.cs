@@ -1,6 +1,7 @@
 ﻿using Bank.Application.Domain;
 using Bank.Application.Requests;
 using Bank.Application.Responses;
+using Bank.UserService.Database.Seeders;
 using Bank.UserService.Models;
 
 using EmployeeResponse = Bank.Application.Responses.EmployeeResponse;
@@ -32,9 +33,11 @@ public static class UserMapper
                };
     }
 
-    private static List<AccountSimpleResponse> MapAccounts(List<Account> accounts) =>
-    accounts.Select(account => account.ToSimpleResponse())
-            .ToList();
+    private static List<AccountSimpleResponse> MapAccounts(List<Account> accounts)
+    {
+        return accounts.Select(account => account.ToSimpleResponse())
+                       .ToList();
+    }
 
     public static UserSimpleResponse ToSimpleResponse(this User user)
     {
@@ -79,7 +82,8 @@ public static class UserMapper
                    CreatedAt                  = user.CreatedAt,
                    ModifiedAt                 = user.ModifiedAt,
                    Employed                   = user.Employed ?? true,
-                   Activated                  = user.Activated
+                   Activated                  = user.Activated,
+                   Permissions                = user.Permissions
                };
     }
 
@@ -100,11 +104,13 @@ public static class UserMapper
                    Password                   = employee.Password,
                    Salt                       = employee.Salt,
                    Role                       = employee.Role,
+                   BankId                     = Seeder.Bank.Bank02.Id,
                    Department                 = employee.Department,
                    CreatedAt                  = employee.CreatedAt,
                    ModifiedAt                 = employee.ModifiedAt,
                    Employed                   = employee.Employed,
-                   Activated                  = employee.Activated
+                   Activated                  = employee.Activated,
+                   Permissions                = employee.Permissions
                };
     }
 
@@ -175,32 +181,24 @@ public static class UserMapper
                    CreatedAt                  = DateTime.UtcNow,
                    ModifiedAt                 = DateTime.UtcNow,
                    Activated                  = false,
+                   Permissions                = employeeCreateRequest.Permissions
                };
     }
 
-    public static Employee ToEmployee(this EmployeeUpdateRequest employeeUpdateRequest, Employee oldEmployee)
+    public static User Update(this User user, EmployeeUpdateRequest updateRequest)
     {
-        return new Employee
-               {
-                   FirstName                  = employeeUpdateRequest.FirstName,
-                   LastName                   = employeeUpdateRequest.LastName,
-                   Username                   = employeeUpdateRequest.Username,
-                   PhoneNumber                = employeeUpdateRequest.PhoneNumber,
-                   Address                    = employeeUpdateRequest.Address,
-                   Role                       = employeeUpdateRequest.Role,
-                   Department                 = employeeUpdateRequest.Department,
-                   Employed                   = employeeUpdateRequest.Employed,
-                   Activated                  = employeeUpdateRequest.Activated,
-                   Id                         = oldEmployee.Id,
-                   Password                   = oldEmployee.Password,
-                   Salt                       = oldEmployee.Salt,
-                   DateOfBirth                = oldEmployee.DateOfBirth,
-                   Gender                     = oldEmployee.Gender,
-                   UniqueIdentificationNumber = oldEmployee.UniqueIdentificationNumber,
-                   Email                      = oldEmployee.Email,
-                   CreatedAt                  = oldEmployee.CreatedAt,
-                   ModifiedAt                 = DateTime.UtcNow
-               };
+        user.FirstName   = updateRequest.FirstName;
+        user.LastName    = updateRequest.LastName;
+        user.Username    = updateRequest.Username;
+        user.PhoneNumber = updateRequest.PhoneNumber;
+        user.Address     = updateRequest.Address;
+        user.Role        = updateRequest.Role;
+        user.Department  = updateRequest.Department;
+        user.Employed    = updateRequest.Employed;
+        user.Activated   = updateRequest.Activated;
+        user.ModifiedAt  = DateTime.UtcNow;
+
+        return user;
     }
 
     public static ClientResponse ToResponse(this Client client)
@@ -259,32 +257,24 @@ public static class UserMapper
                    Salt                       = Guid.NewGuid(),
                    Address                    = clientCreateRequest.Address,
                    Role                       = Role.Client,
+                   BankId                     = Seeder.Bank.Bank02.Id,
                    CreatedAt                  = DateTime.UtcNow,
                    ModifiedAt                 = DateTime.UtcNow,
-                   Activated                  = false
+                   Activated                  = false,
+                   Permissions                = clientCreateRequest.Permissions
                };
     }
 
-    public static Client ToClient(this ClientUpdateRequest clientUpdateRequest, Client oldClient)
+    public static User Update(this User user, ClientUpdateRequest updateRequest)
     {
-        return new Client
-               {
-                   Id                         = oldClient.Id,
-                   FirstName                  = clientUpdateRequest.FirstName,
-                   LastName                   = clientUpdateRequest.LastName,
-                   PhoneNumber                = clientUpdateRequest.PhoneNumber,
-                   Address                    = clientUpdateRequest.Address,
-                   Activated                  = clientUpdateRequest.Activated,
-                   DateOfBirth                = oldClient.DateOfBirth,
-                   Gender                     = oldClient.Gender,
-                   UniqueIdentificationNumber = oldClient.UniqueIdentificationNumber,
-                   Email                      = oldClient.Email,
-                   Password                   = oldClient.Password,
-                   Salt                       = oldClient.Salt,
-                   Role                       = oldClient.Role,
-                   CreatedAt                  = oldClient.CreatedAt,
-                   ModifiedAt                 = DateTime.UtcNow
-               };
+        user.FirstName   = updateRequest.FirstName;
+        user.LastName    = updateRequest.LastName;
+        user.PhoneNumber = updateRequest.PhoneNumber;
+        user.Address     = updateRequest.Address;
+        user.Activated   = updateRequest.Activated;
+        user.ModifiedAt  = DateTime.UtcNow;
+
+        return user;
     }
 
     public static User ToUser(this Client client)
@@ -304,11 +294,13 @@ public static class UserMapper
                    Password                   = client.Password,
                    Salt                       = client.Salt,
                    Role                       = client.Role,
+                   BankId                     = Seeder.Bank.Bank02.Id,
                    Department                 = null,
                    CreatedAt                  = client.CreatedAt,
                    ModifiedAt                 = client.ModifiedAt,
                    Employed                   = null,
-                   Activated                  = client.Activated
+                   Activated                  = client.Activated,
+                   Permissions                = client.Permissions
                };
     }
 
@@ -328,9 +320,11 @@ public static class UserMapper
                    Password                   = user.Password,
                    Salt                       = user.Salt,
                    Role                       = user.Role,
+                   BankId                     = Seeder.Bank.Bank02.Id,
                    CreatedAt                  = user.CreatedAt,
                    ModifiedAt                 = user.ModifiedAt,
-                   Activated                  = user.Activated
+                   Activated                  = user.Activated,
+                   Permissions                = user.Permissions
                };
     }
 }

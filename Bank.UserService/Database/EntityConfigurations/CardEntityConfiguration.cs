@@ -19,6 +19,10 @@ public class CardEntityConfiguration : IEntityTypeConfiguration<Card>
                .IsFixedLength()
                .IsRequired();
 
+        // Ensure Card number is Unique
+        builder.HasIndex(card => card.Number)
+               .IsUnique();
+
         builder.HasOne(card => card.Type)
                .WithMany()
                .HasForeignKey(card => card.TypeId)
@@ -41,6 +45,7 @@ public class CardEntityConfiguration : IEntityTypeConfiguration<Card>
                .IsRequired();
 
         builder.Property(card => card.Limit)
+               .HasPrecision(28, 12)
                .IsRequired();
 
         builder.Property(card => card.Status)

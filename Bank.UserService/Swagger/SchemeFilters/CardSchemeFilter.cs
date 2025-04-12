@@ -1,6 +1,7 @@
 ﻿using Bank.Application.Extensions;
 using Bank.Application.Requests;
 using Bank.Application.Responses;
+using Bank.UserService.Database.Sample;
 
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
@@ -13,51 +14,20 @@ file static class Example
 {
     public static class Card
     {
-        public static readonly Guid     Id         = Guid.Parse("987e6543-e21b-45d3-a123-654321abcdef");
-        public static readonly Guid     CardTypeId = Guid.Parse("c3d4e5f6-a7b8-1234-5678-9abcdef01234");
-        public static readonly Guid     AccountId  = Guid.Parse("d4e5f6a7-b8c9-1234-5678-abcdef012345");
-        public const           string   Number     = "1234-5678-9876-5437";
-        public const           string   Name       = "Credit Card";
-        public static readonly DateOnly ExpiresAt  = new(2028, 5, 31);
-        public const           string   Cvv        = "123";
-        public const           decimal  Limit      = 5000.00m;
-        public const           bool     Status     = true;
-        public static readonly DateTime CreatedAt  = new(2024, 5, 2, 14, 12, 23);
-        public static readonly DateTime ModifiedAt = new(2025, 1, 3, 11, 45, 0);
-
         public static readonly CardResponse Response = new()
                                                        {
-                                                           Id         = Id,
-                                                           Number     = Number,
+                                                           Id         = Guid.Parse("987e6543-e21b-45d3-a123-654321abcdef"),
+                                                           Number     = "1234-5678-9876-5437",
                                                            Type       = null!,
-                                                           Name       = Name,
-                                                           ExpiresAt  = ExpiresAt,
+                                                           Name       = Sample.Card.CreateRequest.Name,
+                                                           ExpiresAt  = new(2028, 5, 31),
                                                            Account    = null!,
-                                                           CVV        = Cvv,
-                                                           Limit      = Limit,
-                                                           Status     = Status,
-                                                           CreatedAt  = CreatedAt,
-                                                           ModifiedAt = ModifiedAt
+                                                           CVV        = "123",
+                                                           Limit      = Sample.Card.CreateRequest.Limit,
+                                                           Status     = Sample.Card.CreateRequest.Status,
+                                                           CreatedAt  = DateTime.UtcNow,
+                                                           ModifiedAt = DateTime.UtcNow
                                                        };
-
-        public static readonly CardCreateRequest CreateRequest = new()
-                                                                 {
-                                                                     CardTypeId = CardTypeId,
-                                                                     AccountId  = AccountId,
-                                                                     Name       = Name,
-                                                                     Limit      = Limit,
-                                                                     Status     = Status
-                                                                 };
-
-        public static readonly CardStatusUpdateRequest StatusUpdateRequest = new()
-                                                                             {
-                                                                                 Status = Status
-                                                                             };
-
-        public static readonly CardLimitUpdateRequest LimitUpdateRequest = new()
-                                                                           {
-                                                                               Limit = Limit
-                                                                           };
     }
 }
 
@@ -65,7 +35,7 @@ public static partial class SwaggerSchemaFilter
 {
     public static class Card
     {
-        public class CreateRequest() : SwaggerSchemaFilter<CardCreateRequest>(SchemeFilters.Example.Card.CreateRequest)
+        public class CreateRequest() : SwaggerSchemaFilter<CardCreateRequest>(Sample.Card.CreateRequest)
         {
             protected override IOpenApiAny CreateExample(OpenApiSchema schema, SchemaFilterContext context)
             {
@@ -85,7 +55,7 @@ public static partial class SwaggerSchemaFilter
             }
         }
 
-        public class StatusUpdateRequest() : SwaggerSchemaFilter<CardStatusUpdateRequest>(SchemeFilters.Example.Card.StatusUpdateRequest)
+        public class StatusUpdateRequest() : SwaggerSchemaFilter<CardUpdateStatusRequest>(Sample.Card.StatusUpdateRequest)
         {
             protected override IOpenApiAny CreateExample(OpenApiSchema schema, SchemaFilterContext context)
             {
@@ -97,7 +67,7 @@ public static partial class SwaggerSchemaFilter
             }
         }
 
-        public class LimitUpdateRequest() : SwaggerSchemaFilter<CardLimitUpdateRequest>(SchemeFilters.Example.Card.LimitUpdateRequest)
+        public class LimitUpdateRequest() : SwaggerSchemaFilter<CardUpdateLimitRequest>(Sample.Card.LimitUpdateRequest)
         {
             protected override IOpenApiAny CreateExample(OpenApiSchema schema, SchemaFilterContext context)
             {

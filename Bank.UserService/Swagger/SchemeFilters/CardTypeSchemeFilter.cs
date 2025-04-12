@@ -12,17 +12,12 @@ file static class Example
 {
     public static class CardType
     {
-        public static readonly Guid     Id         = Guid.Parse("123e4567-e89b-12d3-a456-426614174000");
-        public const           string   Name       = "Credit Card";
-        public static readonly DateTime CreatedAt  = new(2024, 6, 12, 10, 30, 0);
-        public static readonly DateTime ModifiedAt = new(2025, 3, 5, 12, 45, 0);
-
         public static readonly CardTypeResponse Response = new()
                                                            {
-                                                               Id         = Id,
-                                                               Name       = Name,
-                                                               CreatedAt  = CreatedAt,
-                                                               ModifiedAt = ModifiedAt
+                                                               Id         = Guid.Parse("123e4567-e89b-12d3-a456-426614174000"),
+                                                               Name       = "Credit Card",
+                                                               CreatedAt  = DateTime.UtcNow,
+                                                               ModifiedAt = DateTime.UtcNow,
                                                            };
     }
 }

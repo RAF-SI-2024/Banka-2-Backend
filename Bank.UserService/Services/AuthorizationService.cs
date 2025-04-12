@@ -22,23 +22,32 @@ public interface IAuthorizationService
 
 public class AuthorizationService : IAuthorizationService
 {
-    public Guid UserId { get; }
-    public Role Role   { get; }
-
     public AuthorizationService(IHttpContextAccessor httpContextAccessor)
     {
-        var userId = httpContextAccessor.HttpContext?.User.FindFirst("id");
-        var role   = httpContextAccessor.HttpContext?.User.FindFirst("role");
+        var userId     = httpContextAccessor.HttpContext?.User.FindFirst("id");
+        var role       = httpContextAccessor.HttpContext?.User.FindFirst("role");
+        var permission = httpContextAccessor.HttpContext?.User.FindFirst("permission");
 
-        UserId = userId != null ? Guid.Parse(userId.Value) : Guid.Empty;
-        Role   = role   != null ? Enum.TryParse(role.Value, out Role myRole) ? myRole : Role.Invalid : Role.Invalid;
+        UserId      = userId     != null ? Guid.Parse(userId.Value) : Guid.Empty;
+        Role        = role       != null ? Enum.TryParse(role.Value, out Role myRole) ? myRole : Role.Invalid : Role.Invalid;
+        Permissions = permission != null ? long.Parse(permission.Value) : 1;
     }
 
-    public string GenerateToken() => GenerateToken(UserId, Role);
+    public long Permissions { get; }
+    public Guid UserId      { get; }
+    public Role Role        { get; }
 
-    public string GenerateTokenFor(User user) => GenerateToken(user.Id, user.Role);
+    public string GenerateToken()
+    {
+        return GenerateToken(UserId, Role, Permissions);
+    }
 
-    private static string GenerateToken(Guid userId, Role role)
+    public string GenerateTokenFor(User user)
+    {
+        return GenerateToken(user.Id, user.Role, user.Permissions);
+    }
+
+    private static string GenerateToken(Guid userId, Role role, long permission)
     {
         var expirationInMinutes = Configuration.Jwt.ExpirationTimeInMinutes;
         var securityKey         = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration.Jwt.SecretKey));
@@ -48,6 +57,7 @@ public class AuthorizationService : IAuthorizationService
         var claims = new List<Claim>
                      {
                          new("id", userId.ToString()),
+                         new("permission", permission.ToString()),
                          new("role", role.ToString())
                      };
 

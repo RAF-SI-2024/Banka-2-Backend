@@ -24,15 +24,19 @@ public class AccountCurrencyEntityConfiguration : IEntityTypeConfiguration<Accou
                .IsRequired();
 
         builder.Property(accountCurrency => accountCurrency.Balance)
+               .HasPrecision(28, 12)
                .IsRequired();
 
         builder.Property(accountCurrency => accountCurrency.AvailableBalance)
+               .HasPrecision(28, 12)
                .IsRequired();
 
         builder.Property(accountCurrency => accountCurrency.DailyLimit)
+               .HasPrecision(28, 12)
                .IsRequired();
 
         builder.Property(accountCurrency => accountCurrency.MonthlyLimit)
+               .HasPrecision(28, 12)
                .IsRequired();
 
         builder.Property(accountCurrency => accountCurrency.CreatedAt)

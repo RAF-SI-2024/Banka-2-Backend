@@ -11,10 +11,10 @@ public static class AccountCurrencyMapper
         return new AccountCurrencyResponse
                {
                    Id      = accountCurrency.Id,
-                   Account = accountCurrency.Account.ToSimpleResponse(),
-                   Employee = accountCurrency.Employee.ToEmployee()
-                                             .ToSimpleResponse(),
-                   Currency         = accountCurrency.Currency.ToResponse(),
+                   Account = accountCurrency.Account?.ToSimpleResponse()!,
+                   Employee = accountCurrency.Employee?.ToEmployee()
+                                             .ToSimpleResponse()!,
+                   Currency         = accountCurrency.Currency?.ToResponse()!,
                    Balance          = accountCurrency.Balance,
                    AvailableBalance = accountCurrency.AvailableBalance,
                    DailyLimit       = accountCurrency.DailyLimit,
@@ -24,43 +24,30 @@ public static class AccountCurrencyMapper
                };
     }
 
-    public static AccountCurrency ToAccountCurrency(this AccountCurrencyCreateRequest accountCurrencyCreateRequest, User employee, Currency currency, Account account)
+    public static AccountCurrency ToAccountCurrency(this AccountCurrencyCreateRequest createRequest)
     {
         return new AccountCurrency
                {
                    Id               = Guid.NewGuid(),
-                   AccountId        = account.Id,
-                   Account          = account,
-                   EmployeeId       = employee.Id,
-                   Employee         = employee,
-                   CurrencyId       = currency.Id,
-                   Currency         = currency,
+                   AccountId        = createRequest.AccountId,
+                   EmployeeId       = createRequest.EmployeeId,
+                   CurrencyId       = createRequest.CurrencyId,
                    Balance          = 0,
                    AvailableBalance = 0,
-                   DailyLimit       = accountCurrencyCreateRequest.DailyLimit,
-                   MonthlyLimit     = accountCurrencyCreateRequest.MonthlyLimit,
+                   DailyLimit       = createRequest.DailyLimit,
+                   MonthlyLimit     = createRequest.MonthlyLimit,
                    CreatedAt        = DateTime.UtcNow,
                    ModifiedAt       = DateTime.UtcNow
                };
     }
 
-    public static AccountCurrency ToAccountCurrency(this AccountCurrencyClientUpdateRequest accountCurrencyUpdate, AccountCurrency oldAccountCurrency)
+    public static AccountCurrency ToAccountCurrency(this AccountCurrency accountCurrency, AccountCurrencyClientUpdateRequest accountCurrencyUpdate)
     {
-        return new AccountCurrency
-               {
-                   Id               = oldAccountCurrency.Id,
-                   DailyLimit       = accountCurrencyUpdate.DailyLimit,
-                   MonthlyLimit     = accountCurrencyUpdate.MonthlyLimit,
-                   CreatedAt        = oldAccountCurrency.CreatedAt,
-                   ModifiedAt       = DateTime.UtcNow,
-                   Account          = oldAccountCurrency.Account,
-                   AccountId        = oldAccountCurrency.AccountId,
-                   Employee         = oldAccountCurrency.Employee,
-                   EmployeeId       = oldAccountCurrency.EmployeeId,
-                   Currency         = oldAccountCurrency.Currency,
-                   CurrencyId       = oldAccountCurrency.CurrencyId,
-                   Balance          = oldAccountCurrency.Balance,
-                   AvailableBalance = oldAccountCurrency.AvailableBalance
-               };
+        accountCurrency.DailyLimit   = accountCurrencyUpdate.DailyLimit;
+        accountCurrency.MonthlyLimit = accountCurrencyUpdate.MonthlyLimit;
+        accountCurrency.ModifiedAt   = DateTime.UtcNow;
+
+        return accountCurrency;
+        
     }
 }

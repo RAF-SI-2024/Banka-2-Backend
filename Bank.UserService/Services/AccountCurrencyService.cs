@@ -13,7 +13,7 @@ public interface IAccountCurrencyService
 
     Task<Result<Page<AccountCurrencyResponse>>> GetAll(Pageable pageable);
 
-    Task<Result<AccountCurrencyResponse>> Create(AccountCurrencyCreateRequest accountCurrencyCreateRequest);
+    Task<Result<AccountCurrencyResponse>> Create(AccountCurrencyCreateRequest createRequest);
 
     Task<Result<AccountCurrencyResponse>> Update(AccountCurrencyClientUpdateRequest accountClientUpdateRequest, Guid id);
 }
@@ -52,29 +52,33 @@ public class AccountCurrencyService(
         return Result.Ok(new Page<AccountCurrencyResponse>(accountCurrencyResponses, page.PageNumber, page.PageSize, page.TotalElements));
     }
 
-    public async Task<Result<AccountCurrencyResponse>> Create(AccountCurrencyCreateRequest accountCurrencyCreateRequest)
+    public async Task<Result<AccountCurrencyResponse>> Create(AccountCurrencyCreateRequest createRequest)
     {
-        var account  = await m_AccountRepository.FindById(accountCurrencyCreateRequest.AccountId);
-        var currency = await m_CurrencyRepository.FindById(accountCurrencyCreateRequest.CurrencyId);
+        var account  = await m_AccountRepository.FindById(createRequest.AccountId);
+        var currency = await m_CurrencyRepository.FindById(createRequest.CurrencyId);
         var employee = await m_UserRepository.FindById(m_AuthorizationService.UserId);
 
         if (account == null || currency == null || employee == null)
             return Result.BadRequest<AccountCurrencyResponse>("Invalid data.");
 
-        var accountCurrency = await m_AccountCurrencyRepository.Add(accountCurrencyCreateRequest.ToAccountCurrency(employee, currency, account));
+        var accountCurrency = await m_AccountCurrencyRepository.Add(createRequest.ToAccountCurrency());
 
+        accountCurrency.Account  = account;
+        accountCurrency.Currency = currency;
+        accountCurrency.Employee = employee;
+        
         return Result.Ok(accountCurrency.ToResponse());
     }
 
-    public async Task<Result<AccountCurrencyResponse>> Update(AccountCurrencyClientUpdateRequest accountClientUpdateRequest, Guid id)
+    public async Task<Result<AccountCurrencyResponse>> Update(AccountCurrencyClientUpdateRequest request, Guid id)
     {
-        var oldAccountCurrency = await m_AccountCurrencyRepository.FindById(id);
-
-        if (oldAccountCurrency is null)
-            return Result.NotFound<AccountCurrencyResponse>($"No AccountCurrency found with Id: {id}");
-
-        var accountCurrency = await m_AccountCurrencyRepository.Update(oldAccountCurrency, accountClientUpdateRequest.ToAccountCurrency(oldAccountCurrency));
-
+        var dbAccountCurrency = await m_AccountCurrencyRepository.FindById(id);
+    
+        if (dbAccountCurrency is null)
+            return Result.NotFound<AccountCurrencyResponse>($"No Account Currency found with Id: {id}");
+    
+        var accountCurrency = await m_AccountCurrencyRepository.Update(dbAccountCurrency.ToAccountCurrency(request));
+    
         return Result.Ok(accountCurrency.ToResponse());
     }
 }
