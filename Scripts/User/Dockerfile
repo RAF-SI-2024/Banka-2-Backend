@@ -7,8 +7,9 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["Bank.UserService/Bank.UserService.csproj", "Bank.UserService/"]
 COPY ["Bank.Application/Bank.Application.csproj", "Bank.Application/"]
+COPY ["Bank.Database/Bank.Database.csproj", "Bank.Database/"]
+COPY ["Bank.UserService/Bank.UserService.csproj", "Bank.UserService/"]
 RUN dotnet restore "Bank.UserService/Bank.UserService.csproj"
 COPY . .
 WORKDIR "/src/Bank.UserService"
