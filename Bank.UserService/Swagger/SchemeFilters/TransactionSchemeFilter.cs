@@ -30,7 +30,9 @@ file static class Example
                                                                   Purpose         = Sample.Transaction.CreateRequest.Purpose,
                                                                   Status          = Sample.Transaction.UpdateRequest.Status,
                                                                   CreatedAt       = DateTime.UtcNow,
-                                                                  ModifiedAt      = DateTime.UtcNow
+                                                                  ModifiedAt      = DateTime.UtcNow,
+                                                                  FromCurrency    = null!,
+                                                                  ToCurrency      = null!
                                                               };
 
         public static readonly TransactionCreateResponse CreateResponse = new()

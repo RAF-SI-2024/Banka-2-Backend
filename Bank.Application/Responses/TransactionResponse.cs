@@ -18,7 +18,9 @@ public class TransactionResponse
 {
     public required Guid                    Id              { set; get; }
     public required AccountSimpleResponse   FromAccount     { set; get; }
+    public required CurrencyResponse        FromCurrency    { set; get; }
     public required AccountSimpleResponse   ToAccount       { set; get; }
+    public required CurrencyResponse        ToCurrency      { set; get; }
     public required decimal                 FromAmount      { set; get; }
     public required decimal                 ToAmount        { set; get; }
     public required TransactionCodeResponse Code            { set; get; }

@@ -28,8 +28,10 @@ public static class TransactionMapper
         return new TransactionResponse
                {
                    Id              = transaction.Id,
-                   FromAccount     = transaction.FromAccount?.ToSimpleResponse()!,
-                   ToAccount       = transaction.ToAccount?.ToSimpleResponse()!,
+                   FromAccount     = transaction.FromAccount!.ToSimpleResponse(),
+                   FromCurrency    = transaction.FromCurrency!.ToResponse(),
+                   ToAccount       = transaction.ToAccount!.ToSimpleResponse(),
+                   ToCurrency      = transaction.ToCurrency!.ToResponse(),
                    FromAmount      = transaction.FromAmount,
                    ToAmount        = transaction.ToAmount,
                    Code            = transaction.Code?.ToResponse()!,
@@ -105,10 +107,10 @@ public static class TransactionMapper
                    Id              = Guid.NewGuid(),
                    FromAccountId   = internalTransaction.FromAccount!.Id,
                    FromCurrencyId  = internalTransaction.FromCurrencyId,
-                   FromAmount      = internalTransaction.Amount,
+                   FromAmount      = internalTransaction.Amount, //TODO: fix
                    ToAccountId     = internalTransaction.ToAccount!.Id,
                    ToCurrencyId    = internalTransaction.ToCurrencyId,
-                   ToAmount        = internalTransaction.Amount,
+                   ToAmount        = internalTransaction.Amount * internalTransaction.ExchangeDetails.ExchangeRate, 
                    CodeId          = internalTransaction.TransactionCodeId,
                    Status          = TransactionStatus.Pending,
                    Purpose         = internalTransaction.Purpose,
