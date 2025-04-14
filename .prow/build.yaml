@@ -1,4 +1,4 @@
-﻿postsubmit:
+﻿postsubmits:
   - name: post-banka-2-backend-build
     always_run: true
     decorate: true
