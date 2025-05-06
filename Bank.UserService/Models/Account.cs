@@ -38,6 +38,6 @@ public class Account
         accountId = AccountCurrencies.Find(accountCurrency => accountCurrency.CurrencyId == currencyId)
                                      ?.Id ?? Guid.Empty;
 
-        return false;
+        return accountId != Guid.Empty;
     }
 };

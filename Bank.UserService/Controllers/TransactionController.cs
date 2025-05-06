@@ -4,6 +4,7 @@ using Bank.Application.Queries;
 using Bank.Application.Requests;
 using Bank.Application.Responses;
 using Bank.Permissions.Core;
+using Bank.UserService.BackgroundServices;
 using Bank.UserService.Services;
 
 using Microsoft.AspNetCore.Mvc;
@@ -11,9 +12,10 @@ using Microsoft.AspNetCore.Mvc;
 namespace Bank.UserService.Controllers;
 
 [ApiController]
-public class TransactionController(ITransactionService transactionService) : ControllerBase
+public class TransactionController(ITransactionService transactionService, TransactionBackgroundService transactionBackgroundService) : ControllerBase
 {
-    private readonly ITransactionService m_TransactionService = transactionService;
+    private readonly ITransactionService          m_TransactionService           = transactionService;
+    private readonly TransactionBackgroundService m_TransactionBackgroundService = transactionBackgroundService;
 
     [Authorize]
     [HttpGet(Endpoints.Transaction.GetAll)]
@@ -59,5 +61,23 @@ public class TransactionController(ITransactionService transactionService) : Con
         var result = await m_TransactionService.Update(transactionUpdateRequest, id);
 
         return result.ActionResult;
+    }
+    
+    [Authorize]
+    [HttpGet(Endpoints.Transaction.ProcessInternal)]
+    public async Task<ActionResult<Page<TransactionResponse>>> ProcessInternal()
+    {
+        await m_TransactionBackgroundService.ProcessInternalTransactions(m_TransactionBackgroundService);
+        
+        return Ok();
+    }
+    
+    [Authorize]
+    [HttpGet(Endpoints.Transaction.ProcessExternal)]
+    public async Task<ActionResult<Page<TransactionResponse>>> ProcessExternal()
+    {
+        await m_TransactionBackgroundService.ProcessExternalTransactions(m_TransactionBackgroundService);
+        
+        return Ok();
     }
 }

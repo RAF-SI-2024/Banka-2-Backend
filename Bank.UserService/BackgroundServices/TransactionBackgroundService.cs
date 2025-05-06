@@ -32,7 +32,7 @@ public class TransactionBackgroundService(ITransactionService transactionService
 
     private bool m_ProcessingInternalTransaction = false;
 
-    private async Task ProcessInternalTransactions(object? _)
+    public async Task ProcessInternalTransactions(object? _)
     {
         if (m_ProcessingInternalTransaction || InternalTransactions.IsEmpty)
             return;
@@ -50,7 +50,7 @@ public class TransactionBackgroundService(ITransactionService transactionService
         m_ProcessingInternalTransaction = false;
     }
 
-    private async Task ProcessExternalTransactions(object? @object)
+    public async Task ProcessExternalTransactions(object? @object)
     {
         var transactionBackgroundService = @object as TransactionBackgroundService;
     }

@@ -1,11 +1,15 @@
 ﻿using Bank.Application;
 using Bank.Database;
+using Bank.Link;
+using Bank.Link.Core;
 using Bank.OpenApi;
 using Bank.Permissions;
 using Bank.UserService.BackgroundServices;
 using Bank.UserService.Configurations;
 using Bank.UserService.Database;
+using Bank.UserService.Database.Seeders;
 using Bank.UserService.HostedServices;
+using Bank.UserService.Mappers;
 using Bank.UserService.Repositories;
 using Bank.UserService.Services;
 
@@ -32,6 +36,7 @@ public class UserApplication
         builder.Services.AddHostedServices();
         builder.Services.AddBackgroundServices();
         builder.Services.AddHttpServices();
+        builder.Services.AddBankLinkServices();
 
         builder.Services.AddCors();
         builder.Services.AddAuthenticationServices();
@@ -127,6 +132,16 @@ public static class ServiceCollectionExtensions
     {
         services.AddHttpClient();
         services.AddHttpContextAccessor();
+
+        return services;
+    }
+
+    public static IServiceCollection AddBankLinkServices(this IServiceCollection services)
+    {
+        services.AddLinkServices(new DefaultData(Seeder.Currency.All.Select(currency => currency.ToResponse())
+                                                       .ToList(), Seeder.TransactionCode.All.Select(transactionCode => transactionCode.ToResponse())
+                                                                        .ToList()))
+                .AddB3Link(new BankData(Seeder.Bank.Bank03.Code, Seeder.Bank.Bank03.BaseUrl));
 
         return services;
     }

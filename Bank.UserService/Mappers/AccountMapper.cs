@@ -1,5 +1,6 @@
 ﻿using Bank.Application.Requests;
 using Bank.Application.Responses;
+using Bank.UserService.Database.Seeders;
 using Bank.UserService.Models;
 
 namespace Bank.UserService.Mappers;
@@ -98,5 +99,28 @@ public static class AccountMapper
                                   .ToString();
 
         return randomDigits;
+    }
+
+    public static Account ToAccount(this AccountResponse response, Guid clientId)
+    {
+        return new Account
+               {
+                   Id               = Guid.NewGuid(),
+                   ClientId         = clientId,
+                   Name             = response.Name,
+                   Number           = response.AccountNumber[7..16],
+                   Balance          = 0,
+                   AvailableBalance = 0,
+                   EmployeeId       = clientId,
+                   CurrencyId       = response.Currency.Id,
+                   AccountTypeId    = Seeder.AccountType.CheckingAccount.Id,
+                   DailyLimit       = 0,
+                   MonthlyLimit     = 0,
+                   CreationDate     = DateOnly.FromDateTime(DateTime.UtcNow),
+                   ExpirationDate   = DateOnly.FromDateTime(DateTime.UtcNow),
+                   Status           = false,
+                   CreatedAt        = DateTime.UtcNow,
+                   ModifiedAt       = DateTime.UtcNow,
+               };
     }
 }
