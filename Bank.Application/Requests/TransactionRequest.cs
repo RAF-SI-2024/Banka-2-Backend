@@ -4,14 +4,15 @@ namespace Bank.Application.Requests;
 
 public class TransactionCreateRequest
 {
-    public          string? FromAccountNumber { set; get; }
-    public          Guid    FromCurrencyId    { set; get; }
-    public          string? ToAccountNumber   { set; get; }
-    public          Guid    ToCurrencyId      { set; get; }
-    public required decimal Amount            { set; get; }
-    public required Guid    CodeId            { set; get; }
-    public          string? ReferenceNumber   { set; get; }
-    public required string  Purpose           { set; get; }
+    public          string? FromAccountNumber     { set; get; }
+    public          Guid    FromCurrencyId        { set; get; }
+    public          string? ToAccountNumber       { set; get; }
+    public          Guid    ToCurrencyId          { set; get; }
+    public required decimal Amount                { set; get; }
+    public required Guid    CodeId                { set; get; }
+    public          string? ReferenceNumber       { set; get; }
+    public required string  Purpose               { set; get; }
+    public          object? ExternalTransactionId { set; get; }
 }
 
 public class TransactionUpdateRequest

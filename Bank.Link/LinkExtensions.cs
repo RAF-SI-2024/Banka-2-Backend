@@ -1,4 +1,5 @@
 ﻿using Bank.Application.Responses;
+using Bank.Http;
 using Bank.Link.Configurations;
 using Bank.Link.Core;
 using Bank.Link.Core.B3;
@@ -15,12 +16,13 @@ public static class LinkExtensions
         services.AddSingleton<IDataService, DataService>();
         services.AddSingleton<IBankUserData, BankUserData>();
         services.AddSingleton<IBankExchangeData, BankExchangeData>();
+        services.AddUserServiceHttpClient();
 
         if (defaultData is null)
             return services;
 
-        services.AddSingleton<IReadOnlyCollection<CurrencyResponse>>(defaultData.Currencies);
-        services.AddSingleton<IReadOnlyCollection<TransactionCodeResponse>>(defaultData.TransactionCodes);
+        services.AddSingleton<IEnumerable<CurrencyResponse>>(defaultData.Currencies);
+        services.AddSingleton<IEnumerable<TransactionCodeResponse>>(defaultData.TransactionCodes);
 
         return services;
     }

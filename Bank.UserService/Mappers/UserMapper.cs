@@ -345,4 +345,28 @@ public static class UserMapper
                    Permissions                = user.Permissions
                };
     }
+
+    public static User ToUser(this AccountResponse response)
+    {
+        return new User
+               {
+                   Id                         = Guid.NewGuid(),
+                   FirstName                  = response.Client.FirstName,
+                   LastName                   = response.Client.LastName,
+                   DateOfBirth                = response.Client.DateOfBirth,
+                   Gender                     = response.Client.Gender,
+                   UniqueIdentificationNumber = response.Client.UniqueIdentificationNumber,
+                   Email                      = response.Client.Email,
+                   Username                   = string.Empty,
+                   PhoneNumber                = response.Client.PhoneNumber,
+                   Address                    = response.Client.Address,
+                   Role                       = response.Client.Role,
+                   Permissions                = new Permissions(response.Client.Permissions),
+                   BankId                     = Seeder.Bank.All.First(bank => bank.Code == response.AccountNumber[..3]).Id,
+                   CreatedAt                  = DateTime.UtcNow,
+                   ModifiedAt                 = DateTime.UtcNow,
+                   Employed                   = false,
+                   Activated                  = false
+               };
+    }
 }

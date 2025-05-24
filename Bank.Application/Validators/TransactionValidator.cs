@@ -13,32 +13,20 @@ public static class TransactionValidator
         public Create()
         {
             RuleFor(request => request.FromAccountNumber)
-            .NotEmpty()
-            .WithMessage(ValidationErrorMessage.Global.FieldIsRequired("FromAccountNumber"))
             .Length(18)
             .WithMessage(ValidationErrorMessage.Global.TextFixedLength("FromAccountNumber", 18))
             .Must(ValidatorUtilities.Global.ContainsOnlyNumbers)
-            .WithMessage(ValidationErrorMessage.Global.FieldIsInvalid("FromToAccountNumber"));
-
-            RuleFor(request => request.FromCurrencyId)
-            .NotEmpty()
-            .WithMessage(ValidationErrorMessage.Global.FieldIsRequired("FromCurrencyId"));
-
-            RuleFor(request => request.ToCurrencyId)
-            .NotEmpty()
-            .WithMessage(ValidationErrorMessage.Global.FieldIsRequired("ToCurrencyId"));
-
-            RuleFor(request => request.CodeId)
-            .NotEmpty()
-            .WithMessage(ValidationErrorMessage.Global.FieldIsRequired("CodeId"));
+            .WithMessage(ValidationErrorMessage.Global.FieldIsInvalid("FromAccountNumber"));
 
             RuleFor(request => request.ToAccountNumber)
-            .NotEmpty()
-            .WithMessage(ValidationErrorMessage.Global.FieldIsRequired("ToAccountNumber"))
             .Length(18)
             .WithMessage(ValidationErrorMessage.Global.TextFixedLength("ToAccountNumber", 18))
             .Must(ValidatorUtilities.Global.ContainsOnlyNumbers)
             .WithMessage(ValidationErrorMessage.Global.FieldIsInvalid("ToAccountNumber"));
+
+            RuleFor(request => request.CodeId)
+            .NotEmpty()
+            .WithMessage(ValidationErrorMessage.Global.FieldIsRequired("CodeId"));
 
             RuleFor(request => request.Amount)
             .NotEmpty()

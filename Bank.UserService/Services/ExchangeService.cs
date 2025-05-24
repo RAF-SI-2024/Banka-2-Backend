@@ -28,16 +28,18 @@ public interface IExchangeService
 }
 
 public class ExchangeService(
-    IExchangeRepository       exchangeRepository,
-    ICurrencyRepository       currencyRepository,
-    IAccountRepository        accountRepository,
-    Lazy<ITransactionService> transactionServiceLazy
+    IExchangeRepository        exchangeRepository,
+    ICurrencyRepository        currencyRepository,
+    IAccountRepository         accountRepository,
+    Lazy<ITransactionService>  transactionServiceLazy,
+    ITransactionCodeRepository transactionCodeRepository
 ) : IExchangeService
 {
-    private readonly IExchangeRepository       m_ExchangeRepository     = exchangeRepository;
-    private readonly ICurrencyRepository       m_CurrencyRepository     = currencyRepository;
-    private readonly IAccountRepository        m_AccountRepository      = accountRepository;
-    private readonly Lazy<ITransactionService> m_TransactionServiceLazy = transactionServiceLazy;
+    private readonly IExchangeRepository        m_ExchangeRepository        = exchangeRepository;
+    private readonly ICurrencyRepository        m_CurrencyRepository        = currencyRepository;
+    private readonly IAccountRepository         m_AccountRepository         = accountRepository;
+    private readonly ITransactionCodeRepository m_TransactionCodeRepository = transactionCodeRepository;
+    private readonly Lazy<ITransactionService>  m_TransactionServiceLazy    = transactionServiceLazy;
 
     private ITransactionService TransactionService => m_TransactionServiceLazy.Value;
 
@@ -105,27 +107,34 @@ public class ExchangeService(
 
     public async Task<Result<ExchangeResponse>> MakeExchange(ExchangeMakeExchangeRequest exchangeMakeExchangeRequest)
     {
-        var account = await m_AccountRepository.FindById(exchangeMakeExchangeRequest.AccountId);
+        var accountTask         = m_AccountRepository.FindById(exchangeMakeExchangeRequest.AccountId);
+        var fromCurrencyTask    = m_CurrencyRepository.FindById(exchangeMakeExchangeRequest.CurrencyFromId);
+        var toCurrencyTask      = m_CurrencyRepository.FindById(exchangeMakeExchangeRequest.CurrencyToId);
+        var transactionCodeTask = m_TransactionCodeRepository.FindById(Seeder.TransactionCode.TransactionCode285.Id);
+        var exchangeDetailsTask = CalculateExchangeDetails(exchangeMakeExchangeRequest.CurrencyFromId, exchangeMakeExchangeRequest.CurrencyToId);
 
-        if (account is null)
-            return Result.NotFound<ExchangeResponse>($"No Account with Id '{exchangeMakeExchangeRequest.AccountId}'");
+        await Task.WhenAll(accountTask, fromCurrencyTask, toCurrencyTask, transactionCodeTask, exchangeDetailsTask);
 
-        var exchangeDetails = await CalculateExchangeDetails(exchangeMakeExchangeRequest.CurrencyFromId, exchangeMakeExchangeRequest.CurrencyToId);
+        var account         = await accountTask;
+        var fromCurrency    = await fromCurrencyTask;
+        var toCurrency      = await toCurrencyTask;
+        var transactionCode = await transactionCodeTask;
+        var exchangeDetails = await exchangeDetailsTask;
 
-        if (exchangeDetails is null)
-            return Result.NotFound<ExchangeResponse>($"Cannot make exchange");
-
+        if (account is null || fromCurrency is null || toCurrency is null || transactionCode is null || exchangeDetails is null)
+            return Result.BadRequest<ExchangeResponse>("Invalid data.");
+        
         await TransactionService.PrepareInternalTransaction(new PrepareInternalTransaction
                                                             {
                                                                 FromAccount       = account,
-                                                                FromCurrencyId    = exchangeMakeExchangeRequest.CurrencyFromId,
+                                                                FromCurrency      = fromCurrency,
                                                                 ToAccount         = account,
-                                                                ToCurrencyId      = exchangeMakeExchangeRequest.CurrencyToId,
+                                                                ToCurrency        = toCurrency,
                                                                 Amount            = exchangeMakeExchangeRequest.Amount,
                                                                 ExchangeDetails   = exchangeDetails,
-                                                                TransactionCodeId = Seeder.TransactionCode.TransactionCode285.Id,
+                                                                TransactionCode   = transactionCode,
                                                                 ReferenceNumber   = null,
-                                                                Purpose           = null
+                                                                Purpose           = "Currency Exchange"
                                                             });
 
         return Result.Ok<ExchangeResponse>();
