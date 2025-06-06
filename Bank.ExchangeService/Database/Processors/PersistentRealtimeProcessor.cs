@@ -16,7 +16,7 @@ public class PersistentRealtimeProcessor(IQuoteRepository quoteRepository) : IRe
 
     public async Task ProcessStockQuotes(List<Quote> quotes)
     {
-        if (m_StockTimer.Elapsed.Seconds < Configuration.Security.Global.HistoryTimeFrameInMinutes * 60)
+        if (m_StockTimer.Elapsed.TotalSeconds < Configuration.Security.Global.HistoryTimeFrameInMinutes * 60)
             return;
 
         m_StockTimer.Restart();
@@ -26,7 +26,7 @@ public class PersistentRealtimeProcessor(IQuoteRepository quoteRepository) : IRe
 
     public async Task ProcessForexQuotes(List<Quote> quotes)
     {
-        if (m_ForexTimer.Elapsed.Seconds < Configuration.Security.Global.HistoryTimeFrameInMinutes * 60)
+        if (m_ForexTimer.Elapsed.TotalSeconds < Configuration.Security.Global.HistoryTimeFrameInMinutes * 60)
             return;
 
         m_ForexTimer.Restart();
@@ -36,7 +36,7 @@ public class PersistentRealtimeProcessor(IQuoteRepository quoteRepository) : IRe
 
     public async Task ProcessOptionQuotes(List<Quote> quotes)
     {
-        if (m_OptionTimer.Elapsed.Seconds < Configuration.Security.Global.HistoryTimeFrameInMinutes * 60)
+        if (m_OptionTimer.Elapsed.TotalSeconds < Configuration.Security.Global.HistoryTimeFrameInMinutes * 60)
             return;
 
         m_OptionTimer.Restart();

@@ -77,106 +77,106 @@ public static class FutureContractSeederExtension
 
     public static async Task SeedFutureContractsAndQuotes(this DatabaseContext context, ISecurityRepository securityRepository, IQuoteRepository quoteRepository)
     {
-        if (context.Securities.Any(security => security.SecurityType == SecurityType.FutureContract))
-            return;
-
-        var acronymAndStockExchange = await context.StockExchanges.ToDictionaryAsync(stockExchange => stockExchange.Acronym, stockExchange => stockExchange);
-        var futureContractPath      = Path.Combine("Database", "Seeders", "resource", "futures_data.csv");
-        var quotesPath              = Path.Combine("Database", "Seeders", "resource", "quotes_30min_2days.csv");
-        var futures                 = new List<SecurityModel>();
-
-        using (var reader = new StreamReader(futureContractPath))
-        {
-            await reader.ReadLineAsync();
-
-            while (!reader.EndOfStream)
-            {
-                var line = await reader.ReadLineAsync();
-
-                if (line is null)
-                    continue;
-
-                var parts = line.Split(',');
-
-                var ticker = parts[4]
-                .Trim();
-
-                var stockExchangeAcronym = parts[5]
-                .Trim();
-
-                if (!acronymAndStockExchange.TryGetValue(stockExchangeAcronym, out var stockExchange))
-                    continue;
-
-                var security = new SecurityModel
-                               {
-                                   Id = Guid.NewGuid(),
-                                   Name = parts[3]
-                                   .Trim(),
-                                   Ticker          = ticker,
-                                   StockExchangeId = stockExchange.Id,
-                                   SecurityType = Enum.Parse<SecurityType>(parts[6]
-                                                                           .Trim()),
-                                   ContractSize = int.Parse(parts[0]
-                                                            .Trim()),
-                                   ContractUnit = Enum.Parse<ContractUnit>(parts[1]
-                                                                           .Trim()),
-                                   SettlementDate = DateOnly.ParseExact(parts[2]
-                                                                        .Trim(), "dd.MM.yyyy"),
-                               };
-
-                futures.Add(security);
-            }
-        }
-
-        await securityRepository.CreateSecurities(futures);
-
-        var tickerAndFutureContract = (await securityRepository.FindAll(SecurityType.FutureContract)).ToDictionary(security => security.Ticker, security => security);
-        var quotes                  = new List<Quote>();
-
-        using (var reader = new StreamReader(quotesPath))
-        {
-            await reader.ReadLineAsync();
-
-            while (!reader.EndOfStream)
-            {
-                var line = await reader.ReadLineAsync();
-
-                if (line is null)
-                    continue;
-
-                var parts = line.Split(',');
-
-                string ticker = parts[0]
-                .Trim();
-
-                if (!tickerAndFutureContract.TryGetValue(ticker, out var security))
-                    continue;
-
-                var quote = new Quote
-                            {
-                                Id                = Guid.NewGuid(),
-                                SecurityId        = security.Id,
-                                AskPrice          = decimal.Parse(parts[1]),
-                                BidPrice          = decimal.Parse(parts[2]),
-                                HighPrice         = decimal.Parse(parts[3]),
-                                LowPrice          = decimal.Parse(parts[4]),
-                                ClosePrice        = decimal.Parse(parts[5]),
-                                OpeningPrice      = decimal.Parse(parts[6]),
-                                ImpliedVolatility = decimal.Parse(parts[7]),
-                                Volume            = long.Parse(parts[8]),
-                                CreatedAt = DateTime.Parse(parts[9])
-                                                    .ToUniversalTime(),
-                                ModifiedAt = DateTime.Parse(parts[10])
-                                                     .ToUniversalTime(),
-                                AskSize       = int.Parse(parts[11]),
-                                BidSize       = int.Parse(parts[12]),
-                                ContractCount = 1,
-                            };
-
-                quotes.Add(quote);
-            }
-        }
-
-        await quoteRepository.CreateQuotes(quotes);
+        // if (context.Securities.Any(security => security.SecurityType == SecurityType.FutureContract))
+        //     return;
+        //
+        // var acronymAndStockExchange = await context.StockExchanges.ToDictionaryAsync(stockExchange => stockExchange.Acronym, stockExchange => stockExchange);
+        // var futureContractPath      = Path.Combine("Database", "Seeders", "resource", "futures_data.csv");
+        // var quotesPath              = Path.Combine("Database", "Seeders", "resource", "quotes_30min_2days.csv");
+        // var futures                 = new List<SecurityModel>();
+        //
+        // using (var reader = new StreamReader(futureContractPath))
+        // {
+        //     await reader.ReadLineAsync();
+        //
+        //     while (!reader.EndOfStream)
+        //     {
+        //         var line = await reader.ReadLineAsync();
+        //
+        //         if (line is null)
+        //             continue;
+        //
+        //         var parts = line.Split(',');
+        //
+        //         var ticker = parts[4]
+        //         .Trim();
+        //
+        //         var stockExchangeAcronym = parts[5]
+        //         .Trim();
+        //
+        //         if (!acronymAndStockExchange.TryGetValue(stockExchangeAcronym, out var stockExchange))
+        //             continue;
+        //
+        //         var security = new SecurityModel
+        //                        {
+        //                            Id = Guid.NewGuid(),
+        //                            Name = parts[3]
+        //                            .Trim(),
+        //                            Ticker          = ticker,
+        //                            StockExchangeId = stockExchange.Id,
+        //                            SecurityType = Enum.Parse<SecurityType>(parts[6]
+        //                                                                    .Trim()),
+        //                            ContractSize = int.Parse(parts[0]
+        //                                                     .Trim()),
+        //                            ContractUnit = Enum.Parse<ContractUnit>(parts[1]
+        //                                                                    .Trim()),
+        //                            SettlementDate = DateOnly.ParseExact(parts[2]
+        //                                                                 .Trim(), "dd.MM.yyyy"),
+        //                        };
+        //
+        //         futures.Add(security);
+        //     }
+        // }
+        //
+        // await securityRepository.CreateSecurities(futures);
+        //
+        // var tickerAndFutureContract = (await securityRepository.FindAll(SecurityType.FutureContract)).ToDictionary(security => security.Ticker, security => security);
+        // var quotes                  = new List<Quote>();
+        //
+        // using (var reader = new StreamReader(quotesPath))
+        // {
+        //     await reader.ReadLineAsync();
+        //
+        //     while (!reader.EndOfStream)
+        //     {
+        //         var line = await reader.ReadLineAsync();
+        //
+        //         if (line is null)
+        //             continue;
+        //
+        //         var parts = line.Split(',');
+        //
+        //         string ticker = parts[0]
+        //         .Trim();
+        //
+        //         if (!tickerAndFutureContract.TryGetValue(ticker, out var security))
+        //             continue;
+        //
+        //         var quote = new Quote
+        //                     {
+        //                         Id                = Guid.NewGuid(),
+        //                         SecurityId        = security.Id,
+        //                         AskPrice          = decimal.Parse(parts[1]),
+        //                         BidPrice          = decimal.Parse(parts[2]),
+        //                         HighPrice         = decimal.Parse(parts[3]),
+        //                         LowPrice          = decimal.Parse(parts[4]),
+        //                         ClosePrice        = decimal.Parse(parts[5]),
+        //                         OpeningPrice      = decimal.Parse(parts[6]),
+        //                         ImpliedVolatility = decimal.Parse(parts[7]),
+        //                         Volume            = long.Parse(parts[8]),
+        //                         CreatedAt = DateTime.Parse(parts[9])
+        //                                             .ToUniversalTime(),
+        //                         ModifiedAt = DateTime.Parse(parts[10])
+        //                                              .ToUniversalTime(),
+        //                         AskSize       = int.Parse(parts[11]),
+        //                         BidSize       = int.Parse(parts[12]),
+        //                         ContractCount = 1,
+        //                     };
+        //
+        //         quotes.Add(quote);
+        //     }
+        // }
+        //
+        // await quoteRepository.CreateQuotes(quotes);
     }
 }
