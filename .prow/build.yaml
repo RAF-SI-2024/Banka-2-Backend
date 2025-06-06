@@ -21,7 +21,7 @@
               docker login -u $HARBOR_USERNAME -p $HARBOR_PASSWORD harbor.k8s.elab.rs
               commit_hash=$(git rev-parse HEAD)
               
-              for serviceName in User; do
+              for serviceName in User Exchange; do
                 imageName=$(echo "$serviceName" | tr '[:upper:]' '[:lower:]')
                 docker build -t harbor.k8s.elab.rs/${TEAM_NAME}/${imageName}:latest -f "Scripts/${serviceName}/Dockerfile" "."
               
