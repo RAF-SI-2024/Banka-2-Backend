@@ -26,7 +26,6 @@
                 docker build -t harbor.k8s.elab.rs/${TEAM_NAME}/${imageName}:latest -f "Scripts/${serviceName}/Dockerfile" "."
               
                 docker tag harbor.k8s.elab.rs/${TEAM_NAME}/${imageName}:latest harbor.k8s.elab.rs/${TEAM_NAME}/${imageName}:${commit_hash}
-              
                 docker push harbor.k8s.elab.rs/${TEAM_NAME}/${imageName}:latest
                 docker push harbor.k8s.elab.rs/${TEAM_NAME}/${imageName}:${commit_hash}
               done
