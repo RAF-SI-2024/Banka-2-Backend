@@ -35,12 +35,31 @@ public static class InstallmentMapper
                    ModifiedAt      = installment.ModifiedAt
                };
     }
+    
+    public static InstallmentResponse ToResponse(this Installment installment, LoanResponse loanResponse)
+    {
+        return new InstallmentResponse
+               {
+                   Id              = installment.Id,
+                   Loan            = loanResponse,
+                   InterestRate    = installment.InterestRate,
+                   ExpectedDueDate = DateOnly.FromDateTime(installment.ExpectedDueDate),
+                   ActualDueDate   = DateOnly.FromDateTime(installment.ActualDueDate),
+                   Status          = installment.Status,
+                   CreatedAt       = installment.CreatedAt,
+                   ModifiedAt      = installment.ModifiedAt
+               };
+    }
 
     public static Installment Update(this Installment installment, InstallmentUpdateRequest updateRequest)
     {
-        installment.ActualDueDate = updateRequest.ActualDueDate ?? installment.ActualDueDate;
-        installment.Status        = updateRequest.Status        ?? installment.Status;
-        installment.ModifiedAt    = DateTime.UtcNow;
+        if (updateRequest.ActualDueDate.HasValue)
+        {
+            installment.ActualDueDate = DateTime.SpecifyKind(updateRequest.ActualDueDate.Value, DateTimeKind.Utc);
+        }
+    
+        installment.Status     = updateRequest.Status ?? installment.Status;
+        installment.ModifiedAt = DateTime.UtcNow;
 
         return installment;
     }

@@ -161,6 +161,7 @@ resharper_place_linq_into_on_new_line = false
 resharper_place_simple_embedded_statement_on_same_line = false
 resharper_place_simple_list_pattern_on_single_line = false
 resharper_prefer_wrap_around_eq = avoid
+resharper_space_after_operator_keyword = false
 resharper_use_continuous_indent_inside_initializer_braces = false
 resharper_use_continuous_indent_inside_parens = false
 resharper_use_indent_from_vs = false

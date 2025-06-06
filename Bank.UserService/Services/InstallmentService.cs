@@ -19,18 +19,11 @@ public interface IInstallmentService
     Task<Result<InstallmentResponse>> Update(InstallmentUpdateRequest request, Guid id);
 }
 
-public class InstallmentService : IInstallmentService
+public class InstallmentService(IInstallmentRepository installmentRepository, ILoanRepository loanRepository, LoanHostedService loanHostedService) : IInstallmentService
 {
-    private readonly IInstallmentRepository m_InstallmentRepository;
-    private readonly LoanHostedService      m_LoanHostedService;
-    private readonly ILoanRepository        m_LoanRepository;
-
-    public InstallmentService(IInstallmentRepository installmentRepository, ILoanRepository loanRepository, LoanHostedService loanHostedService)
-    {
-        m_InstallmentRepository = installmentRepository;
-        m_LoanRepository        = loanRepository;
-        m_LoanHostedService     = loanHostedService;
-    }
+    private readonly IInstallmentRepository m_InstallmentRepository = installmentRepository;
+    private readonly LoanHostedService      m_LoanHostedService     = loanHostedService;
+    private readonly ILoanRepository        m_LoanRepository        = loanRepository;
 
     public async Task<Result<InstallmentResponse>> GetOne(Guid id)
     {
@@ -59,14 +52,17 @@ public class InstallmentService : IInstallmentService
 
         var page = await m_InstallmentRepository.FindAllByLoanId(loanId, pageable);
 
-        var installmentResponses = new List<InstallmentResponse>();
+        var installmentAmount = await m_LoanHostedService.CalculateInstallmentAmount(loan);
 
-        foreach (var installment in page.Items)
-        {
-            var response = installment.ToResponse();
-            response.Amount = await m_LoanHostedService.CalculateInstallmentAmount(loan);
-            installmentResponses.Add(response);
-        }
+        var installmentResponses = page.Items.Select(installment =>
+                                                     {
+                                                         var installmentResponse = installment.ToResponse();
+
+                                                         installmentResponse.Amount = installmentAmount;
+
+                                                         return installmentResponse;
+                                                     })
+                                       .ToList();
 
         return Result.Ok(new Page<InstallmentResponse>(installmentResponses, page.PageNumber, page.PageSize, page.TotalElements));
     }
@@ -79,10 +75,12 @@ public class InstallmentService : IInstallmentService
             return Result.NotFound<InstallmentResponse>($"Loan with ID {createRequest.LoanId} not found");
 
         var installment = createRequest.ToInstallment();
+        
+        var loanResponse = loan.ToLoanResponse();
 
         var createdInstallment = await m_InstallmentRepository.Add(installment);
 
-        return Result.Ok(createdInstallment.ToResponse());
+        return Result.Ok(createdInstallment.ToResponse(loanResponse));
     }
 
     public async Task<Result<InstallmentResponse>> Update(InstallmentUpdateRequest request, Guid id)

@@ -1,4 +1,6 @@
-﻿using Bank.UserService.Models;
+﻿using System.Collections.Immutable;
+
+using Bank.UserService.Models;
 
 namespace Bank.UserService.Database.Seeders;
 
@@ -111,21 +113,10 @@ public static partial class Seeder
                                                                 CreatedAt   = DateTime.UtcNow,
                                                                 ModifiedAt  = DateTime.UtcNow
                                                             };
-    }
-}
 
-public static class CurrencySeederExtension
-{
-    public static async Task SeedCurrency(this ApplicationContext context)
-    {
-        if (context.Currencies.Any())
-            return;
-
-        await context.Currencies.AddRangeAsync([
-                                                   Seeder.Currency.Euro, Seeder.Currency.SwissFranc, Seeder.Currency.USDollar, Seeder.Currency.BritishPound,
-                                                   Seeder.Currency.JapaneseYen, Seeder.Currency.CanadianDollar, Seeder.Currency.AustralianDollar, Seeder.Currency.SerbianDinar
-                                               ]);
-
-        await context.SaveChangesAsync();
+        public static readonly ImmutableArray<CurrencyModel> All =
+        [
+            Euro, SwissFranc, USDollar, BritishPound, JapaneseYen, CanadianDollar, AustralianDollar, SerbianDinar
+        ];
     }
 }

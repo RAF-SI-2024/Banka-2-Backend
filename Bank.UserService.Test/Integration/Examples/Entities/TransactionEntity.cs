@@ -1,7 +1,6 @@
 using Bank.Application.Domain;
 using Bank.Application.Queries;
 using Bank.Application.Requests;
-using Bank.UserService.Database.Sample;
 using Bank.UserService.Database.Seeders;
 
 namespace Bank.UserService.Test.Examples.Entities;
@@ -12,9 +11,9 @@ public static partial class Example
     {
         public static class Transaction
         {
-            public static readonly TransactionCreateRequest CreateRequest = Sample.Transaction.CreateRequest;
+            public static readonly TransactionCreateRequest CreateRequest = Database.Examples.Example.Transaction.CreateRequest;
 
-            public static readonly TransactionUpdateRequest UpdateRequest = Sample.Transaction.UpdateRequest;
+            public static readonly TransactionUpdateRequest UpdateRequest = Database.Examples.Example.Transaction.UpdateRequest;
 
             public static readonly Guid TransactionId = Seeder.Transaction.Transaction01.Id;
 

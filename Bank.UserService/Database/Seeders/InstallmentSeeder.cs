@@ -1,4 +1,6 @@
-﻿using Bank.Application.Domain;
+﻿using System.Collections.Immutable;
+
+using Bank.Application.Domain;
 using Bank.UserService.Models;
 
 namespace Bank.UserService.Database.Seeders;
@@ -68,19 +70,11 @@ public static partial class Seeder
                                                                               CreatedAt       = DateTime.UtcNow,
                                                                               ModifiedAt      = DateTime.UtcNow
                                                                           };
-    }
-}
 
-public static class InstallmentSeederExtension
-{
-    public static async Task SeedInstallments(this ApplicationContext context)
-    {
-        if (context.Installments.Any())
-            return;
-
-        await context.Installments.AddRangeAsync(Seeder.Installment.PersonalLoanInstallment1, Seeder.Installment.MortgageLoanInstallment1, Seeder.Installment.AutoLoanInstallment1,
-                                                 Seeder.Installment.BusinessLoanInstallment1, Seeder.Installment.StudentLoanInstallment1);
-
-        await context.SaveChangesAsync();
+        public static readonly ImmutableArray<InstallmentModel> All =
+        [
+            PersonalLoanInstallment1, MortgageLoanInstallment1, AutoLoanInstallment1, BusinessLoanInstallment1,
+            StudentLoanInstallment1
+        ];
     }
 }

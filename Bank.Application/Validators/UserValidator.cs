@@ -58,4 +58,18 @@ public static class UserValidator
             .WithMessage(ValidationErrorMessage.Global.PasswordUppercaseCharacterRequired);
         }
     }
+
+    public class UpdatePermission : AbstractValidator<UserUpdatePermissionRequest>
+    {
+        public UpdatePermission()
+        {
+            RuleFor(request => request.Permission)
+            .NotEmpty()
+            .WithMessage(ValidationErrorMessage.Global.FieldIsRequired("Permission"));
+
+            RuleFor(request => request.Type)
+            .NotEmpty()
+            .WithMessage(ValidationErrorMessage.Global.FieldIsRequired("Type"));
+        }
+    }
 }

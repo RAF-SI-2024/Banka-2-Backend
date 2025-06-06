@@ -15,6 +15,7 @@ public class UserResponse
     public required string                      PhoneNumber                { set;  get; }
     public required string                      Address                    { set;  get; }
     public required Role                        Role                       { set;  get; }
+    public required long                        Permissions                { set;  get; }
     public required string?                     Department                 { set;  get; }
     public required List<AccountSimpleResponse> Accounts                   { init; get; } = [];
     public required DateTime                    CreatedAt                  { set;  get; }
@@ -35,6 +36,7 @@ public class UserSimpleResponse
     public required string   PhoneNumber                { set; get; }
     public required string   Address                    { set; get; }
     public required Role     Role                       { set; get; }
+    public required long     Permissions                { set; get; }
     public required string?  Department                 { set; get; }
     public required DateTime CreatedAt                  { set; get; }
     public required DateTime ModifiedAt                 { set; get; }

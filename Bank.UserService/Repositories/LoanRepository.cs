@@ -2,8 +2,11 @@
 
 using Bank.Application.Domain;
 using Bank.Application.Queries;
+using Bank.Database.Core;
 using Bank.UserService.Database;
 using Bank.UserService.Models;
+
+using EFCore.BulkExtensions;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
@@ -18,21 +21,29 @@ public interface ILoanRepository
 
     Task<Loan> Add(Loan loan);
 
+    Task<bool> AddRange(IEnumerable<Loan> loans);
+
     Task<Loan> Update(Loan loan);
+
+    Task<bool> Exists(Guid id);
+
+    Task<bool> IsEmpty();
 
     Task<List<Loan>> GetLoansWithDueInstallmentsAsync(DateTime dueDate);
 
     Task<Page<Loan>> FindByClientId(Guid clientId, Pageable pageable);
 }
 
-public class LoanRepository(ApplicationContext context) : ILoanRepository
+public class LoanRepository(IDatabaseContextFactory<ApplicationContext> contextFactory) : ILoanRepository
 {
-    private readonly ApplicationContext m_Context = context;
+    private readonly IDatabaseContextFactory<ApplicationContext> m_ContextFactory = contextFactory;
 
     public async Task<Page<Loan>> FindAll(LoanFilterQuery filter, Pageable pageable)
     {
-        var query = m_Context.Loans.IncludeAll()
-                             .AsQueryable();
+        await using var context = await m_ContextFactory.CreateContext;
+
+        var query = context.Loans.IncludeAll()
+                           .AsQueryable();
 
         if (filter.LoanTypeId.HasValue)
             query = query.Where(l => l.TypeId == filter.LoanTypeId.Value);
@@ -60,48 +71,82 @@ public class LoanRepository(ApplicationContext context) : ILoanRepository
 
     public async Task<Loan?> FindById(Guid id)
     {
-        return await m_Context.Loans.IncludeAll()
-                              .FirstOrDefaultAsync(l => l.Id == id);
+        await using var context = await m_ContextFactory.CreateContext;
+
+        return await context.Loans.IncludeAll()
+                            .FirstOrDefaultAsync(l => l.Id == id);
     }
 
     public async Task<Loan> Add(Loan loan)
     {
-        m_Context.Loans.Add(loan);
-        await m_Context.SaveChangesAsync();
-        return loan;
+        await using var context = await m_ContextFactory.CreateContext;
+
+        context.Loans.Add(loan);
+        await context.SaveChangesAsync();
+        return await context.Loans.IncludeAll()
+                            .FirstAsync(l => l.Id == loan.Id);
+    }
+
+    public async Task<bool> AddRange(IEnumerable<Loan> loans)
+    {
+        await using var context = await m_ContextFactory.CreateContext;
+
+        await context.BulkInsertAsync(loans, config => config.BatchSize = 2000);
+
+        return true;
     }
 
     public async Task<Loan> Update(Loan loan)
     {
-        await m_Context.Loans.Where(dbLoan => dbLoan.Id == loan.Id)
-                       .ExecuteUpdateAsync(setters => setters.SetProperty(dbLoan => dbLoan.TypeId, loan.TypeId)
-                                                             .SetProperty(dbLoan => dbLoan.AccountId,    loan.AccountId)
-                                                             .SetProperty(dbLoan => dbLoan.Amount,       loan.Amount)
-                                                             .SetProperty(dbLoan => dbLoan.Period,       loan.Period)
-                                                             .SetProperty(dbLoan => dbLoan.CreationDate, loan.CreationDate)
-                                                             .SetProperty(dbLoan => dbLoan.MaturityDate, loan.MaturityDate)
-                                                             .SetProperty(dbLoan => dbLoan.CurrencyId,   loan.CurrencyId)
-                                                             .SetProperty(dbLoan => dbLoan.Status,       loan.Status)
-                                                             .SetProperty(dbLoan => dbLoan.InterestType, loan.InterestType)
-                                                             .SetProperty(dbLoan => dbLoan.ModifiedAt,   loan.ModifiedAt));
+        await using var context = await m_ContextFactory.CreateContext;
+
+        await context.Loans.Where(dbLoan => dbLoan.Id == loan.Id)
+                     .ExecuteUpdateAsync(setters => setters.SetProperty(dbLoan => dbLoan.TypeId, loan.TypeId)
+                                                           .SetProperty(dbLoan => dbLoan.AccountId,    loan.AccountId)
+                                                           .SetProperty(dbLoan => dbLoan.Amount,       loan.Amount)
+                                                           .SetProperty(dbLoan => dbLoan.Period,       loan.Period)
+                                                           .SetProperty(dbLoan => dbLoan.CreationDate, loan.CreationDate)
+                                                           .SetProperty(dbLoan => dbLoan.MaturityDate, loan.MaturityDate)
+                                                           .SetProperty(dbLoan => dbLoan.CurrencyId,   loan.CurrencyId)
+                                                           .SetProperty(dbLoan => dbLoan.Status,       loan.Status)
+                                                           .SetProperty(dbLoan => dbLoan.InterestType, loan.InterestType)
+                                                           .SetProperty(dbLoan => dbLoan.ModifiedAt,   loan.ModifiedAt));
 
         return loan;
     }
 
+    public async Task<bool> Exists(Guid id)
+    {
+        await using var context = await m_ContextFactory.CreateContext;
+
+        return await context.Loans.AnyAsync(loan => loan.Id == id);
+    }
+
+    public async Task<bool> IsEmpty()
+    {
+        await using var context = await m_ContextFactory.CreateContext;
+
+        return await context.Loans.AnyAsync() is not true;
+    }
+
     public async Task<List<Loan>> GetLoansWithDueInstallmentsAsync(DateTime dueDate)
     {
-        return await m_Context.Loans.IncludeAll()
-                              .Where(loan => loan.Status == LoanStatus.Active &&
-                                             loan.Installments.Any(installment => installment.ExpectedDueDate.Date <= dueDate.Date &&
-                                                                                  installment.Status               == InstallmentStatus.Pending))
-                              .ToListAsync();
+        await using var context = await m_ContextFactory.CreateContext;
+
+        return await context.Loans.IncludeAll()
+                            .Where(loan => loan.Status == LoanStatus.Active &&
+                                           loan.Installments.Any(installment => installment.ExpectedDueDate.Date <= dueDate.Date &&
+                                                                                installment.Status               == InstallmentStatus.Pending))
+                            .ToListAsync();
     }
 
     public async Task<Page<Loan>> FindByClientId(Guid clientId, Pageable pageable)
     {
-        var query = m_Context.Loans.IncludeAll()
-                             .Where(loan => loan.Account.ClientId == clientId)
-                             .AsQueryable();
+        await using var context = await m_ContextFactory.CreateContext;
+
+        var query = context.Loans.IncludeAll()
+                           .Where(loan => loan.Account.ClientId == clientId)
+                           .AsQueryable();
 
         var total = await query.CountAsync();
 
@@ -153,7 +198,7 @@ public static partial class RepositoryExtensions
     }
 
     public static IIncludableQueryable<TEntity, object?> ThenIncludeAll<TEntity>(this IIncludableQueryable<TEntity, List<Loan>> value,
-                                                                                 Expression<Func<TEntity, List<Loan>>>          navigationExpression, params string[] excludeProperties)
+                                                                                 Expression<Func<TEntity, List<Loan>>> navigationExpression, params string[] excludeProperties)
     where TEntity : class
     {
         IIncludableQueryable<TEntity, object?> query = value;

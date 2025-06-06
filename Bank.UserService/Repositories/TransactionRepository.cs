@@ -2,9 +2,12 @@
 
 using Bank.Application.Domain;
 using Bank.Application.Queries;
+using Bank.Database.Core;
+using Bank.Permissions.Services;
 using Bank.UserService.Database;
 using Bank.UserService.Models;
-using Bank.UserService.Services;
+
+using EFCore.BulkExtensions;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
@@ -21,28 +24,33 @@ public interface ITransactionRepository
 
     Task<Transaction> Add(Transaction transaction);
 
+    Task<bool> AddRange(IEnumerable<Transaction> transactions);
+
     Task<Transaction> Update(Transaction transaction);
 
     Task<bool> UpdateStatus(Guid id, TransactionStatus status);
+
+    Task<bool> Exists(Guid id);
+
+    Task<bool> IsEmpty();
 }
 
-public class TransactionRepository(ApplicationContext context, IAuthorizationService authorizationService, IDbContextFactory<ApplicationContext> contextFactory)
-: ITransactionRepository
+public class TransactionRepository(IDatabaseContextFactory<ApplicationContext> contextFactory, IAuthorizationServiceFactory authorizationServiceFactory) : ITransactionRepository
 {
-    private readonly ApplicationContext                    m_Context              = context;
-    private readonly IAuthorizationService                 m_AuthorizationService = authorizationService;
-    private readonly IDbContextFactory<ApplicationContext> m_ContextFactory       = contextFactory;
-
-    private Task<ApplicationContext> CreateContext => m_ContextFactory.CreateDbContextAsync();
+    private readonly IDatabaseContextFactory<ApplicationContext> m_ContextFactory              = contextFactory;
+    private readonly IAuthorizationServiceFactory                m_AuthorizationServiceFactory = authorizationServiceFactory;
 
     public async Task<Page<Transaction>> FindAll(TransactionFilterQuery filter, Pageable pageable)
     {
-        var transactionQuery = m_Context.Transactions.IncludeAll()
-                                        .AsQueryable();
+        await using var context              = await m_ContextFactory.CreateContext;
+        var             authorizationService = m_AuthorizationServiceFactory.AuthorizationService;
 
-        if (m_AuthorizationService.Role == Role.Client)
-            transactionQuery = transactionQuery.Where(transaction => transaction.FromAccount!.ClientId == m_AuthorizationService.UserId ||
-                                                                     transaction.ToAccount!.ClientId   == m_AuthorizationService.UserId);
+        var transactionQuery = context.Transactions.IncludeAll()
+                                      .AsQueryable();
+
+        if (authorizationService.Permissions == Permission.Client)
+            transactionQuery = transactionQuery.Where(transaction => transaction.FromAccount!.ClientId == authorizationService.UserId ||
+                                                                     transaction.ToAccount!.ClientId   == authorizationService.UserId);
 
         if (filter.Status != TransactionStatus.Invalid)
             transactionQuery = transactionQuery.Where(transaction => transaction.Status == filter.Status);
@@ -66,8 +74,10 @@ public class TransactionRepository(ApplicationContext context, IAuthorizationSer
 
     public async Task<Page<Transaction>> FindAllByAccountId(Guid accountId, TransactionFilterQuery filter, Pageable pageable)
     {
-        var transactionQuery = m_Context.Transactions.IncludeAll()
-                                        .AsQueryable();
+        await using var context = await m_ContextFactory.CreateContext;
+
+        var transactionQuery = context.Transactions.IncludeAll()
+                                      .AsQueryable();
 
         if (filter.Status != TransactionStatus.Invalid)
             transactionQuery = transactionQuery.Where(transaction => transaction.Status == filter.Status);
@@ -80,6 +90,8 @@ public class TransactionRepository(ApplicationContext context, IAuthorizationSer
 
         transactionQuery = transactionQuery.Where(transaction => transaction.FromAccountId == accountId || transaction.ToAccountId == accountId);
 
+        transactionQuery = transactionQuery.OrderByDescending(transaction => transaction.CreatedAt);
+
         var transactions = await transactionQuery.Skip((pageable.Page - 1) * pageable.Size)
                                                  .Take(pageable.Size)
                                                  .ToListAsync();
@@ -91,14 +103,14 @@ public class TransactionRepository(ApplicationContext context, IAuthorizationSer
 
     public async Task<Transaction?> FindById(Guid id)
     {
-        await using var context = await CreateContext;
+        await using var context = await m_ContextFactory.CreateContext;
 
         return await FindById(id, context);
     }
 
     public async Task<Transaction> Add(Transaction transaction)
     {
-        await using var context = await CreateContext;
+        await using var context = await m_ContextFactory.CreateContext;
 
         var addedTransaction = await context.Transactions.AddAsync(transaction);
 
@@ -107,20 +119,45 @@ public class TransactionRepository(ApplicationContext context, IAuthorizationSer
         return addedTransaction.Entity;
     }
 
+    public async Task<bool> AddRange(IEnumerable<Transaction> transactions)
+    {
+        await using var context = await m_ContextFactory.CreateContext;
+
+        await context.BulkInsertAsync(transactions, config => config.BatchSize = 2000);
+
+        return true;
+    }
+
     public async Task<Transaction> Update(Transaction transaction)
     {
-        await m_Context.Transactions.Where(dbTransaction => dbTransaction.Id == transaction.Id)
-                       .ExecuteUpdateAsync(setters => setters.SetProperty(dbTransaction => dbTransaction.Status, transaction.Status)
-                                                             .SetProperty(dbTransaction => dbTransaction.ModifiedAt, transaction.ModifiedAt));
+        await using var context = await m_ContextFactory.CreateContext;
+
+        await context.Transactions.Where(dbTransaction => dbTransaction.Id == transaction.Id)
+                     .ExecuteUpdateAsync(setters => setters.SetProperty(dbTransaction => dbTransaction.Status, transaction.Status)
+                                                           .SetProperty(dbTransaction => dbTransaction.ModifiedAt, transaction.ModifiedAt));
 
         return transaction;
     }
 
     public async Task<bool> UpdateStatus(Guid id, TransactionStatus status)
     {
-        await using var context = await CreateContext;
+        await using var context = await m_ContextFactory.CreateContext;
 
         return await UpdateStatus(id, status, context);
+    }
+
+    public async Task<bool> Exists(Guid id)
+    {
+        await using var context = await m_ContextFactory.CreateContext;
+
+        return await context.Transactions.AnyAsync(transaction => transaction.Id == id);
+    }
+
+    public async Task<bool> IsEmpty()
+    {
+        await using var context = await m_ContextFactory.CreateContext;
+
+        return await context.Transactions.AnyAsync() is not true;
     }
 
     public static async Task<bool> UpdateStatus(Guid id, TransactionStatus status, ApplicationContext context)
@@ -162,7 +199,7 @@ public static partial class RepositoryExtensions
     }
 
     public static IIncludableQueryable<TEntity, object?> ThenIncludeAll<TEntity>(this IIncludableQueryable<TEntity, Transaction?> value,
-                                                                                 Expression<Func<TEntity, Transaction?>>          navigationExpression, params string[] excludeProperties)
+                                                                                 Expression<Func<TEntity, Transaction?>> navigationExpression, params string[] excludeProperties)
     where TEntity : class
     {
         IIncludableQueryable<TEntity, object?> query = value;
@@ -191,8 +228,8 @@ public static partial class RepositoryExtensions
     }
 
     public static IIncludableQueryable<TEntity, object?> ThenIncludeAll<TEntity>(this IIncludableQueryable<TEntity, List<Transaction>> value,
-                                                                                 Expression<Func<TEntity, List<Transaction>>> navigationExpression, params string[] excludeProperties)
-    where TEntity : class
+                                                                                 Expression<Func<TEntity, List<Transaction>>>          navigationExpression,
+                                                                                 params string[]                                       excludeProperties) where TEntity : class
     {
         IIncludableQueryable<TEntity, object?> query = value;
 

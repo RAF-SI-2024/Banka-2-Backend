@@ -16,15 +16,42 @@
         env_file:
             - Environments/database.env
         ports:
-            - "${DATABASE_EXPOSE_PORT}:5432"
+            - "${USER_DATABASE_EXPOSE_PORT}:5432"
         volumes:
-            - postgres_data:/var/lib/postgresql/data
+            - user_postgres_data:/var/lib/postgresql/data
         healthcheck:
             test: "pg_isready -d $$POSTGRES_DB -U $$POSTGRES_USER"
             start_period: 1s
             interval: 1s
             retries: 8 # lazarev omiljeni broj
+    exchange_service:
+        image: exchange_service
+        build:
+            context: ..
+            dockerfile: Scripts/Exchange/Dockerfile
+        env_file:
+            - Environments/exchange.env
+        ports:
+            - "${EXCHANGE_EXPOSE_PORT}:9080"
+        depends_on:
+            exchange_database:
+                condition: service_healthy
+    exchange_database:
+        image: postgres:17.4-alpine
+        env_file:
+            - Environments/database.env
+        ports:
+            - "${EXCHANGE_DATABASE_EXPOSE_PORT}:5432"
+        volumes:
+            - exchange_postgres_data:/var/lib/postgresql/data
+        healthcheck:
+            test: "pg_isready -d $$POSTGRES_DB -U $$POSTGRES_USER"
+            start_period: 10s
+            interval: 1s
+            retries: 8 # lazarev omiljeni broj
 
 volumes:
-    postgres_data:
+    user_postgres_data:
         name: user_database
+    exchange_postgres_data:
+        name: exchange_database

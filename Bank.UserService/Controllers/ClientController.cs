@@ -3,12 +3,10 @@ using Bank.Application.Endpoints;
 using Bank.Application.Queries;
 using Bank.Application.Requests;
 using Bank.Application.Responses;
+using Bank.Permissions.Core;
 using Bank.UserService.Services;
 
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-
-using Role = Bank.UserService.Configurations.Configuration.Policy.Role;
 
 namespace Bank.UserService.Controllers;
 
@@ -17,20 +15,11 @@ public class ClientController(IClientService clientService) : ControllerBase
 {
     private readonly IClientService m_ClientService = clientService;
 
+    [Authorize(Permission.Admin, Permission.Employee)]
     [HttpGet(Endpoints.Client.GetAll)]
-    [Authorize(Roles = $"{Role.Admin}, {Role.Employee}")]
     public async Task<ActionResult<Page<ClientResponse>>> GetAll([FromQuery] UserFilterQuery filterQuery, [FromQuery] Pageable pageable)
     {
         var result = await m_ClientService.FindAll(filterQuery, pageable);
-
-        return result.ActionResult;
-    }
-
-    [Authorize]
-    [HttpGet(Endpoints.Client.GetAllAccounts)]
-    public async Task<ActionResult<Page<ClientResponse>>> GetAllAccounts([FromRoute] Guid id, [FromQuery] AccountFilterQuery filter, [FromQuery] Pageable pageable)
-    {
-        var result = await m_ClientService.FindAllAccounts(id, filter, pageable);
 
         return result.ActionResult;
     }
@@ -44,8 +33,8 @@ public class ClientController(IClientService clientService) : ControllerBase
         return result.ActionResult;
     }
 
+    [Authorize(Permission.Admin, Permission.Employee)]
     [HttpPost(Endpoints.Client.Create)]
-    [Authorize(Roles = $"{Role.Admin}, {Role.Employee}")]
     public async Task<ActionResult<ClientResponse>> Create([FromBody] ClientCreateRequest clientCreateRequest)
     {
         var result = await m_ClientService.Create(clientCreateRequest);
@@ -53,20 +42,12 @@ public class ClientController(IClientService clientService) : ControllerBase
         return result.ActionResult;
     }
 
+    [Authorize(Permission.Admin, Permission.Employee)]
     [HttpPut(Endpoints.Client.Update)]
-    [Authorize(Roles = $"{Role.Admin}, {Role.Employee}")]
     public async Task<ActionResult<ClientResponse>> Update([FromBody] ClientUpdateRequest clientUpdateRequest, [FromRoute] Guid id)
     {
         var result = await m_ClientService.Update(clientUpdateRequest, id);
 
-        return result.ActionResult;
-    }
-
-    //[Authorize]
-    [HttpGet(Endpoints.Client.Cards)]
-    public async Task<ActionResult<CardResponse>> Cards([FromRoute] Guid id)
-    {
-        var result = await m_ClientService.FindAllCards(id);
         return result.ActionResult;
     }
 }

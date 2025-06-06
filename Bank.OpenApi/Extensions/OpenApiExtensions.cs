@@ -12,4 +12,11 @@ public static class OpenApiExtensions
 
         return array;
     }
+
+    public static OpenApiObject SetProperty(this OpenApiObject value, string propertyName, IOpenApiAny? propertyValue)
+    {
+        value[propertyName] = propertyValue;
+
+        return value;
+    }
 }

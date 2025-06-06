@@ -1,4 +1,4 @@
-﻿namespace Bank.UserService.Models;
+namespace Bank.UserService.Models;
 
 public class Account
 {
@@ -6,6 +6,7 @@ public class Account
     public          User?                 Client            { set;  get; }
     public required Guid                  ClientId          { set;  get; }
     public required string                Name              { set;  get; }
+    public required string                Office            { set;  get; }
     public required string                Number            { set;  get; }
     public required decimal               Balance           { set;  get; }
     public required decimal               AvailableBalance  { set;  get; }
@@ -24,7 +25,7 @@ public class Account
     public required DateTime              CreatedAt         { set;  get; }
     public required DateTime              ModifiedAt        { set;  get; }
 
-    public string AccountNumber => $"{Client?.Bank?.Code}0000{Number}{Type?.Code}";
+    public string AccountNumber => $"{Client?.Bank?.Code}{Office}{Number}{Type?.Code}";
 
     public bool IsForeign => Type != null && (Type.Code.StartsWith('3') || Type.Code.StartsWith('4'));
 
@@ -38,6 +39,6 @@ public class Account
         accountId = AccountCurrencies.Find(accountCurrency => accountCurrency.CurrencyId == currencyId)
                                      ?.Id ?? Guid.Empty;
 
-        return false;
+        return accountId != Guid.Empty;
     }
 };

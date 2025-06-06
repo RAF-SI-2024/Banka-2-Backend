@@ -2,8 +2,11 @@
 
 using Bank.Application.Domain;
 using Bank.Application.Queries;
+using Bank.Database.Core;
 using Bank.UserService.Database;
 using Bank.UserService.Models;
+
+using EFCore.BulkExtensions;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
@@ -18,16 +21,24 @@ public interface IAccountTypeRepository
 
     Task<AccountType> Add(AccountType accountType);
 
+    Task<bool> AddRange(IEnumerable<AccountType> accountTypes);
+
     Task<AccountType> Update(AccountType accountType);
+
+    Task<bool> Exists(Guid id);
+
+    Task<bool> IsEmpty();
 }
 
-public class AccountTypeRepository(ApplicationContext context) : IAccountTypeRepository
+public class AccountTypeRepository(IDatabaseContextFactory<ApplicationContext> contextFactory) : IAccountTypeRepository
 {
-    private readonly ApplicationContext m_Context = context;
+    private readonly IDatabaseContextFactory<ApplicationContext> m_ContextFactory = contextFactory;
 
     public async Task<Page<AccountType>> FindAll(AccountTypeFilterQuery accountTypeFilterQuery, Pageable pageable)
     {
-        var accountTypeQuery = m_Context.AccountTypes.AsQueryable();
+        await using var context = await m_ContextFactory.CreateContext;
+
+        var accountTypeQuery = context.AccountTypes.AsQueryable();
 
         if (!string.IsNullOrEmpty(accountTypeFilterQuery.Name))
             accountTypeQuery = accountTypeQuery.Where(accountType => EF.Functions.ILike(accountType.Name, $"%{accountTypeFilterQuery.Name}%"));
@@ -46,26 +57,55 @@ public class AccountTypeRepository(ApplicationContext context) : IAccountTypeRep
 
     public async Task<AccountType?> FindById(Guid id)
     {
-        return await m_Context.AccountTypes.FirstOrDefaultAsync(a => a.Id == id);
+        await using var context = await m_ContextFactory.CreateContext;
+
+        return await context.AccountTypes.FirstOrDefaultAsync(a => a.Id == id);
     }
 
     public async Task<AccountType> Add(AccountType accountType)
     {
-        var addedAccountType = await m_Context.AccountTypes.AddAsync(accountType);
+        await using var context = await m_ContextFactory.CreateContext;
 
-        await m_Context.SaveChangesAsync();
+        var addedAccountType = await context.AccountTypes.AddAsync(accountType);
+
+        await context.SaveChangesAsync();
 
         return addedAccountType.Entity;
     }
 
+    public async Task<bool> AddRange(IEnumerable<AccountType> accountTypes)
+    {
+        await using var context = await m_ContextFactory.CreateContext;
+
+        await context.BulkInsertAsync(accountTypes, config => config.BatchSize = 2000);
+
+        return true;
+    }
+
     public async Task<AccountType> Update(AccountType accountType)
     {
-        await m_Context.AccountTypes.Where(dbAccountType => dbAccountType.Id == accountType.Id)
-                       .ExecuteUpdateAsync(setters => setters.SetProperty(dbAccountType => dbAccountType.Name, accountType.Name)
-                                                             .SetProperty(dbAccountType => dbAccountType.Code,       accountType.Code)
-                                                             .SetProperty(dbAccountType => dbAccountType.ModifiedAt, accountType.ModifiedAt));
+        await using var context = await m_ContextFactory.CreateContext;
+
+        await context.AccountTypes.Where(dbAccountType => dbAccountType.Id == accountType.Id)
+                     .ExecuteUpdateAsync(setters => setters.SetProperty(dbAccountType => dbAccountType.Name, accountType.Name)
+                                                           .SetProperty(dbAccountType => dbAccountType.Code,       accountType.Code)
+                                                           .SetProperty(dbAccountType => dbAccountType.ModifiedAt, accountType.ModifiedAt));
 
         return accountType;
+    }
+
+    public async Task<bool> Exists(Guid id)
+    {
+        await using var context = await m_ContextFactory.CreateContext;
+
+        return await context.AccountTypes.AnyAsync(accountType => accountType.Id == id);
+    }
+
+    public async Task<bool> IsEmpty()
+    {
+        await using var context = await m_ContextFactory.CreateContext;
+
+        return await context.AccountTypes.AnyAsync() is not true;
     }
 }
 
@@ -78,15 +118,15 @@ public static partial class RepositoryExtensions
     }
 
     public static IIncludableQueryable<TEntity, object?> ThenIncludeAll<TEntity>(this IIncludableQueryable<TEntity, AccountType?> value,
-                                                                                 Expression<Func<TEntity, AccountType?>>          navigationExpression, params string[] excludeProperties)
+                                                                                 Expression<Func<TEntity, AccountType?>> navigationExpression, params string[] excludeProperties)
     where TEntity : class
     {
         return value;
     }
 
     public static IIncludableQueryable<TEntity, object?> ThenIncludeAll<TEntity>(this IIncludableQueryable<TEntity, List<AccountType>> value,
-                                                                                 Expression<Func<TEntity, List<AccountType>>> navigationExpression, params string[] excludeProperties)
-    where TEntity : class
+                                                                                 Expression<Func<TEntity, List<AccountType>>>          navigationExpression,
+                                                                                 params string[]                                       excludeProperties) where TEntity : class
     {
         return value;
     }

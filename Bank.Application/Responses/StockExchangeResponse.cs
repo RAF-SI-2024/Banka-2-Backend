@@ -2,23 +2,29 @@
 
 public class StockExchangeResponse
 {
-    public Guid             Id         { get; set; }
-    public string           Name       { get; set; }
-    public string           Acronym    { get; set; }
-    public string           MIC        { get; set; }
-    public string           Polity     { get; set; }
-    public CurrencyResponse Currency   { get; set; }
-    public TimeSpan         TimeZone   { get; set; }
-    public DateTime         CreatedAt  { get; set; }
-    public DateTime         ModifiedAt { get; set; }
+    public required Guid                   Id       { get; set; }
+    public required string                 Name     { get; set; }
+    public required string                 Acronym  { get; set; }
+    public required string                 MIC      { get; set; }
+    public required string                 Polity   { get; set; }
+    public required CurrencySimpleResponse Currency { get; set; }
+    public required TimeSpan               TimeZone { get; set; }
+    public required TimeSpan               MarketOpen { get; set; }
+
+    public required TimeSpan               MarketClose   { get; set; }
+
+    public required DateTime               CreatedAt  { get; set; }
+    public required DateTime               ModifiedAt { get; set; }
 }
 
 public class ExchangeCreateRequest
 {
-    public string   Name       { get; set; }
-    public string   Acronym    { get; set; }
-    public string   MIC        { get; set; }
-    public string   Polity     { get; set; }
-    public TimeSpan TimeZone   { get; set; }
-    public Guid     CurrencyId { get; set; }
+    public required string   Name       { get; set; }
+    public required string   Acronym    { get; set; }
+    public required string   MIC        { get; set; }
+    public required string   Polity     { get; set; }
+    public required TimeSpan TimeZone   { get; set; }
+    public required TimeSpan MarketOpen { get; set; }
+    public required TimeSpan MarketClose { get; set; }
+    public required Guid     CurrencyId { get; set; }
 }

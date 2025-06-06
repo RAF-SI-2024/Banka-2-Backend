@@ -1,4 +1,5 @@
-﻿using Bank.Application.Requests;
+﻿using Bank.Application.Domain;
+using Bank.Application.Requests;
 using Bank.Application.Responses;
 
 namespace Bank.OpenApi.Examples;
@@ -30,6 +31,12 @@ public static partial class Example
                                                                                           ConfirmPassword = Constant.Password,
                                                                                       };
 
+        public static readonly UserUpdatePermissionRequest DefaultUpdatePermissionRequest = new()
+                                                                                            {
+                                                                                                Permission = Constant.Permissions,
+                                                                                                Type       = Constant.PermissionType,
+                                                                                            };
+
         public static readonly UserResponse DefaultResponse = new()
                                                               {
                                                                   Id                         = Constant.Id,
@@ -43,6 +50,7 @@ public static partial class Example
                                                                   PhoneNumber                = Constant.Phone,
                                                                   Address                    = Constant.Address,
                                                                   Role                       = Constant.Role,
+                                                                  Permissions                = (long)Permission.Client,
                                                                   Department                 = Constant.Department,
                                                                   Accounts                   = [Account.DefaultSimpleResponse],
                                                                   CreatedAt                  = Constant.CreatedAt,
@@ -63,6 +71,7 @@ public static partial class Example
                                                                               PhoneNumber                = Constant.Phone,
                                                                               Address                    = Constant.Address,
                                                                               Role                       = Constant.Role,
+                                                                              Permissions                = (long)Permission.Client,
                                                                               Department                 = Constant.Department,
                                                                               CreatedAt                  = Constant.CreatedAt,
                                                                               ModifiedAt                 = Constant.ModifiedAt,

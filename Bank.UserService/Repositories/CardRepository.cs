@@ -2,8 +2,11 @@
 
 using Bank.Application.Domain;
 using Bank.Application.Queries;
+using Bank.Database.Core;
 using Bank.UserService.Database;
 using Bank.UserService.Models;
+
+using EFCore.BulkExtensions;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
@@ -16,25 +19,35 @@ public interface ICardRepository
 
     Task<Page<Card>> FindAllByAccountId(Guid accountId, Pageable pageable);
 
+    Task<Page<Card>> FindAllByClientId(Guid clientId, Pageable pageable);
+
     Task<Card?> FindById(Guid id);
 
     Task<Card?> FindByNumber(string number);
 
     Task<Card> Add(Card card);
 
+    Task<bool> AddRange(IEnumerable<Card> cards);
+
     Task<Card> Update(Card card);
 
     Task<List<Card>> FindAllByClientId(Guid clientId);
+
+    Task<bool> Exists(Guid id);
+
+    Task<bool> IsEmpty();
 }
 
-public class CardRepository(ApplicationContext context) : ICardRepository
+public class CardRepository(IDatabaseContextFactory<ApplicationContext> contextFactory) : ICardRepository
 {
-    private readonly ApplicationContext m_Context = context;
+    private readonly IDatabaseContextFactory<ApplicationContext> m_ContextFactory = contextFactory;
 
     public async Task<Page<Card>> FindAll(CardFilterQuery cardFilterQuery, Pageable pageable)
     {
-        var cardQuery = m_Context.Cards.IncludeAll()
-                                 .AsQueryable();
+        await using var context = await m_ContextFactory.CreateContext;
+
+        var cardQuery = context.Cards.IncludeAll()
+                               .AsQueryable();
 
         if (!string.IsNullOrEmpty(cardFilterQuery.Number))
             cardQuery = cardQuery.Where(card => EF.Functions.ILike(card.Number, $"%{cardFilterQuery.Number}%"));
@@ -53,59 +66,109 @@ public class CardRepository(ApplicationContext context) : ICardRepository
 
     public async Task<Card?> FindById(Guid id)
     {
-        return await m_Context.Cards.IncludeAll()
-                              .FirstOrDefaultAsync(x => x.Id == id);
+        await using var context = await m_ContextFactory.CreateContext;
+
+        return await context.Cards.IncludeAll()
+                            .FirstOrDefaultAsync(x => x.Id == id);
     }
 
     public async Task<Page<Card>> FindAllByAccountId(Guid accountId, Pageable pageable)
     {
-        var cards = await m_Context.Cards.IncludeAll()
-                                   .Where(card => card.Account!.Id == accountId)
-                                   .Skip((pageable.Page - 1) * pageable.Size)
-                                   .Take(pageable.Size)
-                                   .ToListAsync();
+        await using var context = await m_ContextFactory.CreateContext;
 
-        var totalElements = await m_Context.Cards.CountAsync();
+        var cards = await context.Cards.IncludeAll()
+                                 .Where(card => card.Account!.Id == accountId)
+                                 .Skip((pageable.Page - 1) * pageable.Size)
+                                 .Take(pageable.Size)
+                                 .ToListAsync();
+
+        var totalElements = await context.Cards.CountAsync();
+
+        return new Page<Card>(cards, pageable.Page, pageable.Size, totalElements);
+    }
+
+    public async Task<Page<Card>> FindAllByClientId(Guid clientId, Pageable pageable)
+    {
+        await using var context = await m_ContextFactory.CreateContext;
+
+        var cards = await context.Cards.IncludeAll()
+                                 .Where(card => card.Account!.Client!.Id == clientId)
+                                 .Skip((pageable.Page - 1) * pageable.Size)
+                                 .Take(pageable.Size)
+                                 .ToListAsync();
+
+        var totalElements = await context.Cards.CountAsync();
 
         return new Page<Card>(cards, pageable.Page, pageable.Size, totalElements);
     }
 
     public async Task<Card?> FindByNumber(string number)
     {
-        return await m_Context.Cards.IncludeAll()
-                              .FirstOrDefaultAsync(card => card.Number == number);
+        await using var context = await m_ContextFactory.CreateContext;
+
+        return await context.Cards.IncludeAll()
+                            .FirstOrDefaultAsync(card => card.Number == number);
     }
 
     public async Task<Card> Add(Card card)
     {
-        var addedCard = await m_Context.Cards.AddAsync(card);
+        await using var context = await m_ContextFactory.CreateContext;
 
-        await m_Context.SaveChangesAsync();
+        var addedCard = await context.Cards.AddAsync(card);
+
+        await context.SaveChangesAsync();
 
         return addedCard.Entity;
     }
 
+    public async Task<bool> AddRange(IEnumerable<Card> cards)
+    {
+        await using var context = await m_ContextFactory.CreateContext;
+
+        await context.BulkInsertAsync(cards, config => config.BatchSize = 2000);
+
+        return true;
+    }
+
     public async Task<Card> Update(Card card)
     {
-        await m_Context.Cards.Where(dbCard => dbCard.Id == card.Id)
-                       .ExecuteUpdateAsync(setters => setters.SetProperty(dbCard => dbCard.TypeId, card.TypeId)
-                                                             .SetProperty(dbCard => dbCard.Name,       card.Name)
-                                                             .SetProperty(dbCard => dbCard.Limit,      card.Limit)
-                                                             .SetProperty(dbCard => dbCard.Status,     card.Status)
-                                                             .SetProperty(dbCard => dbCard.ModifiedAt, card.ModifiedAt)
-                                                             .SetProperty(dbCard => dbCard.Number,     card.Number)
-                                                             .SetProperty(dbCard => dbCard.CVV,        card.CVV)
-                                                             .SetProperty(dbCard => dbCard.ExpiresAt,  card.ExpiresAt)
-                                                             .SetProperty(dbCard => dbCard.AccountId,  card.AccountId));
+        await using var context = await m_ContextFactory.CreateContext;
+
+        await context.Cards.Where(dbCard => dbCard.Id == card.Id)
+                     .ExecuteUpdateAsync(setters => setters.SetProperty(dbCard => dbCard.TypeId, card.TypeId)
+                                                           .SetProperty(dbCard => dbCard.Name,       card.Name)
+                                                           .SetProperty(dbCard => dbCard.Limit,      card.Limit)
+                                                           .SetProperty(dbCard => dbCard.Status,     card.Status)
+                                                           .SetProperty(dbCard => dbCard.ModifiedAt, card.ModifiedAt)
+                                                           .SetProperty(dbCard => dbCard.Number,     card.Number)
+                                                           .SetProperty(dbCard => dbCard.CVV,        card.CVV)
+                                                           .SetProperty(dbCard => dbCard.ExpiresAt,  card.ExpiresAt)
+                                                           .SetProperty(dbCard => dbCard.AccountId,  card.AccountId));
 
         return card;
     }
 
     public async Task<List<Card>> FindAllByClientId(Guid clientId)
     {
-        return await m_Context.Cards.IncludeAll()
-                              .Where(c => c.Account != null && c.Account.ClientId == clientId)
-                              .ToListAsync();
+        await using var context = await m_ContextFactory.CreateContext;
+
+        return await context.Cards.IncludeAll()
+                            .Where(c => c.Account != null && c.Account.ClientId == clientId)
+                            .ToListAsync();
+    }
+
+    public async Task<bool> Exists(Guid id)
+    {
+        await using var context = await m_ContextFactory.CreateContext;
+
+        return await context.Cards.AnyAsync(card => card.Id == id);
+    }
+
+    public async Task<bool> IsEmpty()
+    {
+        await using var context = await m_ContextFactory.CreateContext;
+
+        return await context.Cards.AnyAsync() is not true;
     }
 }
 
@@ -137,7 +200,7 @@ public static partial class RepositoryExtensions
     }
 
     public static IIncludableQueryable<TEntity, object?> ThenIncludeAll<TEntity>(this IIncludableQueryable<TEntity, List<Card>> value,
-                                                                                 Expression<Func<TEntity, List<Card>>>          navigationExpression, params string[] excludeProperties)
+                                                                                 Expression<Func<TEntity, List<Card>>> navigationExpression, params string[] excludeProperties)
     where TEntity : class
     {
         IIncludableQueryable<TEntity, object?> query = value;

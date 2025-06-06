@@ -1,4 +1,6 @@
-﻿using Bank.UserService.Models;
+﻿using System.Collections.Immutable;
+
+using Bank.UserService.Models;
 
 namespace Bank.UserService.Database.Seeders;
 
@@ -47,21 +49,10 @@ public static partial class Seeder
                                                                                CreatedAt  = DateTime.UtcNow,
                                                                                ModifiedAt = DateTime.UtcNow
                                                                            };
-    }
-}
 
-public static class CardTypeSeederExtension
-{
-    public static async Task SeedCadType(this ApplicationContext context)
-    {
-        if (context.CardTypes.Any())
-            return;
-
-        await context.CardTypes.AddRangeAsync([
-                                                  Seeder.CardType.VisaDebitCard, Seeder.CardType.MasterCardGold, Seeder.CardType.DinaCardStandard, Seeder.CardType.VisaBusinessCard,
-                                                  Seeder.CardType.MasterCardGold, Seeder.CardType.AmericanExpressPlatinumCard
-                                              ]);
-
-        await context.SaveChangesAsync();
+        public static readonly ImmutableArray<CardTypeModel> All =
+        [
+            VisaDebitCard, MasterCardGold, DinaCardStandard, VisaBusinessCard, AmericanExpressPlatinumCard
+        ];
     }
 }

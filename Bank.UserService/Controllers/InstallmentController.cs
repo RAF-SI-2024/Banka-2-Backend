@@ -2,15 +2,12 @@
 using Bank.Application.Endpoints;
 using Bank.Application.Requests;
 using Bank.Application.Responses;
-using Bank.UserService.Configurations;
+using Bank.Permissions.Core;
 using Bank.UserService.Services;
 
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Bank.UserService.Controllers;
-
-using Role = Configuration.Policy.Role;
 
 [ApiController]
 public class InstallmentController(IInstallmentService installmentService) : ControllerBase
@@ -18,8 +15,8 @@ public class InstallmentController(IInstallmentService installmentService) : Con
     private readonly IInstallmentService m_InstallmentService = installmentService;
 
     [Authorize]
-    [HttpGet(Endpoints.Installment.GetAll)]
-    public async Task<ActionResult<Page<InstallmentResponse>>> GetAllByLoan([FromQuery] Guid loanId, [FromQuery] Pageable pageable)
+    [HttpGet(Endpoints.Installment.GetAllByLoan)]
+    public async Task<ActionResult<Page<InstallmentResponse>>> GetAllByLoan([FromRoute] Guid loanId, [FromQuery] Pageable pageable)
     {
         var result = await m_InstallmentService.GetAllByLoanId(loanId, pageable);
 
@@ -35,8 +32,8 @@ public class InstallmentController(IInstallmentService installmentService) : Con
         return result.ActionResult;
     }
 
+    [Authorize(Permission.Admin, Permission.Employee)]
     [HttpPost(Endpoints.Installment.Create)]
-    [Authorize(Roles = $"{Role.Admin}, {Role.Employee}")]
     public async Task<ActionResult<InstallmentResponse>> Create([FromBody] InstallmentCreateRequest createRequest)
     {
         var result = await m_InstallmentService.Create(createRequest);
@@ -44,8 +41,8 @@ public class InstallmentController(IInstallmentService installmentService) : Con
         return result.ActionResult;
     }
 
+    [Authorize(Permission.Admin, Permission.Employee)]
     [HttpPut(Endpoints.Installment.Update)]
-    [Authorize(Roles = $"{Role.Admin}, {Role.Employee}")]
     public async Task<ActionResult<InstallmentResponse>> Update([FromBody] InstallmentUpdateRequest request, [FromRoute] Guid id)
     {
         var result = await m_InstallmentService.Update(request, id);

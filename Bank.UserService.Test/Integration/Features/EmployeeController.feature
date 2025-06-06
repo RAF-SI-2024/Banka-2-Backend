@@ -1,23 +1,21 @@
 ﻿Feature: Employee controller testing
 
-    Scenario: Get AllEmployees
-        Given employee filter request
-        And pageable parameters for employee list
-        When employee list is fetched from the database
-        Then the result should contain a list of employees
+    Scenario: Get all employees through API
+        Given a valid employee filter request and pageable parameters
+        When a GET request is sent to fetch all employees
+        Then the response ActionResult should indicate successful retrieval of all employees
 
-    Scenario: Create Employee
-        Given employee create request
-        When employee is created in the database
-        Then employee details should match the created employee
+    Scenario: Create employee through API
+        Given a valid employee create request
+        When a POST request is sent to the employee creation endpoint
+        Then the response ActionResult should indicate successful employee creation
 
-    Scenario: Update Employee
-        Given a valid employee Id for update
-        And update request employee
-        When employee is updated in the database
-        Then employee details should match the updated employee
+    Scenario: Update employee through API
+        Given a valid employee Id and update request
+        When a PUT request is sent to the employee update endpoint
+        Then the response ActionResult should indicate successful employee update
 
-    Scenario: GetOne Employee
-        Given a valid employee Id
-        When employee is fetched by Id
-        Then the result should contain the employee details
+    Scenario: Get employee by Id through API
+        Given a valid employee Id that exists
+        When a GET request is sent to fetch the employee by Id
+        Then the response ActionResult should indicate successful retrieval of the employee

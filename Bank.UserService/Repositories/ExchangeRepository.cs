@@ -1,8 +1,11 @@
 ﻿using System.Linq.Expressions;
 
 using Bank.Application.Queries;
+using Bank.Database.Core;
 using Bank.UserService.Database;
 using Bank.UserService.Models;
+
+using EFCore.BulkExtensions;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
@@ -13,6 +16,8 @@ public interface IExchangeRepository
 {
     public Task<List<Exchange>> FindAll(ExchangeFilterQuery exchangeFilterQuery);
 
+    public Task<List<Exchange>> FindAllLatest();
+
     public Task<Exchange?> FindById(Guid id);
 
     public Task<Exchange?> FindByCurrencyFromAndCurrencyTo(Guid firstCurrencyId, Guid secondCurrencyId);
@@ -21,21 +26,25 @@ public interface IExchangeRepository
 
     public Task<Exchange> Add(Exchange exchange);
 
+    public Task<bool> AddRange(IEnumerable<Exchange> exchanges);
+
     public Task<Exchange> Update(Exchange exchange);
+
+    Task<bool> Exists(Guid id);
+
+    Task<bool> IsEmpty();
 }
 
-public class ExchangeRepository(ApplicationContext context, IDbContextFactory<ApplicationContext> contextFactory) : IExchangeRepository
+public class ExchangeRepository(IDatabaseContextFactory<ApplicationContext> contextFactory) : IExchangeRepository
 {
-    private readonly ApplicationContext m_Context = context;
-
-    private readonly IDbContextFactory<ApplicationContext> m_ContextFactory = contextFactory;
-
-    private Task<ApplicationContext> CreateContext => m_ContextFactory.CreateDbContextAsync();
+    private readonly IDatabaseContextFactory<ApplicationContext> m_ContextFactory = contextFactory;
 
     public async Task<List<Exchange>> FindAll(ExchangeFilterQuery exchangeFilterQuery)
     {
-        var exchangeQueue = m_Context.Exchanges.IncludeAll()
-                                     .AsQueryable();
+        await using var context = await m_ContextFactory.CreateContext;
+
+        var exchangeQueue = context.Exchanges.IncludeAll()
+                                   .AsQueryable();
 
         if (!string.IsNullOrEmpty(exchangeFilterQuery.CurrencyCode))
             exchangeQueue = exchangeQueue.Where(exchange => EF.Functions.ILike(exchange.CurrencyFrom!.Code.ToLower(), $"%{exchangeFilterQuery.CurrencyCode.ToLower()}%") ||
@@ -53,42 +62,80 @@ public class ExchangeRepository(ApplicationContext context, IDbContextFactory<Ap
         return await exchangeQueue.ToListAsync();
     }
 
+    public async Task<List<Exchange>> FindAllLatest()
+    {
+        await using var context = await m_ContextFactory.CreateContext;
+
+        return await context.Exchanges.IncludeAll()
+                            .GroupBy(exchange => new { exchange.CurrencyFromId, exchange.CurrencyToId })
+                            .Select(group => group.OrderByDescending(exchange => exchange.CreatedAt)
+                                                  .First())
+                            .ToListAsync();
+    }
+
     public async Task<Exchange?> FindById(Guid id)
     {
-        await using var context = await CreateContext;
+        await using var context = await m_ContextFactory.CreateContext;
 
         return await FindById(id, context);
     }
 
     public async Task<Exchange?> FindByCurrencyFromAndCurrencyTo(Guid firstCurrencyId, Guid secondCurrencyId)
     {
-        await using var context = await CreateContext;
+        await using var context = await m_ContextFactory.CreateContext;
 
         return await FindByCurrencyFromAndCurrencyTo(firstCurrencyId, secondCurrencyId, context);
     }
 
     public async Task<Exchange?> FindByCurrencyFromAndCurrencyTo(Currency firstCurrency, Currency secondCurrency)
     {
-        await using var context = await CreateContext;
+        await using var context = await m_ContextFactory.CreateContext;
 
         return await FindByCurrencyFromAndCurrencyTo(firstCurrency.Id, secondCurrency.Id, context);
     }
 
     public async Task<Exchange> Add(Exchange exchange)
     {
-        var addExchange = await m_Context.Exchanges.AddAsync(exchange);
+        await using var context = await m_ContextFactory.CreateContext;
 
-        await m_Context.SaveChangesAsync();
+        var addExchange = await context.Exchanges.AddAsync(exchange);
+
+        await context.SaveChangesAsync();
 
         return addExchange.Entity;
     }
 
+    public async Task<bool> AddRange(IEnumerable<Exchange> exchanges)
+    {
+        await using var context = await m_ContextFactory.CreateContext;
+
+        await context.BulkInsertAsync(exchanges, config => config.BatchSize = 2000);
+
+        return true;
+    }
+
     public async Task<Exchange> Update(Exchange exchange)
     {
-        await m_Context.Exchanges.Where(dbExchange => dbExchange.Id == exchange.Id)
-                       .ExecuteUpdateAsync(setter => setter.SetProperty(dbExchange => dbExchange.Commission, exchange.Commission));
+        await using var context = await m_ContextFactory.CreateContext;
+
+        await context.Exchanges.Where(dbExchange => dbExchange.Id == exchange.Id)
+                     .ExecuteUpdateAsync(setter => setter.SetProperty(dbExchange => dbExchange.Commission, exchange.Commission));
 
         return exchange;
+    }
+
+    public async Task<bool> Exists(Guid id)
+    {
+        await using var context = await m_ContextFactory.CreateContext;
+
+        return await context.Exchanges.AnyAsync(exchange => exchange.Id == id);
+    }
+
+    public async Task<bool> IsEmpty()
+    {
+        await using var context = await m_ContextFactory.CreateContext;
+
+        return await context.Exchanges.AnyAsync() is not true;
     }
 
     #region Static Repository Calls
@@ -121,7 +168,7 @@ public static partial class RepositoryExtensions
     }
 
     public static IIncludableQueryable<TEntity, object?> ThenIncludeAll<TEntity>(this IIncludableQueryable<TEntity, Exchange?> value,
-                                                                                 Expression<Func<TEntity, Exchange?>>          navigationExpression, params string[] excludeProperties)
+                                                                                 Expression<Func<TEntity, Exchange?>> navigationExpression, params string[] excludeProperties)
     where TEntity : class
     {
         IIncludableQueryable<TEntity, object?> query = value;

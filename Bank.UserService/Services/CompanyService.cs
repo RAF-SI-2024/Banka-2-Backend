@@ -75,6 +75,8 @@ public class CompanyService(ICompanyRepository companyRepository, IUserRepositor
 
         var company = await m_CompanyRepository.Update(dbCompany.Update(companyUpdateRequest));
 
+        company.MajorityOwner = userMajorityOwner;
+
         return Result.Ok(company.ToResponse());
     }
 }

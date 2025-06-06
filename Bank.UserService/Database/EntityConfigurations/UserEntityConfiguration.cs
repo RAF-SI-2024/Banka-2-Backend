@@ -1,4 +1,5 @@
-﻿using Bank.UserService.Models;
+﻿using Bank.UserService.Database.ValueConverters;
+using Bank.UserService.Models;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -76,6 +77,7 @@ public class UserEntityConfiguration : IEntityTypeConfiguration<User>
                .IsRequired();
 
         builder.Property(user => user.Permissions)
+               .HasConversion(new PermissionsValueConverter())
                .IsRequired();
 
         builder.HasMany(user => user.Accounts)

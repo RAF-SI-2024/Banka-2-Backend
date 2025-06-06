@@ -1,10 +1,15 @@
-﻿using Bank.Application.Domain;
+﻿using System.Reflection;
+
+using Bank.Application.Domain;
 using Bank.Application.Endpoints;
 using Bank.Application.Queries;
 using Bank.Application.Requests;
 using Bank.Application.Responses;
+using Bank.Permissions.Services;
+using Bank.UserService.Controllers;
 using Bank.UserService.Services;
 using Bank.UserService.Test.Examples.Entities;
+using Bank.UserService.Test.Integration.Services;
 
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,11 +18,12 @@ using Shouldly;
 namespace Bank.UserService.Test.Steps;
 
 [Binding]
-public class UserSteps(IUserService userService, ScenarioContext scenarioContext, IAuthorizationService authorizationService)
+public class UserSteps(IUserService userService, ScenarioContext scenarioContext, IAuthorizationServiceFactory authorizationServiceFactory, UserController userController)
 {
-    private readonly IUserService          m_UserService          = userService;
-    private readonly ScenarioContext       m_ScenarioContext      = scenarioContext;
-    private readonly IAuthorizationService m_AuthorizationService = authorizationService;
+    private readonly IUserService                 m_UserService                 = userService;
+    private readonly ScenarioContext              m_ScenarioContext             = scenarioContext;
+    private readonly IAuthorizationServiceFactory m_AuthorizationServiceFactory = authorizationServiceFactory;
+    private readonly UserController               m_UserController              = userController;
 
     [Given(@"user login request")]
     public void GivenUserLoginRequest()
@@ -28,6 +34,17 @@ public class UserSteps(IUserService userService, ScenarioContext scenarioContext
     [When(@"user sends valid login request")]
     public async Task WhenUserSendsValidLoginRequest()
     {
+        var instance = m_AuthorizationServiceFactory as TestAuthorizationServiceFactory;
+
+        instance!.Permissions = new Permissions.Domain.Permissions(Permission.Admin);
+
+        instance.UserId = Example.Entity.AccountCurrency.EmployeeId;
+
+        var field = m_UserService.GetType()
+                                 .GetField("m_AuthorizationServiceFactory", BindingFlags.Instance | BindingFlags.NonPublic);
+
+        field?.SetValue(m_UserService, m_AuthorizationServiceFactory);
+
         var userLoginRequest = m_ScenarioContext.Get<UserLoginRequest>(Constant.LoginRequest);
 
         var userLoginResult = await m_UserService.Login(userLoginRequest);
@@ -150,7 +167,10 @@ public class UserSteps(IUserService userService, ScenarioContext scenarioContext
     [Given(@"a user has received a valid activation token")]
     public void GivenAUserHasReceivedAValidActivationToken()
     {
-        string token = m_AuthorizationService.GenerateTokenFor(Example.Entity.User.GetEmployee);
+        var instance = m_AuthorizationServiceFactory as TestAuthorizationServiceFactory;
+
+        string token = instance.AuthorizationService.GenerateTokenFor(Example.Entity.User.GetEmployee.Id, Example.Entity.User.GetEmployee.Permissions);
+
         m_ScenarioContext[Constant.Token] = token;
     }
 
@@ -189,18 +209,275 @@ public class UserSteps(IUserService userService, ScenarioContext scenarioContext
         m_ScenarioContext[Constant.Result]       = result;
         m_ScenarioContext[Constant.ActionResult] = result.ActionResult;
     }
+
+    [Given(@"user update permission request with data")]
+    public void GivenUserUpdatePermissionRequestWithData()
+    {
+        m_ScenarioContext[Constant.Permission] = Example.Entity.User.UserUpdatePermissionRequest;
+    }
+
+    [Given(@"user id")]
+    public void GivenUserId()
+    {
+        m_ScenarioContext[Constant.Id] = Example.Entity.User.Id;
+    }
+
+    [When(@"they request to update user permission")]
+    public async Task WhenTheyRequestToUpdateUserPermission()
+    {
+        var request = m_ScenarioContext.Get<UserUpdatePermissionRequest>(Constant.Permission);
+
+        var id = m_ScenarioContext.Get<Guid>(Constant.Id);
+
+        var result = await m_UserService.UpdatePermission(id, request);
+
+        m_ScenarioContext[Constant.Result]       = result;
+        m_ScenarioContext[Constant.ActionResult] = result.ActionResult;
+    }
+
+    [Given(@"user password reset request with data")]
+    public void GivenUserPasswordResetRequestWithData()
+    {
+        m_ScenarioContext[Constant.PasswordReset] = Example.Entity.User.UserPasswordResetRequest;
+    }
+
+    [Given(@"a user has received a valid activation token for password reset")]
+    public void GivenAUserHasReceivedAValidActivationTokenForPasswordReset()
+    {
+        var instance = m_AuthorizationServiceFactory as TestAuthorizationServiceFactory;
+
+        instance!.Permissions = new Permissions.Domain.Permissions(Permission.Admin);
+
+        instance.UserId = Example.Entity.AccountCurrency.EmployeeId;
+
+        var field = m_UserService.GetType()
+                                 .GetField("m_AuthorizationServiceFactory", BindingFlags.Instance | BindingFlags.NonPublic);
+
+        field?.SetValue(m_UserService, m_AuthorizationServiceFactory);
+
+        string token = m_AuthorizationServiceFactory.AuthorizationService.GenerateTokenFor(Example.Entity.User.GetEmployee.Id, Example.Entity.User.GetEmployee.Permissions);
+
+        m_ScenarioContext[Constant.Token] = token;
+    }
+
+    [When(@"they request to reset user password")]
+    public async Task WhenTheyRequestToResetUserPassword()
+    {
+        var request = m_ScenarioContext.Get<UserPasswordResetRequest>(Constant.PasswordReset);
+
+        var token = m_ScenarioContext.Get<string>(Constant.Token);
+
+        var result = await m_UserService.PasswordReset(request, token);
+
+        m_ScenarioContext[Constant.Result]       = result;
+        m_ScenarioContext[Constant.ActionResult] = result.ActionResult;
+    }
+
+    [Given(@"a user filter query and pageable parameters")]
+    public void GivenUserFilterQueryAndPageable()
+    {
+        m_ScenarioContext[Constant.UserFilterQuery] = new UserFilterQuery();
+        m_ScenarioContext[Constant.Pageable]        = new Pageable();
+    }
+
+    [When(@"a GET request is sent to fetch all users")]
+    public async Task WhenGetAllUsers()
+    {
+        var query    = m_ScenarioContext.Get<UserFilterQuery>(Constant.UserFilterQuery);
+        var pageable = m_ScenarioContext.Get<Pageable>(Constant.Pageable);
+
+        var result = await m_UserController.GetAll(query, pageable);
+        m_ScenarioContext[Constant.GetUsersResult] = result;
+    }
+
+    [Then(@"the response should contain the list of users")]
+    public void ThenResponseContainsUsers()
+    {
+        var result = m_ScenarioContext.Get<ActionResult<Page<UserResponse>>>(Constant.GetUsersResult);
+        result.Result.ShouldBeOfType<OkObjectResult>();
+        result.ShouldNotBeNull();
+    }
+
+    [Given(@"a valid user Id")]
+    public void GivenValidUserId()
+    {
+        m_ScenarioContext[Constant.UserId] = Example.Entity.User.Id;
+    }
+
+    [When(@"a GET request is sent to fetch a user by Id")]
+    public async Task WhenGetUserById()
+    {
+        var id     = m_ScenarioContext.Get<Guid>(Constant.UserId);
+        var result = await m_UserController.GetOne(id);
+        m_ScenarioContext[Constant.GetUserResult] = result;
+    }
+
+    [Then(@"the response should contain the user")]
+    public void ThenResponseShouldContainUser()
+    {
+        var result = m_ScenarioContext.Get<ActionResult<UserResponse>>(Constant.GetUserResult);
+        result.Result.ShouldBeOfType<OkObjectResult>();
+        result.ShouldNotBeNull();
+    }
+
+    [Given(@"a valid user login request")]
+    public void GivenLoginRequest()
+    {
+        m_ScenarioContext[Constant.UserLoginRequest] = Example.Entity.User.LoginRequest;
+    }
+
+    [When(@"a POST request is sent to the login endpoint")]
+    public async Task WhenLoginPost()
+    {
+        var request = m_ScenarioContext.Get<UserLoginRequest>(Constant.UserLoginRequest);
+        var result  = await m_UserController.Login(request);
+        m_ScenarioContext[Constant.LoginResult] = result;
+    }
+
+    [Then(@"the login response should be successfully returned")]
+    public void ThenLoginResponseShouldBeSuccessfullyReturned()
+    {
+        var result = m_ScenarioContext.Get<ActionResult<UserLoginResponse>>(Constant.LoginResult);
+        result.Result.ShouldBeOfType<OkObjectResult>();
+        result.ShouldNotBeNull();
+    }
+
+    [Given(@"a valid activation request and token")]
+    public void GivenActivationRequest()
+    {
+        var instance = m_AuthorizationServiceFactory as TestAuthorizationServiceFactory;
+
+        string token = instance.AuthorizationService.GenerateTokenFor(Example.Entity.User.GetEmployee.Id, Example.Entity.User.GetEmployee.Permissions);
+
+        m_ScenarioContext[Constant.Token] = token;
+
+        m_ScenarioContext[Constant.ActivationRequest] = Example.Entity.User.UserActivationRequest;
+    }
+
+    [When(@"a POST request is sent to the activation endpoint")]
+    public async Task WhenActivate()
+    {
+        var request = m_ScenarioContext.Get<UserActivationRequest>(Constant.ActivationRequest);
+        var token   = m_ScenarioContext.Get<string>(Constant.Token);
+        var result  = await m_UserController.Activate(request, token);
+        m_ScenarioContext[Constant.ActivationResult] = result;
+    }
+
+    [Then(@"the response should indicate successful activation")]
+    public void ThenActivationSuccess()
+    {
+        var result = m_ScenarioContext.Get<ActionResult>(Constant.ActivationResult);
+        result.ShouldBeOfType<AcceptedResult>();
+    }
+
+    [Given(@"a valid password reset request")]
+    public void GivenPasswordResetRequest()
+    {
+        m_ScenarioContext[Constant.PasswordResetRequest] = new UserRequestPasswordResetRequest
+                                                           {
+                                                               Email = Example.Entity.User.GetEmployee.Email
+                                                           };
+    }
+
+    [When(@"a POST request is sent to request password reset")]
+    public async Task WhenRequestReset()
+    {
+        var request = m_ScenarioContext.Get<UserRequestPasswordResetRequest>(Constant.PasswordResetRequest);
+        var result  = await m_UserController.RequestPasswordReset(request);
+        m_ScenarioContext[Constant.PasswordResetResult] = result;
+    }
+
+    [Then(@"the response should indicate reset email was sent")]
+    public void ThenResetEmailSent()
+    {
+        var result = m_ScenarioContext.Get<ActionResult>(Constant.PasswordResetResult);
+        result.ShouldBeOfType<AcceptedResult>();
+    }
+
+    [Given(@"a valid new password and reset token")]
+    public void GivenNewPasswordAndToken()
+    {
+        m_ScenarioContext[Constant.PasswordReset] = Example.Entity.User.UserPasswordResetRequest;
+
+        var instance = m_AuthorizationServiceFactory as TestAuthorizationServiceFactory;
+
+        instance!.Permissions = new Permissions.Domain.Permissions(Permission.Admin);
+
+        instance.UserId = Example.Entity.AccountCurrency.EmployeeId;
+
+        var field = m_UserService.GetType()
+                                 .GetField("m_AuthorizationServiceFactory", BindingFlags.Instance | BindingFlags.NonPublic);
+
+        field?.SetValue(m_UserService, m_AuthorizationServiceFactory);
+
+        string token = m_AuthorizationServiceFactory.AuthorizationService.GenerateTokenFor(Example.Entity.User.GetEmployee.Id, Example.Entity.User.GetEmployee.Permissions);
+
+        m_ScenarioContext[Constant.Token] = token;
+    }
+
+    [When(@"a POST request is sent to reset password")]
+    public async Task WhenPostPasswordReset()
+    {
+        var request = m_ScenarioContext.Get<UserPasswordResetRequest>(Constant.PasswordReset);
+        var token   = m_ScenarioContext.Get<string>(Constant.Token);
+        var result  = await m_UserController.PasswordReset(request, token);
+        m_ScenarioContext[Constant.PasswordResetConfirmResult] = result;
+    }
+
+    [Then(@"the password should be reset successfully")]
+    public void ThenPasswordResetSuccessful()
+    {
+        var result = m_ScenarioContext.Get<ActionResult>(Constant.PasswordResetConfirmResult);
+        result.ShouldBeOfType<AcceptedResult>();
+    }
+
+    [Given(@"a user Id and permission update request")]
+    public void GivenUserIdAndPermissionUpdate()
+    {
+        m_ScenarioContext[Constant.UserId]                  = Example.Entity.User.Id;
+        m_ScenarioContext[Constant.PermissionUpdateRequest] = Example.Entity.User.UserUpdatePermissionRequest;
+    }
+
+    [When(@"a PUT request is sent to update user permission")]
+    public async Task WhenPutPermissionUpdate()
+    {
+        var id      = m_ScenarioContext.Get<Guid>(Constant.UserId);
+        var request = m_ScenarioContext.Get<UserUpdatePermissionRequest>(Constant.PermissionUpdateRequest);
+        var result  = await m_UserController.UpdatePermission(id, request);
+        m_ScenarioContext[Constant.PermissionUpdateResult] = result;
+    }
+
+    [Then(@"the user permission should be updated successfully")]
+    public void ThenPermissionUpdatedSuccessfully()
+    {
+        var result = m_ScenarioContext.Get<ActionResult>(Constant.PermissionUpdateResult);
+        result.ShouldBeOfType<OkResult>();
+    }
 }
 
 file static class Constant
 {
-    public const string LoginRequest      = "EmployeeCreateRequest";
-    public const string LoginResult       = "EmployeeCreateResult";
-    public const string FilterParam       = "UserFilterQuery";
-    public const string Pageable          = "UserPageable";
-    public const string Id                = "UserId";
-    public const string Result            = "UserResult";
-    public const string ActionResult      = "UserActionResult";
-    public const string Token             = "UserToken";
-    public const string ActivationRequest = "UserActivatioRequest";
-    public const string PasswordReset     = "UserPasswordReset";
+    public const string LoginRequest                = "EmployeeCreateRequest";
+    public const string LoginResult                 = "EmployeeCreateResult";
+    public const string FilterParam                 = "UserFilterQuery";
+    public const string Pageable                    = "UserPageable";
+    public const string Id                          = "UserId";
+    public const string Result                      = "UserResult";
+    public const string ActionResult                = "UserActionResult";
+    public const string Token                       = "UserToken";
+    public const string ActivationRequest           = "UserActivatioRequest";
+    public const string PasswordReset               = "UserPasswordReset";
+    public const string Permission                  = "UserPermission";
+    public const string PasswordResetRequest        = "UserPasswordResetRequest";
+    public const string PasswordResetConfirmRequest = "UserPasswordResetConfirmRequest";
+    public const string GetUsersResult              = "GetUsersResult";
+    public const string GetUserResult               = "GetUserResult";
+    public const string UserId                      = "UserId";
+    public const string UserLoginRequest            = "UserLoginRequest";
+    public const string ActivationResult            = "ActivationResult";
+    public const string PasswordResetResult         = "PasswordResetResult";
+    public const string PasswordResetConfirmResult  = "PasswordResetConfirmResult";
+    public const string PermissionUpdateRequest     = "PermissionUpdateRequest";
+    public const string PermissionUpdateResult      = "PermissionUpdateResult";
+    public const string UserFilterQuery             = "UserFilterQuery";
 }

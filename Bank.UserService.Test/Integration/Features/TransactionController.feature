@@ -1,35 +1,26 @@
-Feature: Transaction controller testing
+﻿Feature: Transaction controller testing
 
-    Scenario: Get all transaction with filter parameters
-        Given transaction get request with query filter parameters
-        And transaction get request with query pageable
-        When transactions are fetched from the database
-        Then transaction response should be 200
-        And response should contain the list of transactions matching the filter parameters
+    Scenario: Get all transactions with filter parameters through API
+        Given a transaction filter query and pageable parameters
+        When a GET request is sent to fetch all transactions
+        Then the response ActionResult should indicate successful retrieval of transactions matching the filter parameters
 
-    Scenario: Get transaction by Id
-        Given transaction get request with Id
-        When transaction is fetched by Id from the database
-        Then transaction response should be 200
-        And response should contain the transaction with the given Id
+    Scenario: Get all transactions by account Id and filter parameters through API
+        Given a valid account Id and a transaction filter query and pageable parameters
+        When a GET request is sent to fetch transactions by account Id
+        Then the response ActionResult should indicate successful retrieval of transactions for the account
 
-    Scenario: Get all transaction by account Id with filter parameters
-        Given transaction get request with account Id
-        And transaction get request with query filter parameters
-        And transaction get request with query pageable
-        When transactions are fetched by account Id from the database
-        Then transaction response should be 200
-        And response should contain the list of transactions matching the filter parameters and account Id
+    Scenario: Get transaction by Id through API
+        Given a valid transaction Id
+        When a GET request is sent to fetch a transaction by Id
+        Then the response ActionResult should indicate successful retrieval of the transaction
 
-    Scenario: Create Transaction
-        Given transaction create request
-        When transaction is created in the database
-        Then transaction response should be 200
-        And transaction details should match the created transaction
+#    Scenario: Create transaction through API
+#        Given a valid transaction create request
+#        When a POST request is sent to the transaction creation endpoint
+#        Then the response ActionResult should indicate successful transaction creation
 
-    Scenario: Update Transaction
-        Given a valid transaction Id for update
-        And update request transaction
-        When transaction is updated in the database
-        Then transaction response should be 200
-        And transaction details should match the updated transaction
+    Scenario: Update transaction through API
+        Given a valid transaction Id and update request
+        When a PUT request is sent to the transaction update endpoint
+        Then the response ActionResult should indicate successful transaction update

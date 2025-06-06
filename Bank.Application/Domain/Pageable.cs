@@ -1,9 +1,13 @@
 ﻿namespace Bank.Application.Domain;
 
-public class Pageable
+public class Pageable(int page, int size)
 {
-    public int Page { get; set; } = 1;
-    public int Size { get; set; } = 10;
+    public int Page { get; set; } = page;
+    public int Size { get; set; } = size;
+
+    public Pageable() : this(1, 10) { }
+
+    public static Pageable Create(int page = 1, int size = 10) => new(page, size);
 }
 
 public class Page<T>

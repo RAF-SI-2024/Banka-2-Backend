@@ -3,12 +3,10 @@ using Bank.Application.Endpoints;
 using Bank.Application.Queries;
 using Bank.Application.Requests;
 using Bank.Application.Responses;
+using Bank.Permissions.Core;
 using Bank.UserService.Services;
 
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-
-using Role = Bank.UserService.Configurations.Configuration.Policy.Role;
 
 namespace Bank.UserService.Controllers;
 
@@ -17,8 +15,8 @@ public class EmployeeController(IEmployeeService employeeService) : ControllerBa
 {
     private readonly IEmployeeService m_EmployeeService = employeeService;
 
+    [Authorize(Permission.Admin, Permission.Employee)]
     [HttpGet(Endpoints.Employee.GetAll)]
-    [Authorize(Roles = $"{Role.Admin}, {Role.Employee}")]
     public async Task<ActionResult<Page<EmployeeResponse>>> GetAll([FromQuery] UserFilterQuery userFilterQuery, [FromQuery] Pageable pageable)
     {
         var result = await m_EmployeeService.GetAll(userFilterQuery, pageable);
@@ -26,8 +24,8 @@ public class EmployeeController(IEmployeeService employeeService) : ControllerBa
         return result.ActionResult;
     }
 
+    [Authorize(Permission.Admin, Permission.Employee)]
     [HttpGet(Endpoints.Employee.GetOne)]
-    [Authorize(Roles = $"{Role.Admin}, {Role.Employee}")]
     public async Task<ActionResult<EmployeeResponse>> GetOne([FromRoute] Guid id)
     {
         var result = await m_EmployeeService.GetOne(id);
@@ -35,8 +33,8 @@ public class EmployeeController(IEmployeeService employeeService) : ControllerBa
         return result.ActionResult;
     }
 
+    [Authorize(Permission.Admin, Permission.Employee)]
     [HttpPost(Endpoints.Employee.Create)]
-    [Authorize(Roles = $"{Role.Admin}, {Role.Employee}")]
     public async Task<ActionResult<EmployeeResponse>> Create([FromBody] EmployeeCreateRequest employeeCreateRequest)
     {
         var result = await m_EmployeeService.Create(employeeCreateRequest);
@@ -44,8 +42,8 @@ public class EmployeeController(IEmployeeService employeeService) : ControllerBa
         return result.ActionResult;
     }
 
+    [Authorize(Permission.Admin, Permission.Employee)]
     [HttpPut(Endpoints.Employee.Update)]
-    [Authorize(Roles = $"{Role.Admin}, {Role.Employee}")]
     public async Task<ActionResult<EmployeeResponse>> Update([FromBody] EmployeeUpdateRequest employeeUpdateRequest, [FromRoute] Guid id)
     {
         var result = await m_EmployeeService.Update(employeeUpdateRequest, id);

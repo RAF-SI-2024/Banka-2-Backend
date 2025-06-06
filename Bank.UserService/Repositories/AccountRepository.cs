@@ -2,9 +2,12 @@
 
 using Bank.Application.Domain;
 using Bank.Application.Queries;
-using Bank.UserService.BackgroundServices;
+using Bank.Database.Core;
 using Bank.UserService.Database;
 using Bank.UserService.Models;
+using Bank.UserService.Services;
+
+using EFCore.BulkExtensions;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
@@ -19,43 +22,46 @@ public interface IAccountRepository
 
     Task<Account?> FindById(Guid id);
 
-    Task<bool> Exists(Guid id);
-
-    Task<Account?> FindByNumber(string number);
+    Task<Account?> FindByAccountNumber(string? accountNumber);
 
     Task<Account> Add(Account account);
 
+    Task<bool> AddRange(IEnumerable<Account> accounts);
+
     Task<Account> Update(Account account);
 
-    Task<bool> DecreaseBalance(Guid accountId, Guid bankCurrencyId, decimal accountAmount, decimal bankAccountAmount);
+    Task<bool> Exists(Guid id);
 
-    Task<bool> DecreaseAvailableBalance(Guid accountId, Guid bankCurrencyId, decimal accountAmount, decimal bankAccountAmount);
+    Task<bool> IsEmpty();
 
-    Task<bool> DecreaseAvailableBalanceWithoutLimitCheck(Guid accountId, Guid bankCurrencyId, decimal accountAmount, decimal bankAccountAmount);
+    Task<bool> IncreaseBalance(Guid accountId, decimal amount, ApplicationContext? context = null);
 
-    Task<bool> IncreaseBalances(Guid accountId, Guid bankCurrencyId, decimal amount);
+    Task<bool> DecreaseBalance(Guid accountId, decimal amount, ApplicationContext? context = null);
 
-    Task<bool> DecreaseBalances(Guid accountId, Guid bankCurrencyId, decimal amount);
+    Task<bool> DecreaseBalance(Guid accountId, Guid bankCurrencyId, decimal accountAmount, decimal bankAccountAmount, ApplicationContext? context = null);
 
-    Task<bool> DecreaseBalance(Guid accountId, Guid bankCurrencyId, decimal accountAmount, decimal bankAccountAmount, ApplicationContext context);
+    Task<bool> DecreaseAvailableBalance(Guid accountId, decimal amount, ApplicationContext? context = null);
 
-    Task<bool> DecreaseAvailableBalance(Guid accountId, Guid bankCurrencyId, decimal accountAmount, decimal bankAccountAmount, ApplicationContext context);
+    Task<bool> DecreaseAvailableBalance(Guid accountId, Guid bankCurrencyId, decimal accountAmount, decimal bankAccountAmount, ApplicationContext? context = null);
 
-    Task<bool> DecreaseAvailableBalanceWithoutLimitCheck(Guid accountId, Guid bankCurrencyId, decimal accountAmount, decimal bankAccountAmount, ApplicationContext context);
+    Task<bool> DecreaseAvailableBalanceWithoutLimitCheck(Guid accountId, decimal amount, ApplicationContext? context = null);
 
-    Task<bool> IncreaseBalances(Guid accountId, Guid bankCurrencyId, decimal amount, ApplicationContext context);
+    Task<bool> DecreaseAvailableBalanceWithoutLimitCheck(Guid accountId, Guid bankCurrencyId, decimal accountAmount, decimal bankAccountAmount, ApplicationContext? context = null);
 
-    Task<bool> DecreaseBalances(Guid accountId, Guid bankCurrencyId, decimal amount, ApplicationContext context);
+    Task<bool> IncreaseBalances(Guid accountId, Guid bankCurrencyId, decimal amount, ApplicationContext? context = null);
+
+    Task<bool> IncreaseBalancesIncludingTax(Guid                accountId, Guid bankCurrencyId, decimal amount, decimal profit, ExchangeDetails exchangeDetails,
+                                            ApplicationContext? context = null);
+
+    Task<bool> DecreaseBalances(Guid accountId, Guid bankCurrencyId, decimal amount, ApplicationContext? context = null);
 }
 
-public class AccountRepository(IDbContextFactory<ApplicationContext> contextFactory, ApplicationContext context, TransactionBackgroundService transactionBackgroundService)
-: IAccountRepository
+public class AccountRepository(IDatabaseContextFactory<ApplicationContext> contextFactory, Lazy<IDataService> dataServiceLazy) : IAccountRepository
 {
-    private readonly ApplicationContext                    m_Context                      = context;
-    private readonly IDbContextFactory<ApplicationContext> m_ContextFactory               = contextFactory;
-    private readonly TransactionBackgroundService          m_TransactionBackgroundService = transactionBackgroundService;
+    private readonly IDatabaseContextFactory<ApplicationContext> m_ContextFactory  = contextFactory;
+    private readonly Lazy<IDataService>                          m_DataServiceLazy = dataServiceLazy;
 
-    private Task<ApplicationContext> CreateContext => m_ContextFactory.CreateDbContextAsync();
+    private IDataService Data => m_DataServiceLazy.Value;
 
     private static DateTime Midnight => DateTime.UtcNow.Date;
 
@@ -65,8 +71,10 @@ public class AccountRepository(IDbContextFactory<ApplicationContext> contextFact
 
     public async Task<Page<Account>> FindAll(AccountFilterQuery accountFilterQuery, Pageable pageable)
     {
-        var accountQuery = m_Context.Accounts.IncludeAll()
-                                    .AsQueryable();
+        await using var context = await m_ContextFactory.CreateContext;
+
+        var accountQuery = context.Accounts.IncludeAll()
+                                  .AsQueryable();
 
         if (!string.IsNullOrEmpty(accountFilterQuery.ClientEmail))
             accountQuery = accountQuery.Where(account => account.Client != null && EF.Functions.ILike(account.Client.Email, $"%{accountFilterQuery.ClientEmail}%"));
@@ -89,6 +97,9 @@ public class AccountRepository(IDbContextFactory<ApplicationContext> contextFact
         if (!string.IsNullOrEmpty(accountFilterQuery.Number))
             accountQuery = accountQuery.Where(account => EF.Functions.ILike(account.Number, $"%{accountFilterQuery.Number}%"));
 
+        if (accountFilterQuery.Ids.Count > 0)
+            accountQuery = accountQuery.Where(account => accountFilterQuery.Ids.Contains(account.Id));
+        
         if (accountFilterQuery.Status != null)
             accountQuery = accountQuery.Where(account => account.Status == accountFilterQuery.Status.Value);
 
@@ -103,23 +114,22 @@ public class AccountRepository(IDbContextFactory<ApplicationContext> contextFact
 
     public async Task<Page<Account>> FindAllByClientId(Guid clientId, Pageable pageable)
     {
-        var accounts = await m_Context.Accounts.IncludeAll()
-                                      .Where(account => account.ClientId == clientId)
-                                      .Skip((pageable.Page - 1) * pageable.Size)
-                                      .Take(pageable.Size)
-                                      .ToListAsync();
+        await using var context = await m_ContextFactory.CreateContext;
 
-        var totalElements = await m_Context.Accounts.CountAsync();
+        var accounts = await context.Accounts.IncludeAll()
+                                    .Where(account => account.ClientId == clientId)
+                                    .Skip((pageable.Page - 1) * pageable.Size)
+                                    .Take(pageable.Size)
+                                    .ToListAsync();
+
+        var totalElements = await context.Accounts.CountAsync();
 
         return new Page<Account>(accounts, pageable.Page, pageable.Size, totalElements);
     }
 
     public async Task<Account?> FindById(Guid id)
     {
-        await using var context = await CreateContext;
-
-        Console.WriteLine($"FindById | {DateTime.Now:hh:mm:ss.fff}");
-        await Task.Delay(100);
+        await using var context = await m_ContextFactory.CreateContext;
 
         return await context.Accounts.IncludeAll()
                             .FirstOrDefaultAsync(a => a.Id == id);
@@ -127,211 +137,428 @@ public class AccountRepository(IDbContextFactory<ApplicationContext> contextFact
 
     public async Task<bool> Exists(Guid id)
     {
-        return await m_Context.Accounts.AnyAsync(account => account.Id == id);
+        await using var context = await m_ContextFactory.CreateContext;
+
+        return await context.Accounts.AnyAsync(account => account.Id == id);
     }
 
-    public async Task<Account?> FindByNumber(string number)
+    public async Task<bool> IsEmpty()
     {
-        await using var context = await CreateContext;
+        await using var context = await m_ContextFactory.CreateContext;
+
+        return await context.Accounts.AnyAsync() is not true;
+    }
+
+    public async Task<Account?> FindByAccountNumber(string? accountNumber)
+    {
+        if (accountNumber is null)
+            return null;
+
+        await using var context = await m_ContextFactory.CreateContext;
+
+        var code   = accountNumber[..3];
+        var branch = accountNumber[3..7];
+        var number = accountNumber[7..16];
+        var type   = accountNumber[16..];
 
         return await context.Accounts.IncludeAll()
-                            .FirstOrDefaultAsync(a => a.Number == number);
+                            .FirstOrDefaultAsync(account => account.Client!.Bank!.Code == code && account.Number == number);
     }
 
     public async Task<Account> Add(Account account)
     {
-        var addedAccount = await m_Context.Accounts.AddAsync(account);
+        await using var context = await m_ContextFactory.CreateContext;
 
-        await m_Context.SaveChangesAsync();
+        var addedAccount = await context.Accounts.AddAsync(account);
+
+        await context.SaveChangesAsync();
 
         return addedAccount.Entity;
     }
 
+    public async Task<bool> AddRange(IEnumerable<Account> accounts)
+    {
+        await using var context = await m_ContextFactory.CreateContext;
+
+        await context.BulkInsertAsync(accounts, config => config.BatchSize = 2000);
+
+        return true;
+    }
+
     public async Task<Account> Update(Account account)
     {
-        await m_Context.Accounts.Where(dbAccount => dbAccount.Id == account.Id)
-                       .ExecuteUpdateAsync(setters => setters.SetProperty(dbAccount => dbAccount.Status, account.Status)
-                                                             .SetProperty(dbAccount => dbAccount.Name,         account.Name)
-                                                             .SetProperty(dbAccount => dbAccount.DailyLimit,   account.DailyLimit)
-                                                             .SetProperty(dbAccount => dbAccount.MonthlyLimit, account.MonthlyLimit)
-                                                             .SetProperty(dbAccount => dbAccount.ModifiedAt,   account.ModifiedAt));
+        await using var context = await m_ContextFactory.CreateContext;
+
+        await context.Accounts.Where(dbAccount => dbAccount.Id == account.Id)
+                     .ExecuteUpdateAsync(setters => setters.SetProperty(dbAccount => dbAccount.Status, account.Status)
+                                                           .SetProperty(dbAccount => dbAccount.Name,         account.Name)
+                                                           .SetProperty(dbAccount => dbAccount.DailyLimit,   account.DailyLimit)
+                                                           .SetProperty(dbAccount => dbAccount.MonthlyLimit, account.MonthlyLimit)
+                                                           .SetProperty(dbAccount => dbAccount.ModifiedAt,   account.ModifiedAt));
 
         return account;
     }
 
-    public async Task<bool> DecreaseBalance(Guid accountId, Guid bankCurrencyId, decimal accountAmount, decimal bankAccountAmount)
-    {
-        await using var context = await CreateContext;
+    #region Balance & Available Balance
 
-        return await DecreaseBalance(accountId, bankCurrencyId, accountAmount, bankAccountAmount, context);
+    public async Task<bool> IncreaseBalance(Guid accountId, decimal amount, ApplicationContext? context = null)
+    {
+        var result            = 0;
+        var isContextProvided = context is not null;
+        context ??= await m_ContextFactory.CreateContext;
+
+        result += await context.Accounts.Where(account => account.Id == accountId)
+                               .ExecuteUpdateAsync(setters => setters.SetProperty(account => account.Balance, account => account.Balance                   + amount)
+                                                                     .SetProperty(account => account.AvailableBalance, account => account.AvailableBalance + amount)
+                                                                     .SetProperty(account => account.ModifiedAt,       DateTime.UtcNow));
+
+        result += await context.AccountCurrencies.Where(account => account.Id == accountId)
+                               .ExecuteUpdateAsync(setters => setters.SetProperty(account => account.Balance, account => account.Balance                   + amount)
+                                                                     .SetProperty(account => account.AvailableBalance, account => account.AvailableBalance + amount)
+                                                                     .SetProperty(account => account.ModifiedAt,       DateTime.UtcNow));
+
+        if (isContextProvided is false)
+            await context.DisposeAsync();
+
+        return result == 1;
     }
 
-    public async Task<bool> DecreaseAvailableBalance(Guid accountId, Guid bankCurrencyId, decimal accountAmount, decimal bankAccountAmount)
+    public async Task<bool> DecreaseBalance(Guid accountId, decimal amount, ApplicationContext? context = null)
     {
-        await using var context = await CreateContext;
+        var result            = 0;
+        var isContextProvided = context is not null;
+        context ??= await m_ContextFactory.CreateContext;
 
-        return await DecreaseAvailableBalance(accountId, bankCurrencyId, accountAmount, bankAccountAmount, context);
+        result += await context.Accounts.Where(account => account.Id == accountId)
+                               .ExecuteUpdateAsync(setters => setters.SetProperty(account => account.Balance, account => account.Balance - amount)
+                                                                     .SetProperty(account => account.ModifiedAt, DateTime.UtcNow));
+
+        result += await context.AccountCurrencies.Where(account => account.Id == accountId)
+                               .ExecuteUpdateAsync(setters => setters.SetProperty(account => account.Balance, account => account.Balance - amount)
+                                                                     .SetProperty(account => account.ModifiedAt, DateTime.UtcNow));
+
+        if (isContextProvided is false)
+            await context.DisposeAsync();
+
+        return result == 1;
     }
 
-    public async Task<bool> DecreaseAvailableBalanceWithoutLimitCheck(Guid accountId, Guid bankCurrencyId, decimal accountAmount, decimal bankAccountAmount)
+    public async Task<bool> DecreaseBalance(Guid accountId, Guid bankCurrencyId, decimal accountAmount, decimal bankAccountAmount, ApplicationContext? context)
     {
-        await using var context = await CreateContext;
+        if (!Data.BankAccount.TryFindAccount(bankCurrencyId, out var bankAccountId))
+            return false;
 
-        return await DecreaseAvailableBalanceWithoutLimitCheck(accountId, bankCurrencyId, accountAmount, bankAccountAmount, context);
+        var result            = 0;
+        var isContextProvided = context is not null;
+        context ??= await m_ContextFactory.CreateContext;
+
+        if (isContextProvided is false)
+            await context.Database.BeginTransactionAsync();
+
+        result += await context.Accounts.Where(account => account.Id == accountId || account.Id == bankAccountId)
+                               .ExecuteUpdateAsync(setters => setters.SetProperty(account => account.Balance,
+                                                                                  account => account.Balance - (account.Id == accountId ? accountAmount : bankAccountAmount))
+                                                                     .SetProperty(account => account.ModifiedAt, DateTime.UtcNow));
+
+        result += await context.AccountCurrencies.Where(account => account.Id == accountId || account.Id == bankAccountId)
+                               .ExecuteUpdateAsync(setters => setters.SetProperty(account => account.Balance,
+                                                                                  account => account.Balance - (account.Id == accountId ? accountAmount : bankAccountAmount))
+                                                                     .SetProperty(account => account.ModifiedAt, DateTime.UtcNow));
+
+        if (isContextProvided is false && result == 2)
+            await context.Database.CommitTransactionAsync();
+
+        if (isContextProvided is false && result != 2)
+            await context.Database.RollbackTransactionAsync();
+
+        if (isContextProvided is false)
+            await context.DisposeAsync();
+
+        return result == 2;
     }
 
-    public async Task<bool> IncreaseBalances(Guid accountId, Guid bankCurrencyId, decimal amount)
+    public async Task<bool> DecreaseAvailableBalance(Guid accountId, decimal amount, ApplicationContext? context = null)
     {
-        await using var context = await CreateContext;
+        var result            = 0;
+        var isContextProvided = context is not null;
+        context ??= await m_ContextFactory.CreateContext;
 
-        return await IncreaseBalances(accountId, bankCurrencyId, amount, context);
-    }
-
-    public async Task<bool> DecreaseBalances(Guid accountId, Guid bankCurrencyId, decimal amount)
-    {
-        await using var context = await CreateContext;
-
-        return await DecreaseBalances(accountId, bankCurrencyId, amount, context);
-    }
-
-    public async Task<bool> DecreaseBalance(Guid accountId, Guid bankCurrencyId, decimal accountAmount, decimal bankAccountAmount, ApplicationContext context)
-    {
-        m_TransactionBackgroundService.BankAccount.TryFindAccount(bankCurrencyId, out var bankAccountId);
-
-        var updatedAccounts = await context.Accounts.Where(account => account.Id == accountId || account.Id == bankAccountId)
-                                           .ExecuteUpdateAsync(setters => setters.SetProperty(account => account.Balance,
-                                                                                              account => account.Balance - (account.Id == accountId
-                                                                                                                            ? accountAmount
-                                                                                                                            : bankAccountAmount)));
-
-        var updatedAccountCurrencies = await context.AccountCurrencies.Where(account => account.Id == accountId || account.Id == bankAccountId)
-                                                    .ExecuteUpdateAsync(setters => setters.SetProperty(account => account.Balance,
-                                                                                                       account => account.Balance - (account.Id == accountId
-                                                                                                                                     ? accountAmount
-                                                                                                                                     : bankAccountAmount)));
-
-        return updatedAccounts + updatedAccountCurrencies == 2;
-    }
-
-    public async Task<bool> DecreaseAvailableBalance(Guid accountId, Guid bankCurrencyId, decimal accountAmount, decimal bankAccountAmount, ApplicationContext context)
-    {
-        m_TransactionBackgroundService.BankAccount.TryFindAccount(bankCurrencyId, out var bankAccountId);
-
-        var updatedAccounts = await context.Accounts.Where(account => account.Id == accountId || account.Id == bankAccountId)
-                                           .Where(account => account.AvailableBalance - (account.Id == accountId ? accountAmount : bankAccountAmount) >= 0)
-                                           .GroupJoin(context.Transactions, account => account.Id, transaction => transaction.FromAccountId,
-                                                      (account, transaction) => new { account, transaction })
-                                           .Select(group => new
-                                                            {
-                                                                Entity = group.account,
-                                                                Daily = group.transaction
-                                                                             .Where(transaction => transaction.FromCurrencyId == group.account.CurrencyId   &&
+        result += await context.Accounts.Where(account => account.Id               == accountId)
+                               .Where(account => account.AvailableBalance - amount >= 0)
+                               .GroupJoin(context.Transactions, account => account.Id, transaction => transaction.FromAccountId,
+                                          (account, transaction) => new { account, transaction })
+                               .Select(group => new
+                                                {
+                                                    Entity = group.account,
+                                                    Daily = group.transaction.Where(transaction => transaction.FromCurrencyId == group.account.CurrencyId   &&
                                                                                                    transaction.CreatedAt      >= Midnight                   &&
                                                                                                    transaction.Status         != TransactionStatus.Canceled &&
                                                                                                    transaction.Status         != TransactionStatus.Failed)
-                                                                             .Sum(transaction => (decimal?)transaction.FromAmount) ?? 0m,
-                                                                Monthly = group.transaction
-                                                                               .Where(transaction =>
-                                                                                      transaction.FromCurrencyId == group.account.CurrencyId   &&
-                                                                                      transaction.CreatedAt      >= FirstDayOfMonth            &&
-                                                                                      transaction.Status         != TransactionStatus.Canceled &&
-                                                                                      transaction.Status         != TransactionStatus.Failed)
-                                                                               .Sum(transaction => (decimal?)transaction.FromAmount) ?? 0m
-                                                            })
-                                           .Where(spending =>
-                                                  spending.Daily   + (spending.Entity.Id == accountId ? accountAmount : bankAccountAmount) <= spending.Entity.DailyLimit &&
+                                                                 .Sum(transaction => (decimal?)transaction.FromAmount) ?? 0m,
+                                                    Monthly = group.transaction.Where(transaction => transaction.FromCurrencyId == group.account.CurrencyId   &&
+                                                                                                     transaction.CreatedAt      >= FirstDayOfMonth            &&
+                                                                                                     transaction.Status         != TransactionStatus.Canceled &&
+                                                                                                     transaction.Status         != TransactionStatus.Failed)
+                                                                   .Sum(transaction => (decimal?)transaction.FromAmount) ?? 0m
+                                                })
+                               .Where(spending => spending.Daily + amount <= spending.Entity.DailyLimit && spending.Monthly + amount <= spending.Entity.MonthlyLimit)
+                               .Select(spending => spending.Entity)
+                               .ExecuteUpdateAsync(setters => setters.SetProperty(account => account.AvailableBalance, account => account.AvailableBalance - amount)
+                                                                     .SetProperty(account => account.ModifiedAt, DateTime.UtcNow));
+
+        result += await context.AccountCurrencies.Where(account => account.Id      == accountId)
+                               .Where(account => account.AvailableBalance - amount >= 0)
+                               .GroupJoin(context.Transactions, account => account.Id, transaction => transaction.FromAccountId,
+                                          (account, transaction) => new { account, transaction })
+                               .Select(group => new
+                                                {
+                                                    Entity = group.account,
+                                                    Daily = group.transaction.Where(transaction => transaction.FromCurrencyId == group.account.CurrencyId   &&
+                                                                                                   transaction.CreatedAt      >= Midnight                   &&
+                                                                                                   transaction.Status         != TransactionStatus.Canceled &&
+                                                                                                   transaction.Status         != TransactionStatus.Failed)
+                                                                 .Sum(transaction => (decimal?)transaction.FromAmount) ?? 0m,
+                                                    Monthly = group.transaction.Where(transaction => transaction.FromCurrencyId == group.account.CurrencyId   &&
+                                                                                                     transaction.CreatedAt      >= FirstDayOfMonth            &&
+                                                                                                     transaction.Status         != TransactionStatus.Canceled &&
+                                                                                                     transaction.Status         != TransactionStatus.Failed)
+                                                                   .Sum(transaction => (decimal?)transaction.FromAmount) ?? 0m
+                                                })
+                               .Where(spending => spending.Daily + amount <= spending.Entity.DailyLimit && spending.Monthly + amount <= spending.Entity.MonthlyLimit)
+                               .Select(spending => spending.Entity)
+                               .ExecuteUpdateAsync(setters => setters.SetProperty(account => account.AvailableBalance, account => account.AvailableBalance - amount)
+                                                                     .SetProperty(account => account.ModifiedAt, DateTime.UtcNow));
+
+        if (isContextProvided is false)
+            await context.DisposeAsync();
+
+        return result == 1;
+    }
+
+    public async Task<bool> DecreaseAvailableBalance(Guid accountId, Guid bankCurrencyId, decimal accountAmount, decimal bankAccountAmount, ApplicationContext? context)
+    {
+        if (!Data.BankAccount.TryFindAccount(bankCurrencyId, out var bankAccountId))
+            return false;
+
+        var result            = 0;
+        var isContextProvided = context is not null;
+        context ??= await m_ContextFactory.CreateContext;
+
+        if (isContextProvided is false)
+            await context.Database.BeginTransactionAsync();
+
+        result += await context.Accounts.Where(account => account.Id == accountId || account.Id == bankAccountId)
+                               .Where(account => account.AvailableBalance - (account.Id == accountId ? accountAmount : bankAccountAmount) >= 0)
+                               .GroupJoin(context.Transactions, account => account.Id, transaction => transaction.FromAccountId,
+                                          (account, transaction) => new { account, transaction })
+                               .Select(group => new
+                                                {
+                                                    Entity = group.account,
+                                                    Daily = group.transaction.Where(transaction => transaction.FromCurrencyId == group.account.CurrencyId   &&
+                                                                                                   transaction.CreatedAt      >= Midnight                   &&
+                                                                                                   transaction.Status         != TransactionStatus.Canceled &&
+                                                                                                   transaction.Status         != TransactionStatus.Failed)
+                                                                 .Sum(transaction => (decimal?)transaction.FromAmount) ?? 0m,
+                                                    Monthly = group.transaction.Where(transaction => transaction.FromCurrencyId == group.account.CurrencyId   &&
+                                                                                                     transaction.CreatedAt      >= FirstDayOfMonth            &&
+                                                                                                     transaction.Status         != TransactionStatus.Canceled &&
+                                                                                                     transaction.Status         != TransactionStatus.Failed)
+                                                                   .Sum(transaction => (decimal?)transaction.FromAmount) ?? 0m
+                                                })
+                               .Where(spending => spending.Daily   + (spending.Entity.Id == accountId ? accountAmount : bankAccountAmount) <= spending.Entity.DailyLimit &&
                                                   spending.Monthly + (spending.Entity.Id == accountId ? accountAmount : bankAccountAmount) <= spending.Entity.MonthlyLimit)
-                                           .Select(spending => spending.Entity)
-                                           .ExecuteUpdateAsync(setters => setters.SetProperty(account => account.AvailableBalance,
-                                                                                              account => account.AvailableBalance -
-                                                                                                         (account.Id == accountId ? accountAmount : bankAccountAmount)));
+                               .Select(spending => spending.Entity)
+                               .ExecuteUpdateAsync(setters => setters.SetProperty(account => account.AvailableBalance,
+                                                                                  account => account.AvailableBalance -
+                                                                                             (account.Id == accountId ? accountAmount : bankAccountAmount)));
 
-        var updatedAccountCurrencies = await context.AccountCurrencies.Where(account => account.Id == accountId || account.Id == bankAccountId)
-                                                    .Where(account => account.AvailableBalance - (account.Id == accountId ? accountAmount : bankAccountAmount) >= 0)
-                                                    .GroupJoin(context.Transactions, account => account.Id, transaction => transaction.FromAccountId,
-                                                               (account, transaction) => new { account, transaction })
-                                                    .Select(group => new
-                                                                     {
-                                                                         Entity = group.account,
-                                                                         Daily = group.transaction
-                                                                                      .Where(transaction =>
-                                                                                             transaction.FromCurrencyId ==
-                                                                                             group.account.CurrencyId                            &&
-                                                                                             transaction.CreatedAt >= Midnight                   &&
-                                                                                             transaction.Status    != TransactionStatus.Canceled &&
-                                                                                             transaction.Status    != TransactionStatus.Failed)
-                                                                                      .Sum(transaction => (decimal?)transaction.FromAmount) ?? 0m,
-                                                                         Monthly = group.transaction
-                                                                                        .Where(transaction =>
-                                                                                               transaction.FromCurrencyId ==
-                                                                                               group.account.CurrencyId                            &&
-                                                                                               transaction.CreatedAt >= FirstDayOfMonth            &&
-                                                                                               transaction.Status    != TransactionStatus.Canceled &&
-                                                                                               transaction.Status    != TransactionStatus.Failed)
-                                                                                        .Sum(transaction => (decimal?)transaction.FromAmount) ?? 0m
-                                                                     })
-                                                    .Where(spending => spending.Daily + (spending.Entity.Id == accountId ? accountAmount : bankAccountAmount) <=
-                                                                       spending.Entity.DailyLimit &&
-                                                                       spending.Monthly + (spending.Entity.Id == accountId ? accountAmount : bankAccountAmount) <=
-                                                                       spending.Entity.MonthlyLimit)
-                                                    .Select(spending => spending.Entity)
-                                                    .ExecuteUpdateAsync(setters => setters.SetProperty(account => account.AvailableBalance,
-                                                                                                       account => account.AvailableBalance -
-                                                                                                                  (account.Id == accountId ? accountAmount : bankAccountAmount)));
+        result += await context.AccountCurrencies.Where(account => account.Id == accountId || account.Id == bankAccountId)
+                               .Where(account => account.AvailableBalance - (account.Id == accountId ? accountAmount : bankAccountAmount) >= 0)
+                               .GroupJoin(context.Transactions, account => account.Id, transaction => transaction.FromAccountId,
+                                          (account, transaction) => new { account, transaction })
+                               .Select(group => new
+                                                {
+                                                    Entity = group.account,
+                                                    Daily = group.transaction.Where(transaction => transaction.FromCurrencyId == group.account.CurrencyId   &&
+                                                                                                   transaction.CreatedAt      >= Midnight                   &&
+                                                                                                   transaction.Status         != TransactionStatus.Canceled &&
+                                                                                                   transaction.Status         != TransactionStatus.Failed)
+                                                                 .Sum(transaction => (decimal?)transaction.FromAmount) ?? 0m,
+                                                    Monthly = group.transaction.Where(transaction => transaction.FromCurrencyId == group.account.CurrencyId   &&
+                                                                                                     transaction.CreatedAt      >= FirstDayOfMonth            &&
+                                                                                                     transaction.Status         != TransactionStatus.Canceled &&
+                                                                                                     transaction.Status         != TransactionStatus.Failed)
+                                                                   .Sum(transaction => (decimal?)transaction.FromAmount) ?? 0m
+                                                })
+                               .Where(spending => spending.Daily   + (spending.Entity.Id == accountId ? accountAmount : bankAccountAmount) <= spending.Entity.DailyLimit &&
+                                                  spending.Monthly + (spending.Entity.Id == accountId ? accountAmount : bankAccountAmount) <= spending.Entity.MonthlyLimit)
+                               .Select(spending => spending.Entity)
+                               .ExecuteUpdateAsync(setters => setters.SetProperty(account => account.AvailableBalance,
+                                                                                  account => account.AvailableBalance -
+                                                                                             (account.Id == accountId ? accountAmount : bankAccountAmount))
+                                                                     .SetProperty(account => account.ModifiedAt, DateTime.UtcNow));
 
-        return updatedAccounts + updatedAccountCurrencies == 2;
+        if (isContextProvided is false && result == 2)
+            await context.Database.CommitTransactionAsync();
+
+        if (isContextProvided is false && result != 2)
+            await context.Database.RollbackTransactionAsync();
+
+        if (isContextProvided is false)
+            await context.DisposeAsync();
+
+        return result == 2;
     }
 
-    public async Task<bool> DecreaseAvailableBalanceWithoutLimitCheck(Guid               accountId, Guid bankCurrencyId, decimal accountAmount, decimal bankAccountAmount,
-                                                                      ApplicationContext context)
+    public async Task<bool> DecreaseAvailableBalanceWithoutLimitCheck(Guid accountId, decimal amount, ApplicationContext? context = null)
     {
-        m_TransactionBackgroundService.BankAccount.TryFindAccount(bankCurrencyId, out var bankAccountId);
+        var result            = 0;
+        var isContextProvided = context is not null;
+        context ??= await m_ContextFactory.CreateContext;
 
-        var updatedAccounts = await context.Accounts.Where(account => account.Id == accountId || account.Id == bankAccountId)
-                                           .Where(account => account.AvailableBalance - (account.Id == accountId ? accountAmount : bankAccountAmount) >= 0)
-                                           .ExecuteUpdateAsync(setters => setters.SetProperty(account => account.AvailableBalance,
-                                                                                              account => account.AvailableBalance -
-                                                                                                         (account.Id == accountId ? accountAmount : bankAccountAmount)));
+        result += await context.Accounts.Where(account => account.Id               == accountId)
+                               .Where(account => account.AvailableBalance - amount >= 0)
+                               .ExecuteUpdateAsync(setters => setters.SetProperty(account => account.AvailableBalance, account => account.AvailableBalance - amount)
+                                                                     .SetProperty(account => account.ModifiedAt, DateTime.UtcNow));
 
-        var updatedAccountCurrencies = await context.AccountCurrencies.Where(account => account.Id == accountId || account.Id == bankAccountId)
-                                                    .ExecuteUpdateAsync(setters => setters.SetProperty(account => account.AvailableBalance,
-                                                                                                       account => account.AvailableBalance -
-                                                                                                                  (account.Id == accountId ? accountAmount : bankAccountAmount)));
+        result += await context.AccountCurrencies.Where(account => account.Id == accountId)
+                               .ExecuteUpdateAsync(setters => setters.SetProperty(account => account.AvailableBalance, account => account.AvailableBalance - amount)
+                                                                     .SetProperty(account => account.ModifiedAt, DateTime.UtcNow));
 
-        return updatedAccounts + updatedAccountCurrencies == 2;
+        if (isContextProvided is false)
+            await context.DisposeAsync();
+
+        return result == 1;
     }
 
-    public async Task<bool> DecreaseBalances(Guid accountId, Guid bankCurrencyId, decimal amount, ApplicationContext context)
+    public async Task<bool> DecreaseAvailableBalanceWithoutLimitCheck(Guid                accountId, Guid bankCurrencyId, decimal accountAmount, decimal bankAccountAmount,
+                                                                      ApplicationContext? context)
     {
-        m_TransactionBackgroundService.BankAccount.TryFindAccount(bankCurrencyId, out var bankAccountId);
+        if (!Data.BankAccount.TryFindAccount(bankCurrencyId, out var bankAccountId))
+            return false;
 
-        var updatedAccounts = await context.Accounts.Where(account => account.Id == accountId || account.Id == bankAccountId)
-                                           .ExecuteUpdateAsync(setters => setters.SetProperty(account => account.Balance, account => account.Balance                   - amount)
-                                                                                 .SetProperty(account => account.AvailableBalance, account => account.AvailableBalance - amount));
+        var result            = 0;
+        var isContextProvided = context is not null;
+        context ??= await m_ContextFactory.CreateContext;
 
-        var updatedAccountCurrencies = await context.AccountCurrencies.Where(account => account.Id == accountId || account.Id == bankAccountId)
-                                                    .ExecuteUpdateAsync(setters => setters.SetProperty(account => account.Balance, account => account.Balance - amount)
-                                                                                          .SetProperty(account => account.AvailableBalance,
-                                                                                                       account => account.AvailableBalance - amount));
+        result += await context.Accounts.Where(account => account.Id == accountId || account.Id == bankAccountId)
+                               .Where(account => account.AvailableBalance - (account.Id == accountId ? accountAmount : bankAccountAmount) >= 0)
+                               .ExecuteUpdateAsync(setters => setters.SetProperty(account => account.AvailableBalance,
+                                                                                  account => account.AvailableBalance -
+                                                                                             (account.Id == accountId ? accountAmount : bankAccountAmount))
+                                                                     .SetProperty(account => account.ModifiedAt, DateTime.UtcNow));
 
-        return updatedAccounts + updatedAccountCurrencies == 2;
+        result += await context.AccountCurrencies.Where(account => account.Id == accountId || account.Id == bankAccountId)
+                               .ExecuteUpdateAsync(setters => setters.SetProperty(account => account.AvailableBalance,
+                                                                                  account => account.AvailableBalance -
+                                                                                             (account.Id == accountId ? accountAmount : bankAccountAmount))
+                                                                     .SetProperty(account => account.ModifiedAt, DateTime.UtcNow));
+
+        if (isContextProvided is false)
+            await context.DisposeAsync();
+
+        return result == 2;
     }
 
-    public async Task<bool> IncreaseBalances(Guid accountId, Guid bankCurrencyId, decimal amount, ApplicationContext context)
+    public async Task<bool> DecreaseBalances(Guid accountId, Guid bankCurrencyId, decimal amount, ApplicationContext? context)
     {
-        m_TransactionBackgroundService.BankAccount.TryFindAccount(bankCurrencyId, out var bankAccountId);
+        if (!Data.BankAccount.TryFindAccount(bankCurrencyId, out var bankAccountId))
+            return false;
 
-        var updatedAccounts = await context.Accounts.Where(account => account.Id == accountId || account.Id == bankAccountId)
-                                           .ExecuteUpdateAsync(setters => setters.SetProperty(account => account.Balance, account => account.Balance                   + amount)
-                                                                                 .SetProperty(account => account.AvailableBalance, account => account.AvailableBalance + amount));
+        var result            = 0;
+        var isContextProvided = context is not null;
+        context ??= await m_ContextFactory.CreateContext;
 
-        var updatedAccountCurrencies = await context.AccountCurrencies.Where(account => account.Id == accountId || account.Id == bankAccountId)
-                                                    .ExecuteUpdateAsync(setters => setters.SetProperty(account => account.Balance, account => account.Balance + amount)
-                                                                                          .SetProperty(account => account.AvailableBalance,
-                                                                                                       account => account.AvailableBalance + amount));
+        if (isContextProvided is false)
+            await context.Database.BeginTransactionAsync();
 
-        return updatedAccounts + updatedAccountCurrencies == 2;
+        result += await context.Accounts.Where(account => account.Id == accountId || account.Id == bankAccountId)
+                               .ExecuteUpdateAsync(setters => setters.SetProperty(account => account.Balance, account => account.Balance                   - amount)
+                                                                     .SetProperty(account => account.AvailableBalance, account => account.AvailableBalance - amount)
+                                                                     .SetProperty(account => account.ModifiedAt,       DateTime.UtcNow));
+
+        result += await context.AccountCurrencies.Where(account => account.Id == accountId || account.Id == bankAccountId)
+                               .ExecuteUpdateAsync(setters => setters.SetProperty(account => account.Balance, account => account.Balance                   - amount)
+                                                                     .SetProperty(account => account.AvailableBalance, account => account.AvailableBalance - amount)
+                                                                     .SetProperty(account => account.ModifiedAt,       DateTime.UtcNow));
+
+        if (isContextProvided is false && result == 2)
+            await context.Database.CommitTransactionAsync();
+
+        if (isContextProvided is false && result != 2)
+            await context.Database.RollbackTransactionAsync();
+
+        if (isContextProvided is false)
+            await context.DisposeAsync();
+
+        return result == 2;
     }
+
+    public async Task<bool> IncreaseBalances(Guid accountId, Guid bankCurrencyId, decimal amount, ApplicationContext? context)
+    {
+        if (!Data.BankAccount.TryFindAccount(bankCurrencyId, out var bankAccountId))
+            return false;
+
+        var result            = 0;
+        var isContextProvided = context is not null;
+        context ??= await m_ContextFactory.CreateContext;
+
+        if (isContextProvided is false)
+            await context.Database.BeginTransactionAsync();
+
+        result += await context.Accounts.Where(account => account.Id == accountId || account.Id == bankAccountId)
+                               .ExecuteUpdateAsync(setters => setters.SetProperty(account => account.Balance, account => account.Balance                   + amount)
+                                                                     .SetProperty(account => account.AvailableBalance, account => account.AvailableBalance + amount)
+                                                                     .SetProperty(account => account.ModifiedAt,       DateTime.UtcNow));
+
+        result += await context.AccountCurrencies.Where(account => account.Id == accountId || account.Id == bankAccountId)
+                               .ExecuteUpdateAsync(setters => setters.SetProperty(account => account.Balance, account => account.Balance                   + amount)
+                                                                     .SetProperty(account => account.AvailableBalance, account => account.AvailableBalance + amount)
+                                                                     .SetProperty(account => account.ModifiedAt,       DateTime.UtcNow));
+
+        if (isContextProvided is false && result == 2)
+            await context.Database.CommitTransactionAsync();
+
+        if (isContextProvided is false && result != 2)
+            await context.Database.RollbackTransactionAsync();
+
+        if (isContextProvided is false)
+            await context.DisposeAsync();
+
+        return result == 2;
+    }
+
+    public async Task<bool> IncreaseBalancesIncludingTax(Guid                accountId, Guid bankCurrencyId, decimal amount, decimal profit, ExchangeDetails exchangeDetails,
+                                                         ApplicationContext? context = null)
+    {
+        if (profit <= 0)
+            return await IncreaseBalances(accountId, bankCurrencyId, amount, context);
+
+        var result            = 0;
+        var tax               = profit * 0.15m; // NOTE: Make it constant (Nope)
+        var isContextProvided = context is not null;
+        context ??= await m_ContextFactory.CreateContext;
+
+        if (isContextProvided is false)
+            await context.Database.BeginTransactionAsync();
+
+        result += await IncreaseBalances(accountId, bankCurrencyId, amount - tax, context) ? 1 : 0;
+
+        result += await IncreaseBalance(Data.CountryAccount.Id, tax * exchangeDetails.InverseAverageRate, context) ? 1 : 0;
+
+        if (isContextProvided is false && result == 2)
+            await context.Database.CommitTransactionAsync();
+
+        if (isContextProvided is false && result != 2)
+            await context.Database.RollbackTransactionAsync();
+
+        if (isContextProvided is false)
+            await context.DisposeAsync();
+
+        return result == 2;
+    }
+
+    #endregion
 }
 
 public static partial class RepositoryExtensions
@@ -351,7 +578,7 @@ public static partial class RepositoryExtensions
     }
 
     public static IIncludableQueryable<TEntity, object?> ThenIncludeAll<TEntity>(this IIncludableQueryable<TEntity, Account?> value,
-                                                                                 Expression<Func<TEntity, Account?>>          navigationExpression, params string[] excludeProperties)
+                                                                                 Expression<Func<TEntity, Account?>> navigationExpression, params string[] excludeProperties)
     where TEntity : class
     {
         IIncludableQueryable<TEntity, object?> query = value;

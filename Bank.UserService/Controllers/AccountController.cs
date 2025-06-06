@@ -3,12 +3,10 @@ using Bank.Application.Endpoints;
 using Bank.Application.Queries;
 using Bank.Application.Requests;
 using Bank.Application.Responses;
+using Bank.Permissions.Core;
 using Bank.UserService.Services;
 
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-
-using Role = Bank.UserService.Configurations.Configuration.Policy.Role;
 
 namespace Bank.UserService.Controllers;
 
@@ -27,10 +25,10 @@ public class AccountController(IAccountService accountService) : ControllerBase
     }
 
     [Authorize]
-    [HttpGet(Endpoints.Account.GetAllCards)]
-    public async Task<ActionResult<Page<AccountResponse>>> GetAllCards([FromRoute] Guid id, [FromQuery] CardFilterQuery filter, [FromQuery] Pageable pageable)
+    [HttpGet(Endpoints.Account.GetAllForClient)]
+    public async Task<ActionResult<Page<AccountResponse>>> GetAllAccounts([FromRoute] Guid clientId, [FromQuery] AccountFilterQuery filter, [FromQuery] Pageable pageable)
     {
-        var result = await m_AccountService.GetAllCards(id, filter, pageable);
+        var result = await m_AccountService.GetAllForClient(clientId, filter, pageable);
 
         return result.ActionResult;
     }
@@ -44,8 +42,17 @@ public class AccountController(IAccountService accountService) : ControllerBase
         return result.ActionResult;
     }
 
+    [Authorize]
+    [HttpGet(Endpoints.Account.GetOneByNumber)]
+    public async Task<ActionResult<AccountResponse>> GetOneByAccountNumber([FromRoute] string number)
+    {
+        var result = await m_AccountService.GetOneByAccountNumber(number);
+
+        return result.ActionResult;
+    }
+
+    [Authorize(Permission.Admin, Permission.Employee)]
     [HttpPost(Endpoints.Account.Create)]
-    [Authorize(Roles = $"{Role.Admin}, {Role.Employee}")]
     public async Task<ActionResult<AccountResponse>> Create([FromBody] AccountCreateRequest accountCreateRequest)
     {
         var result = await m_AccountService.Create(accountCreateRequest);
@@ -53,8 +60,8 @@ public class AccountController(IAccountService accountService) : ControllerBase
         return result.ActionResult;
     }
 
+    [Authorize]
     [HttpPut(Endpoints.Account.UpdateClient)]
-    [Authorize(Roles = $"{Role.Client}")]
     public async Task<ActionResult<AccountResponse>> Update([FromBody] AccountUpdateClientRequest accountUpdateClientRequest, [FromRoute] Guid id)
     {
         var result = await m_AccountService.Update(accountUpdateClientRequest, id);
@@ -62,8 +69,8 @@ public class AccountController(IAccountService accountService) : ControllerBase
         return result.ActionResult;
     }
 
+    [Authorize(Permission.Admin, Permission.Employee)]
     [HttpPut(Endpoints.Account.UpdateEmployee)]
-    [Authorize(Roles = $"{Role.Admin}, {Role.Employee}")]
     public async Task<ActionResult<AccountResponse>> Update([FromBody] AccountUpdateEmployeeRequest accountUpdateEmployeeRequest, [FromRoute] Guid id)
     {
         var result = await m_AccountService.Update(accountUpdateEmployeeRequest, id);

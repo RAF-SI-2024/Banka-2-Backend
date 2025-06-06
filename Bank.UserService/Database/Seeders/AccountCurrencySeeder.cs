@@ -1,4 +1,6 @@
-﻿using Bank.UserService.Models;
+﻿using System.Collections.Immutable;
+
+using Bank.UserService.Models;
 
 namespace Bank.UserService.Database.Seeders;
 
@@ -161,25 +163,12 @@ public static partial class Seeder
                                                                                          CreatedAt        = DateTime.UtcNow,
                                                                                          ModifiedAt       = DateTime.UtcNow,
                                                                                      };
-    }
-}
 
-public static class AccountCurrencySeederExtension
-{
-    public static async Task SeedAccountCurrency(this ApplicationContext context)
-    {
-        if (context.AccountCurrencies.Any())
-            return;
-
-        await context.AccountCurrencies.AddRangeAsync([
-                                                          Seeder.AccountCurrency.BankAustralianDollar, Seeder.AccountCurrency.BankBritishPound,
-                                                          Seeder.AccountCurrency.BankCanadianDollar,
-                                                          Seeder.AccountCurrency.BankSwissFranc, Seeder.AccountCurrency.BankEuro, Seeder.AccountCurrency.BankJapaneseYen,
-                                                          Seeder.AccountCurrency.BankUSDollar, Seeder.AccountCurrency.ForeignAccount01USDollar,
-                                                          Seeder.AccountCurrency.ForeignAccount01BritishPound, Seeder.AccountCurrency.ForeignAccount01CanadianDollar,
-                                                          Seeder.AccountCurrency.ForeignAccount02CanadianDollar
-                                                      ]);
-
-        await context.SaveChangesAsync();
+        public static readonly ImmutableArray<AccountCurrencyModel> All =
+        [
+            BankAustralianDollar, BankBritishPound, BankCanadianDollar, BankSwissFranc, BankEuro, BankJapaneseYen,
+            BankUSDollar, ForeignAccount01USDollar, ForeignAccount01BritishPound, ForeignAccount01CanadianDollar,
+            ForeignAccount02CanadianDollar
+        ];
     }
 }

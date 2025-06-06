@@ -15,6 +15,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bank.Database", "Bank.Datab
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bank.OpenApi", "Bank.OpenApi\Bank.OpenApi.csproj", "{2F6ECF99-3E2B-4EC2-8E0A-9DC7FB768768}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bank.Permissions", "Bank.Permissions\Bank.Permissions.csproj", "{132A445C-682C-4535-A99F-D8389E8BC46A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bank.Http", "Bank.Http\Bank.Http.csproj", "{983DE7DE-258A-43DF-993C-2AE94BE1C5B2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bank.Link", "Bank.Link\Bank.Link.csproj", "{F4937F18-83E4-405C-B80D-054969393F59}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -49,6 +55,18 @@ Global
 		{2F6ECF99-3E2B-4EC2-8E0A-9DC7FB768768}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2F6ECF99-3E2B-4EC2-8E0A-9DC7FB768768}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2F6ECF99-3E2B-4EC2-8E0A-9DC7FB768768}.Release|Any CPU.Build.0 = Release|Any CPU
+		{132A445C-682C-4535-A99F-D8389E8BC46A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{132A445C-682C-4535-A99F-D8389E8BC46A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{132A445C-682C-4535-A99F-D8389E8BC46A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{132A445C-682C-4535-A99F-D8389E8BC46A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{983DE7DE-258A-43DF-993C-2AE94BE1C5B2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{983DE7DE-258A-43DF-993C-2AE94BE1C5B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{983DE7DE-258A-43DF-993C-2AE94BE1C5B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{983DE7DE-258A-43DF-993C-2AE94BE1C5B2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F4937F18-83E4-405C-B80D-054969393F59}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F4937F18-83E4-405C-B80D-054969393F59}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F4937F18-83E4-405C-B80D-054969393F59}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F4937F18-83E4-405C-B80D-054969393F59}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{C328B3D2-9265-42A4-81F5-CF9D941F8234}.Debug|Any CPU.ActiveCfg = Debug|Any CPU

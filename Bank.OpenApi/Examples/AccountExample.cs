@@ -35,6 +35,7 @@ public static partial class Example
                                                                  {
                                                                      Id                = Constant.Id,
                                                                      AccountNumber     = Constant.AccountNumber,
+                                                                     Office            = Constant.Office,
                                                                      Name              = Constant.AccountName,
                                                                      Balance           = Constant.Balance,
                                                                      AvailableBalance  = Constant.Balance,

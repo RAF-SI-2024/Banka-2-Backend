@@ -2,6 +2,7 @@
 using Bank.Application.Endpoints;
 using Bank.Application.Queries;
 using Bank.Application.Responses;
+using Bank.UserService.Controllers;
 using Bank.UserService.Services;
 using Bank.UserService.Test.Examples.Entities;
 
@@ -12,10 +13,11 @@ using Shouldly;
 namespace Bank.UserService.Test.Steps;
 
 [Binding]
-public class CountrySteps(ScenarioContext scenarioContext, ICountryService countryService)
+public class CountrySteps(ScenarioContext scenarioContext, ICountryService countryService, CountryController countryController)
 {
-    private readonly ICountryService m_CountryService  = countryService;
-    private readonly ScenarioContext m_ScenarioContext = scenarioContext;
+    private readonly ICountryService   m_CountryService    = countryService;
+    private readonly ScenarioContext   m_ScenarioContext   = scenarioContext;
+    private readonly CountryController m_CountryController = countryController;
 
     [Given(@"country get request with name filter parameter")]
     public void GivenCountryGetRequestWithNameFilterParameter()
@@ -125,12 +127,84 @@ public class CountrySteps(ScenarioContext scenarioContext, ICountryService count
         result.Value.ShouldNotBeNull();
         result.Value.Id.ShouldBe(m_ScenarioContext.Get<Guid>(Constant.Id));
     }
+
+    [Given(@"a country filter query with name filter")]
+    public void GivenACountryFilterQueryWithNameFilter()
+    {
+        m_ScenarioContext[Constant.CountryFilterQuery] = new CountryFilterQuery { Name = "TestCountry" };
+        m_ScenarioContext[Constant.Pageable]           = new Pageable();
+    }
+
+    [Given(@"a country filter query with currency code filter")]
+    public void GivenACountryFilterQueryWithCurrencyCodeFilter()
+    {
+        m_ScenarioContext[Constant.CountryFilterQuery] = new CountryFilterQuery { CurrencyCode = "USD" };
+        m_ScenarioContext[Constant.Pageable]           = new Pageable();
+    }
+
+    [Given(@"a country filter query with currency name filter")]
+    public void GivenACountryFilterQueryWithCurrencyNameFilter()
+    {
+        m_ScenarioContext[Constant.CountryFilterQuery] = new CountryFilterQuery { CurrencyName = "Dollar" };
+        m_ScenarioContext[Constant.Pageable]           = new Pageable();
+    }
+
+    [When(@"a GET request is sent to fetch countries")]
+    public async Task WhenAGetRequestIsSentToFetchCountries()
+    {
+        var filterQuery = m_ScenarioContext.Get<CountryFilterQuery>(Constant.CountryFilterQuery);
+        var pageable    = m_ScenarioContext.Get<Pageable>(Constant.Pageable);
+
+        var getCountriesResult = await m_CountryController.GetAll(filterQuery, pageable);
+
+        m_ScenarioContext[Constant.GetCountries] = getCountriesResult;
+    }
+
+    [Then(@"the response ActionResult should indicate successful retrieval of countries matching the name filter")]
+    [Then(@"the response ActionResult should indicate successful retrieval of countries matching the currency code filter")]
+    [Then(@"the response ActionResult should indicate successful retrieval of countries matching the currency name filter")]
+    public void ThenTheResponseActionResultShouldIndicateSuccessfulRetrievalOfCountries()
+    {
+        var getCountriesResult = m_ScenarioContext.Get<ActionResult<Page<CountryResponse>>>(Constant.GetCountries);
+
+        getCountriesResult.Result.ShouldBeOfType<OkObjectResult>();
+        getCountriesResult.ShouldNotBeNull();
+    }
+
+    [Given(@"a country Id to fetch")]
+    public void GivenACountryIdToFetch()
+    {
+        m_ScenarioContext[Constant.CountryId] = Example.Entity.Country.GetById;
+    }
+
+    [When(@"a GET request is sent to fetch a country by Id")]
+    public async Task WhenAGetRequestIsSentToFetchACountryById()
+    {
+        var countryId = m_ScenarioContext.Get<Guid>(Constant.CountryId);
+
+        var getCountryResult = await m_CountryController.GetOne(countryId);
+
+        m_ScenarioContext[Constant.GetCountry] = getCountryResult;
+    }
+
+    [Then(@"the response ActionResult should indicate successful retrieval of the country")]
+    public void ThenTheResponseActionResultShouldIndicateSuccessfulRetrievalOfTheCountry()
+    {
+        var getCountryResult = m_ScenarioContext.Get<ActionResult<CountryResponse>>(Constant.GetCountry);
+
+        getCountryResult.Result.ShouldBeOfType<OkObjectResult>();
+        getCountryResult.ShouldNotBeNull();
+    }
 }
 
 file static class Constant
 {
-    public const string FilterParam = "CountryFilterQuery";
-    public const string Pageable    = "CountryPageable";
-    public const string Id          = "CountryId";
-    public const string GetResult   = "CountryGetResult";
+    public const string FilterParam        = "CountryFilterQuery";
+    public const string Pageable           = "CountryPageable";
+    public const string Id                 = "CountryId";
+    public const string GetResult          = "CountryGetResult";
+    public const string CountryFilterQuery = "CountryFilterQuery";
+    public const string GetCountries       = "GetCountriesResult";
+    public const string CountryId          = "CountryId";
+    public const string GetCountry         = "GetCountryResult";
 }

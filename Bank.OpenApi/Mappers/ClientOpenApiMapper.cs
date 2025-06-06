@@ -40,9 +40,6 @@ internal static class ClientOpenApiMapper
         @object[nameof(value.Address)
                 .ToCamelCase()] = new OpenApiString(value.Address);
 
-        @object[nameof(value.Permissions)
-                .ToCamelCase()] = new OpenApiLong(value.Permissions);
-
         return @object;
     }
 

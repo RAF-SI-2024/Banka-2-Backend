@@ -2,7 +2,7 @@
 using Bank.Application.Endpoints;
 using Bank.Application.Requests;
 using Bank.Application.Responses;
-using Bank.UserService.Database.Seeders;
+using Bank.UserService.Controllers;
 using Bank.UserService.Services;
 using Bank.UserService.Test.Examples.Entities;
 
@@ -13,10 +13,11 @@ using Shouldly;
 namespace Bank.UserService.Test.Steps;
 
 [Binding]
-public class LoanTypeSteps(ScenarioContext scenarioContext, ILoanTypeService loanTypeService)
+public class LoanTypeSteps(ScenarioContext scenarioContext, ILoanTypeService loanTypeService, LoanTypeController loanTypeController)
 {
-    private readonly ScenarioContext  m_ScenarioContext = scenarioContext;
-    private readonly ILoanTypeService m_LoanTypeService = loanTypeService;
+    private readonly ScenarioContext    m_ScenarioContext    = scenarioContext;
+    private readonly ILoanTypeService   m_LoanTypeService    = loanTypeService;
+    private readonly LoanTypeController m_LoanTypeController = loanTypeController;
 
     [Given(@"loan type create request")]
     public void GivenLoanTypeCreateRequest()
@@ -64,7 +65,7 @@ public class LoanTypeSteps(ScenarioContext scenarioContext, ILoanTypeService loa
     [Given(@"loan type Id")]
     public void GivenLoanTypeId()
     {
-        m_ScenarioContext[Constant.LoanTypeId] = Seeder.LoanType.Personal.Id;
+        m_ScenarioContext[Constant.LoanTypeId] = Example.Entity.LoanType.Id;
     }
 
     [When(@"loan type is updated in the database")]
@@ -107,6 +108,100 @@ public class LoanTypeSteps(ScenarioContext scenarioContext, ILoanTypeService loa
         loanTypes.ShouldNotBeNull();
         loanTypes.Value?.Items.ShouldNotBeEmpty();
     }
+
+    [Given(@"a valid loan type create request")]
+    public void GivenAValidLoanTypeCreateRequest()
+    {
+        m_ScenarioContext[Constant.LoanTypeCreateRequest] = Example.Entity.LoanType.Request;
+    }
+
+    [When(@"a POST request is sent to the loan type creation endpoint")]
+    public async Task WhenAPostRequestIsSentToTheLoanTypeCreationEndpoint()
+    {
+        var createRequest = m_ScenarioContext.Get<LoanTypeCreateRequest>(Constant.LoanTypeCreateRequest);
+
+        var createResult = await m_LoanTypeController.Create(createRequest);
+
+        m_ScenarioContext[Constant.LoanTypeCreateResult] = createResult;
+    }
+
+    [Then(@"the response ActionResult should indicate successful loan type creation")]
+    public void ThenTheResponseActionResultShouldIndicateSuccessfulLoanTypeCreation()
+    {
+        var createResult = m_ScenarioContext.Get<ActionResult<LoanTypeResponse>>(Constant.LoanTypeCreateResult);
+
+        createResult.Result.ShouldBeOfType<OkObjectResult>();
+        createResult.ShouldNotBeNull();
+    }
+
+    [Given(@"a valid loan type update request and loan type Id")]
+    public void GivenAValidLoanTypeUpdateRequestAndLoanTypeId()
+    {
+        m_ScenarioContext[Constant.LoanTypeId]            = Example.Entity.LoanType.Id;
+        m_ScenarioContext[Constant.LoanTypeUpdateRequest] = Example.Entity.LoanType.UpdateRequest;
+    }
+
+    [When(@"a PUT request is sent to the loan type update endpoint")]
+    public async Task WhenAPutRequestIsSentToTheLoanTypeUpdateEndpoint()
+    {
+        var loanTypeId    = m_ScenarioContext.Get<Guid>(Constant.LoanTypeId);
+        var updateRequest = m_ScenarioContext.Get<LoanTypeUpdateRequest>(Constant.LoanTypeUpdateRequest);
+
+        var updateResult = await m_LoanTypeController.Update(updateRequest, loanTypeId);
+
+        m_ScenarioContext[Constant.LoanTypeUpdateResult] = updateResult;
+    }
+
+    [Then(@"the response ActionResult should indicate successful loan type update")]
+    public void ThenTheResponseActionResultShouldIndicateSuccessfulLoanTypeUpdate()
+    {
+        var updateResult = m_ScenarioContext.Get<ActionResult<LoanTypeResponse>>(Constant.LoanTypeUpdateResult);
+
+        updateResult.Result.ShouldBeOfType<OkObjectResult>();
+        updateResult.ShouldNotBeNull();
+    }
+
+    [When(@"a GET request is sent to fetch all loan types")]
+    public async Task WhenAGetRequestIsSentToFetchAllLoanTypes()
+    {
+        var getLoanTypesResult = await m_LoanTypeController.GetAll(new Pageable());
+
+        m_ScenarioContext[Constant.GetLoanTypes] = getLoanTypesResult;
+    }
+
+    [Then(@"the response ActionResult should indicate successful retrieval of all loan types")]
+    public void ThenTheResponseActionResultShouldIndicateSuccessfulRetrievalOfAllLoanTypes()
+    {
+        var getLoanTypesResult = m_ScenarioContext.Get<ActionResult<Page<LoanTypeResponse>>>(Constant.GetLoanTypes);
+
+        getLoanTypesResult.Result.ShouldBeOfType<OkObjectResult>();
+        getLoanTypesResult.ShouldNotBeNull();
+    }
+
+    [Given(@"a valid loan type Id")]
+    public void GivenAValidLoanTypeId()
+    {
+        m_ScenarioContext[Constant.LoanTypeId] = Example.Entity.LoanType.Id;
+    }
+
+    [When(@"a GET request is sent to fetch a loan type by Id")]
+    public async Task WhenAGetRequestIsSentToFetchALoanTypeById()
+    {
+        var loanTypeId = m_ScenarioContext.Get<Guid>(Constant.LoanTypeId);
+
+        var getLoanTypeResult = await m_LoanTypeController.GetOne(loanTypeId);
+
+        m_ScenarioContext[Constant.GetLoanType] = getLoanTypeResult;
+    }
+
+    [Then(@"the response ActionResult should indicate successful retrieval of the loan type")]
+    public void ThenTheResponseActionResultShouldIndicateSuccessfulRetrievalOfTheLoanType()
+    {
+        var getLoanTypeResult = m_ScenarioContext.Get<ActionResult<LoanTypeResponse>>(Constant.GetLoanType);
+
+        getLoanTypeResult.Result.ShouldBeOfType<OkObjectResult>();
+        getLoanTypeResult.ShouldNotBeNull();
+    }
 }
 
 file static class Constant
@@ -117,4 +212,6 @@ file static class Constant
     public const string LoanTypeUpdateResult  = "LoanTypeUpdateResult";
     public const string LoanTypeId            = "LoanTypeId";
     public const string LoanTypes             = "LoanTypes";
+    public const string GetLoanTypes          = "GetLoanTypes";
+    public const string GetLoanType           = "GetLoanType";
 }

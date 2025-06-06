@@ -1,4 +1,5 @@
-﻿using Bank.UserService.Database.EntityConfigurations;
+﻿using Bank.Database.Core;
+using Bank.UserService.Database.EntityConfigurations;
 using Bank.UserService.Models;
 
 using Microsoft.EntityFrameworkCore;
@@ -7,7 +8,7 @@ namespace Bank.UserService.Database;
 
 using BankModel = Models.Bank;
 
-public class ApplicationContext(DbContextOptions options) : DbContext(options)
+public class ApplicationContext(DbContextOptions options) : DatabaseContext(options)
 {
     public DbSet<BankModel>           Banks                { init; get; }
     public DbSet<User>                Users                { init; get; }
@@ -26,7 +27,6 @@ public class ApplicationContext(DbContextOptions options) : DbContext(options)
     public DbSet<Loan>                Loans                { init; get; }
     public DbSet<Installment>         Installments         { init; get; }
     public DbSet<LoanType>            LoanTypes            { init; get; }
-    public DbSet<Order>     Orders               { init; get; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -47,6 +47,5 @@ public class ApplicationContext(DbContextOptions options) : DbContext(options)
         builder.ApplyConfiguration(new TransactionTemplateEntityConfiguration());
         builder.ApplyConfiguration(new TransactionEntityConfiguration());
         builder.ApplyConfiguration(new ExchangeEntityConfiguration());
-        builder.ApplyConfiguration(new OrderEntityConfiguration());
     }
 }

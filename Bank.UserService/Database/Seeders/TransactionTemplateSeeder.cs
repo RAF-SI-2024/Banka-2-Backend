@@ -1,4 +1,6 @@
-﻿using Bank.UserService.Models;
+﻿using System.Collections.Immutable;
+
+using Bank.UserService.Models;
 
 namespace Bank.UserService.Database.Seeders;
 
@@ -29,20 +31,10 @@ public static partial class Seeder
                                                                                     CreatedAt     = DateTime.UtcNow,
                                                                                     ModifiedAt    = DateTime.UtcNow
                                                                                 };
-    }
-}
 
-public static class TransactionTemplateSeederExtension
-{
-    public static async Task SeedTransactionTemplate(this ApplicationContext context)
-    {
-        if (context.TransactionTemplates.Any())
-            return;
-
-        await context.TransactionTemplates.AddRangeAsync([
-                                                             Seeder.TransactionTemplate.TransactionTemplate01, Seeder.TransactionTemplate.TransactionTemplate02
-                                                         ]);
-
-        await context.SaveChangesAsync();
+        public static readonly ImmutableArray<TransactionTemplateModel> All =
+        [
+            TransactionTemplate01, TransactionTemplate02
+        ];
     }
 }

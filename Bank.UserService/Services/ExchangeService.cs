@@ -31,15 +31,15 @@ public class ExchangeService(
     IExchangeRepository        exchangeRepository,
     ICurrencyRepository        currencyRepository,
     IAccountRepository         accountRepository,
-    IAccountCurrencyRepository accountCurrencyRepository,
-    Lazy<ITransactionService>  transactionServiceLazy
+    Lazy<ITransactionService>  transactionServiceLazy,
+    ITransactionCodeRepository transactionCodeRepository
 ) : IExchangeService
 {
     private readonly IExchangeRepository        m_ExchangeRepository        = exchangeRepository;
     private readonly ICurrencyRepository        m_CurrencyRepository        = currencyRepository;
     private readonly IAccountRepository         m_AccountRepository         = accountRepository;
+    private readonly ITransactionCodeRepository m_TransactionCodeRepository = transactionCodeRepository;
     private readonly Lazy<ITransactionService>  m_TransactionServiceLazy    = transactionServiceLazy;
-    private readonly IAccountCurrencyRepository m_AccountCurrencyRepository = accountCurrencyRepository;
 
     private ITransactionService TransactionService => m_TransactionServiceLazy.Value;
 
@@ -107,28 +107,35 @@ public class ExchangeService(
 
     public async Task<Result<ExchangeResponse>> MakeExchange(ExchangeMakeExchangeRequest exchangeMakeExchangeRequest)
     {
-        var account = await m_AccountRepository.FindById(exchangeMakeExchangeRequest.AccountId);
+        var accountTask         = m_AccountRepository.FindById(exchangeMakeExchangeRequest.AccountId);
+        var fromCurrencyTask    = m_CurrencyRepository.FindById(exchangeMakeExchangeRequest.CurrencyFromId);
+        var toCurrencyTask      = m_CurrencyRepository.FindById(exchangeMakeExchangeRequest.CurrencyToId);
+        var transactionCodeTask = m_TransactionCodeRepository.FindById(Seeder.TransactionCode.TransactionCode285.Id);
+        var exchangeDetailsTask = CalculateExchangeDetails(exchangeMakeExchangeRequest.CurrencyFromId, exchangeMakeExchangeRequest.CurrencyToId);
 
-        if (account is null)
-            return Result.NotFound<ExchangeResponse>($"No Account with Id '{exchangeMakeExchangeRequest.AccountId}'");
+        await Task.WhenAll(accountTask, fromCurrencyTask, toCurrencyTask, transactionCodeTask, exchangeDetailsTask);
 
-        var exchangeDetails = await CalculateExchangeDetails(exchangeMakeExchangeRequest.CurrencyFromId, exchangeMakeExchangeRequest.CurrencyToId);
+        var account         = await accountTask;
+        var fromCurrency    = await fromCurrencyTask;
+        var toCurrency      = await toCurrencyTask;
+        var transactionCode = await transactionCodeTask;
+        var exchangeDetails = await exchangeDetailsTask;
 
-        if (exchangeDetails is null)
-            return Result.NotFound<ExchangeResponse>($"Cannot make exchange");
+        if (account is null || fromCurrency is null || toCurrency is null || transactionCode is null || exchangeDetails is null)
+            return Result.BadRequest<ExchangeResponse>("Invalid data.");
 
         await TransactionService.PrepareInternalTransaction(new PrepareInternalTransaction
-                                                              {
-                                                                  FromAccount       = account,
-                                                                  FromCurrencyId    = exchangeMakeExchangeRequest.CurrencyFromId,
-                                                                  ToAccount         = account,
-                                                                  ToCurrencyId      = exchangeMakeExchangeRequest.CurrencyToId,
-                                                                  Amount            = exchangeMakeExchangeRequest.Amount,
-                                                                  ExchangeDetails   = exchangeDetails,
-                                                                  TransactionCodeId = Seeder.TransactionCode.TransactionCode285.Id,
-                                                                  ReferenceNumber   = null,
-                                                                  Purpose           = null
-                                                              });
+                                                            {
+                                                                FromAccount     = account,
+                                                                FromCurrency    = fromCurrency,
+                                                                ToAccount       = account,
+                                                                ToCurrency      = toCurrency,
+                                                                Amount          = exchangeMakeExchangeRequest.Amount,
+                                                                ExchangeDetails = exchangeDetails,
+                                                                TransactionCode = transactionCode,
+                                                                ReferenceNumber = null,
+                                                                Purpose         = "Currency Exchange"
+                                                            });
 
         return Result.Ok<ExchangeResponse>();
     }
@@ -150,7 +157,7 @@ public class ExchangeService(
         var currencyFromTask    = m_CurrencyRepository.FindById(currencyFromId);
         var currencyToTask      = m_CurrencyRepository.FindById(currencyToId);
         var defaultCurrencyTask = m_CurrencyRepository.FindByCode(Configuration.Exchange.DefaultCurrencyCode);
-        
+
         await Task.WhenAll(currencyFromTask, currencyToTask, defaultCurrencyTask);
 
         var currencyFrom    = await currencyFromTask;
@@ -165,7 +172,7 @@ public class ExchangeService(
 
         var exchangeFromTask = m_ExchangeRepository.FindByCurrencyFromAndCurrencyTo(defaultCurrency, currencyFrom);
         var exchangeToTask   = m_ExchangeRepository.FindByCurrencyFromAndCurrencyTo(defaultCurrency, currencyTo);
-        
+
         await Task.WhenAll(exchangeFromTask, exchangeToTask);
 
         var exchangeFrom = await exchangeFromTask;

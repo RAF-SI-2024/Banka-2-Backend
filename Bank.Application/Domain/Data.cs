@@ -77,17 +77,72 @@ public enum Direction
 public enum OrderStatus
 {
     Invalid,
-    Pending,
-    Approved,
+    NeedsApproval,
+    Active,
     Declined,
     Completed,
+    Canceled,
     Failed
+}
+
+public enum PermissionType
+{
+    Invalid,
+    Set,
+    Clear,
 }
 
 public enum Permission : long
 {
-    Invalid  = 1 << 0,
-    Admin    = 1 << 1,
-    Employee = 1 << 2,
-    Client   = 1 << 3
+    Invalid      = 0L,
+    Client       = 1L << 0,
+    Employee     = 1L << 1,
+    Admin        = 1L << 2,
+    Trade        = 1L << 3,
+    ApproveTrade = 1L << 4,
+    Bank         = 1L << 62,
+
+    Agent      = Employee | Trade,
+    Supervisor = Employee | Trade | ApproveTrade,
+}
+
+public enum Liquidity
+{
+    High,
+    Medium,
+    Low
+}
+
+public enum OptionType
+{
+    Call,
+    Put
+}
+
+public enum ContractUnit
+{
+    Kilogram,
+    Liter,
+    Barrel,
+    Bushel,
+    Pound,
+    CubicMeter
+}
+
+public enum SecurityType
+{
+    Stock,
+    Option,
+    FutureContract,
+    ForexPair
+}
+
+public enum QuoteIntervalType
+{
+    Week,
+    Day,
+    Month,
+    ThreeMonths,
+    Year,
+    Max
 }

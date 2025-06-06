@@ -9,6 +9,10 @@ ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["Bank.Application/Bank.Application.csproj", "Bank.Application/"]
 COPY ["Bank.Database/Bank.Database.csproj", "Bank.Database/"]
+COPY ["Bank.Http/Bank.Http.csproj", "Bank.Http/"]
+COPY ["Bank.Link/Bank.Link.csproj", "Bank.Link/"]
+COPY ["Bank.OpenApi/Bank.OpenApi.csproj", "Bank.OpenApi/"]
+COPY ["Bank.Permissions/Bank.Permissions.csproj", "Bank.Permissions/"]
 COPY ["Bank.UserService/Bank.UserService.csproj", "Bank.UserService/"]
 RUN dotnet restore "Bank.UserService/Bank.UserService.csproj"
 COPY . .

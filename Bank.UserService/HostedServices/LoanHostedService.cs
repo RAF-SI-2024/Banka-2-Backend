@@ -2,6 +2,8 @@
 
 using Bank.Application.Domain;
 using Bank.Application.Queries;
+using Bank.Application.Requests;
+using Bank.UserService.Database.Seeders;
 using Bank.UserService.Models;
 using Bank.UserService.Repositories;
 using Bank.UserService.Services;
@@ -11,11 +13,29 @@ using TransactionStatus = Bank.Application.Domain.TransactionStatus;
 
 namespace Bank.UserService.HostedServices;
 
-public class LoanHostedService(IServiceProvider serviceProvider)
+public class LoanHostedService
 {
-    private readonly Random           m_Random          = new();
-    private readonly IServiceProvider m_ServiceProvider = serviceProvider;
-    private          Timer?           m_Timer;
+    private readonly Random                     m_Random = new();
+    private readonly ILoanRepository            m_LoanRepository;
+    private readonly IAccountRepository         m_AccountRepository;
+    private readonly IInstallmentRepository     m_InstallmentRepository;
+    private readonly IEmailService              m_EmailService;
+    private readonly ITransactionCodeRepository m_TransactionCodeRepository;
+    private readonly IExchangeService           m_ExchangeService;
+    private readonly ITransactionService        m_transactionService;
+    private          Timer?                     m_Timer;
+
+    public LoanHostedService(ILoanRepository loanRepository, IAccountRepository accountRepository, IInstallmentRepository installmentRepository, IEmailService emailService,
+                             ITransactionCodeRepository transactionCodeRepository, IExchangeService exchangeService, ITransactionService transactionService)
+    {
+        m_LoanRepository            = loanRepository;
+        m_AccountRepository         = accountRepository;
+        m_InstallmentRepository     = installmentRepository;
+        m_EmailService              = emailService;
+        m_TransactionCodeRepository = transactionCodeRepository;
+        m_ExchangeService           = exchangeService;
+        m_transactionService        = transactionService;
+    }
 
     public void OnApplicationStarted()
     {
@@ -39,17 +59,12 @@ public class LoanHostedService(IServiceProvider serviceProvider)
     {
         try
         {
-            using var scope                 = m_ServiceProvider.CreateScope();
-            var       loanRepository        = scope.ServiceProvider.GetRequiredService<ILoanRepository>();
-            var       accountRepository     = scope.ServiceProvider.GetRequiredService<IAccountRepository>();
-            var       installmentRepository = scope.ServiceProvider.GetRequiredService<IInstallmentRepository>();
-
             var today = DateTime.UtcNow.Date;
 
-            var activeLoans = await loanRepository.GetLoansWithDueInstallmentsAsync(today);
+            var activeLoans = await m_LoanRepository.GetLoansWithDueInstallmentsAsync(today);
 
             foreach (var loan in activeLoans)
-                await ProcessLoanInstallmentsAsync(loan, today, loanRepository, accountRepository, installmentRepository);
+                await ProcessLoanInstallmentsAsync(loan, today, m_LoanRepository, m_AccountRepository, m_InstallmentRepository);
         }
         catch (Exception ex)
         {
@@ -72,7 +87,7 @@ public class LoanHostedService(IServiceProvider serviceProvider)
                 var paymentAmount = await CalculateInstallmentAmount(loan);
 
                 // Process payment
-                var paymentSuccessful = await ProcessPaymentAsync(loan, installment, paymentAmount, accountRepository);
+                var paymentSuccessful = await ProcessPaymentAsync(loan, paymentAmount, accountRepository);
 
                 if (paymentSuccessful)
                 {
@@ -97,12 +112,7 @@ public class LoanHostedService(IServiceProvider serviceProvider)
                         // Izračunaj preostali dug
                         var remainingBalance  = await GetRemainingPrincipal(loan, installmentRepository);
                         var installmentAmount = await CalculateInstallmentAmount(loan);
-
-                        using (var scope = m_ServiceProvider.CreateScope())
-                        {
-                            var emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
-                            await emailService.Send(EmailType.LoanInstallmentPaid, client, client.FirstName, installmentAmount, loan.Currency.Code, remainingBalance);
-                        }
+                        await m_EmailService.Send(EmailType.LoanInstallmentPaid, client, client.FirstName, installmentAmount, loan.Currency.Code, remainingBalance);
                     }
 
                     await CreateNextInstallmentIfNeededAsync(loan, installmentRepository);
@@ -117,7 +127,7 @@ public class LoanHostedService(IServiceProvider serviceProvider)
         }
     }
 
-    public async Task<bool> ProcessPaymentAsync(Loan loan, Installment installment, decimal paymentAmount, IAccountRepository accountRepository)
+    public async Task<bool> ProcessPaymentAsync(Loan loan, decimal paymentAmount, IAccountRepository accountRepository)
     {
         try
         {
@@ -128,77 +138,23 @@ public class LoanHostedService(IServiceProvider serviceProvider)
                 return false;
             }
 
-            if (account.AvailableBalance < paymentAmount)
-            {
-                return false;
-            }
+            // Create a transaction request for loan payment
+            var bankAccount = await m_AccountRepository.FindById(Seeder.Account.BankAccount.Id);
 
-            using var scope               = m_ServiceProvider.CreateScope();
-            var       transactionRepo     = scope.ServiceProvider.GetRequiredService<ITransactionRepository>();
-            var       transactionCodeRepo = scope.ServiceProvider.GetRequiredService<ITransactionCodeRepository>();
-
-            var allCodes        = await transactionCodeRepo.FindAll(new Pageable());
-            var loanPaymentCode = allCodes.Items.FirstOrDefault(c => c.Code == "289");
-
-            if (loanPaymentCode == null)
-            {
-                return false;
-            }
-
-            var transaction = new Transaction
-                              {
-                                  Id              = Guid.NewGuid(),
-                                  FromAccountId   = account.Id,
-                                  ToAccountId     = null,
-                                  FromAmount      = paymentAmount,
-                                  ToAmount        = paymentAmount,
-                                  FromCurrencyId  = loan.CurrencyId,
-                                  ToCurrencyId    = loan.CurrencyId,
-                                  CodeId          = loanPaymentCode.Id,
-                                  ReferenceNumber = "loan payment",
-                                  Purpose         = "loan payment purpose",
-                                  Status          = TransactionStatus.Completed,
-                                  CreatedAt       = DateTime.UtcNow,
-                                  ModifiedAt      = DateTime.UtcNow
-                              };
-
-            using var transactionScope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
-
-            try
-            {
-                var updatedAccount = new Account
+            var transactionRequest = new TransactionCreateRequest
                                      {
-                                         Id                = account.Id,
-                                         ClientId          = account.ClientId,
-                                         Name              = account.Name,
-                                         Number            = account.Number,
-                                         Balance           = account.Balance          - paymentAmount,
-                                         AvailableBalance  = account.AvailableBalance - paymentAmount,
-                                         EmployeeId        = account.EmployeeId,
-                                         CurrencyId        = account.CurrencyId,
-                                         AccountTypeId     = account.AccountTypeId,
-                                         AccountCurrencies = account.AccountCurrencies,
-                                         DailyLimit        = account.DailyLimit,
-                                         MonthlyLimit      = account.MonthlyLimit,
-                                         CreationDate      = account.CreationDate,
-                                         ExpirationDate    = account.ExpirationDate,
-                                         Status            = account.Status,
-                                         CreatedAt         = account.CreatedAt,
-                                         ModifiedAt        = DateTime.UtcNow
+                                         FromAccountNumber = account.AccountNumber,
+                                         ToAccountNumber   = bankAccount!.AccountNumber,
+                                         FromCurrencyId    = account.CurrencyId,
+                                         ToCurrencyId      = loan.CurrencyId,
+                                         Amount            = paymentAmount,
+                                         CodeId            = Seeder.TransactionCode.TransactionCode276.Id,
+                                         Purpose           = "loan payment"
                                      };
 
-                await accountRepository.Update(updatedAccount);
+            var result = await m_transactionService.Create(transactionRequest);
 
-                await transactionRepo.Add(transaction);
-
-                transactionScope.Complete();
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                return false;
-            }
+            return result.Value != null;
         }
         catch (Exception ex)
         {
@@ -258,7 +214,7 @@ public class LoanHostedService(IServiceProvider serviceProvider)
 
     public async Task<decimal> CalculateInstallmentAmount(Loan loan)
     {
-        var loanAmountInRsd = await ConvertToRsd(loan.Amount, loan.Currency);
+        var loanAmountInRsd = await ConvertToRsd(loan.Amount, loan.Currency!);
 
         var monthlyPayment = CalculateMonthlyPayment(loanAmountInRsd, loan.Period, await GetEffectiveInterestRate(loan));
 
@@ -267,12 +223,12 @@ public class LoanHostedService(IServiceProvider serviceProvider)
 
     public async Task<decimal> GetEffectiveInterestRate(Loan loan)
     {
-        var amountInRsd   = await ConvertToRsd(loan.Amount, loan.Currency);
+        var amountInRsd   = await ConvertToRsd(loan.Amount, loan.Currency!);
         var effectiveRate = GetBaseInterestRate(amountInRsd);
 
         if (loan.InterestType == InterestType.Variable)
         {
-            effectiveRate += loan.LoanType.Margin;
+            effectiveRate += loan.LoanType!.Margin;
 
             effectiveRate += GetCurrentEuriborRate();
 
@@ -305,7 +261,7 @@ public class LoanHostedService(IServiceProvider serviceProvider)
 
             if (loan.InterestType == InterestType.Variable)
             {
-                effectiveRate += loan.LoanType.Margin;
+                effectiveRate += loan.LoanType!.Margin;
 
                 if (loan.Currency.Code != "RSD")
                     effectiveRate += GetCurrentEuriborRate();
@@ -357,16 +313,13 @@ public class LoanHostedService(IServiceProvider serviceProvider)
         if (currency.Code == "RSD")
             return amount;
 
-        using var scope           = m_ServiceProvider.CreateScope();
-        var       exchangeService = scope.ServiceProvider.GetRequiredService<IExchangeService>();
-
         var exchangeBetweenQuery = new ExchangeBetweenQuery
                                    {
                                        CurrencyFromCode = currency.Code,
                                        CurrencyToCode   = "RSD"
                                    };
 
-        var result = await exchangeService.GetByCurrencies(exchangeBetweenQuery);
+        var result = await m_ExchangeService.GetByCurrencies(exchangeBetweenQuery);
 
         var convertedAmount = amount * result.Value!.Rate;
 
@@ -377,5 +330,42 @@ public class LoanHostedService(IServiceProvider serviceProvider)
     {
         var account = await accountRepository.FindById(loan.AccountId);
         return account?.Client;
+    }
+
+    public async Task<bool> DisperseFundsAfterLoanActivation(Loan loan)
+    {
+        try
+        {
+            // Get the client's account
+            var account = await m_AccountRepository.FindById(loan.AccountId);
+
+            if (account == null)
+            {
+                return false;
+            }
+
+            var bankAccount = await m_AccountRepository.FindById(Seeder.Account.BankAccount.Id);
+
+            // Create a transaction request for loan disbursement
+            var transactionRequest = new TransactionCreateRequest
+                                     {
+                                         FromAccountNumber = bankAccount!.AccountNumber, // Bank is the source, can be empty for deposits
+                                         ToAccountNumber   = account.AccountNumber,
+                                         ToCurrencyId      = loan.CurrencyId,
+                                         Amount            = loan.Amount,
+                                         CodeId            = Seeder.TransactionCode.TransactionCode270.Id, // Loan disbursement code
+                                         ReferenceNumber   = "12345",
+                                         Purpose           = "Loan disbursement"
+                                     };
+
+            // Use TransactionService to create the transaction
+            await m_transactionService.Create(transactionRequest);
+
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
     }
 }

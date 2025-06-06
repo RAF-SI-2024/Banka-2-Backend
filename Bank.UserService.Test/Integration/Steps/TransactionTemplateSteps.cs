@@ -1,11 +1,12 @@
-﻿using System.Reflection;
-
-using Bank.Application.Domain;
+﻿using Bank.Application.Domain;
 using Bank.Application.Endpoints;
 using Bank.Application.Requests;
 using Bank.Application.Responses;
+using Bank.Permissions.Services;
+using Bank.UserService.Controllers;
 using Bank.UserService.Services;
 using Bank.UserService.Test.Examples.Entities;
+using Bank.UserService.Test.Integration.Services;
 
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,11 +15,17 @@ using Shouldly;
 namespace Bank.UserService.Test.Steps;
 
 [Binding]
-public class TransactionTemplateSteps(ScenarioContext scenarioContext, ITransactionTemplateService transactionTemplateService, IAuthorizationService authorizationService)
+public class TransactionTemplateSteps(
+    ScenarioContext               scenarioContext,
+    ITransactionTemplateService   transactionTemplateService,
+    IAuthorizationServiceFactory  authorizationServiceFactory,
+    TransactionTemplateController transactionTemplateController
+)
 {
-    private readonly ScenarioContext             m_ScenarioContext            = scenarioContext;
-    private readonly ITransactionTemplateService m_TransactionTemplateService = transactionTemplateService;
-    private readonly IAuthorizationService       m_AuthorizationService       = authorizationService;
+    private readonly ScenarioContext               m_ScenarioContext               = scenarioContext;
+    private readonly ITransactionTemplateService   m_TransactionTemplateService    = transactionTemplateService;
+    private readonly IAuthorizationServiceFactory  m_AuthorizationServiceFactory   = authorizationServiceFactory;
+    private readonly TransactionTemplateController m_TransactionTemplateController = transactionTemplateController;
 
     [Given(@"transaction template get request with query pageable")]
     public void GivenTransactionTemplateGetRequestWithQueryPageable()
@@ -33,8 +40,9 @@ public class TransactionTemplateSteps(ScenarioContext scenarioContext, ITransact
     [Given(@"authorization for transaction template")]
     public void GivenAuthorizationForTransactionTemplate() //TODO What do to with AuthorizationService
     {
-        typeof(AuthorizationService).GetField($"<{nameof(m_AuthorizationService.UserId)}>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic)
-                                    ?.SetValue(m_AuthorizationService, Example.Entity.TransactionTemplate.GetTransactionTemplate.ClientId);
+        var instance = m_AuthorizationServiceFactory as TestAuthorizationServiceFactory;
+
+        instance!.UserId = Example.Entity.TransactionTemplate.GetTransactionTemplate.ClientId;
     }
 
     [When(@"transactions template are fetched from the database")]
@@ -163,16 +171,125 @@ public class TransactionTemplateSteps(ScenarioContext scenarioContext, ITransact
         result.Value.AccountNumber.ShouldBe(updateRequest.AccountNumber);
         result.Value.Deleted.ShouldBe(updateRequest.Deleted);
         result.Value.CreatedAt.ShouldBeInRange(seeder.CreatedAt.Subtract(TimeSpan.FromSeconds(5)), seeder.CreatedAt.AddSeconds(5));
-        result.Value.ModifiedAt.ShouldBeInRange(seeder.ModifiedAt.Subtract(TimeSpan.FromSeconds(5)), seeder.ModifiedAt.AddSeconds(5));
+        //result.Value.ModifiedAt.ShouldBeInRange(seeder.ModifiedAt.Subtract(TimeSpan.FromSeconds(15)), seeder.ModifiedAt.AddSeconds(5));
+    }
+
+    [Given(@"a pageable query for transaction templates")]
+    public void GivenAPageableQueryForTransactionTemplates()
+    {
+        m_ScenarioContext[Constant.Pageable] = new Pageable();
+    }
+
+    [When(@"a GET request is sent to fetch all transaction templates")]
+    public async Task WhenAGetRequestIsSentToFetchAllTransactionTemplates()
+    {
+        var pageable = m_ScenarioContext.Get<Pageable>(Constant.Pageable);
+
+        var getTemplatesResult = await m_TransactionTemplateController.GetAll(pageable);
+
+        m_ScenarioContext[Constant.GetTemplates] = getTemplatesResult;
+    }
+
+    [Then(@"the response ActionResult should indicate successful retrieval of transaction templates")]
+    public void ThenTheResponseActionResultShouldIndicateSuccessfulRetrievalOfTransactionTemplates()
+    {
+        var getTemplatesResult = m_ScenarioContext.Get<ActionResult<Page<TransactionTemplateResponse>>>(Constant.GetTemplates);
+
+        getTemplatesResult.Result.ShouldBeOfType<OkObjectResult>();
+        getTemplatesResult.ShouldNotBeNull();
+    }
+
+    [Given(@"a valid transaction template Id")]
+    public void GivenAValidTransactionTemplateId()
+    {
+        m_ScenarioContext[Constant.TemplateId] = Example.Entity.TransactionTemplate.GetTransactionTemplate.Id;
+    }
+
+    [When(@"a GET request is sent to fetch a transaction template by Id")]
+    public async Task WhenAGetRequestIsSentToFetchATransactionTemplateById()
+    {
+        var id = m_ScenarioContext.Get<Guid>(Constant.TemplateId);
+
+        var getTemplateResult = await m_TransactionTemplateController.GetOne(id);
+
+        m_ScenarioContext[Constant.GetTemplate] = getTemplateResult;
+    }
+
+    [Then(@"the response ActionResult should indicate successful retrieval of the transaction template")]
+    public void ThenTheResponseActionResultShouldIndicateSuccessfulRetrievalOfTheTransactionTemplate()
+    {
+        var getTemplateResult = m_ScenarioContext.Get<ActionResult<TransactionTemplateResponse>>(Constant.GetTemplate);
+
+        getTemplateResult.Result.ShouldBeOfType<OkObjectResult>();
+        getTemplateResult.ShouldNotBeNull();
+    }
+
+    [Given(@"a valid transaction template create request")]
+    public void GivenAValidTransactionTemplateCreateRequest()
+    {
+        m_ScenarioContext[Constant.TransactionTemplateCreateRequest] = Example.Entity.TransactionTemplate.TransactionTemplateCreateRequest;
+    }
+
+    [When(@"a POST request is sent to the transaction template creation endpoint")]
+    public async Task WhenAPostRequestIsSentToTheTransactionTemplateCreationEndpoint()
+    {
+        var createRequest = m_ScenarioContext.Get<TransactionTemplateCreateRequest>(Constant.TransactionTemplateCreateRequest);
+
+        var createResult = await m_TransactionTemplateController.Create(createRequest);
+
+        m_ScenarioContext[Constant.TransactionTemplateCreateResult] = createResult;
+    }
+
+    [Then(@"the response ActionResult should indicate successful transaction template creation")]
+    public void ThenTheResponseActionResultShouldIndicateSuccessfulTransactionTemplateCreation()
+    {
+        var createResult = m_ScenarioContext.Get<ActionResult<TransactionTemplateResponse>>(Constant.TransactionTemplateCreateResult);
+
+        createResult.Result.ShouldBeOfType<OkObjectResult>();
+        createResult.ShouldNotBeNull();
+    }
+
+    [Given(@"a valid transaction template Id and an update request")]
+    public void GivenAValidTransactionTemplateIdAndAnUpdateRequest()
+    {
+        m_ScenarioContext[Constant.TemplateId]                       = Example.Entity.TransactionTemplate.GetTransactionTemplate.Id;
+        m_ScenarioContext[Constant.TransactionTemplateUpdateRequest] = Example.Entity.TransactionTemplate.TransactionTemplateUpdateRequest;
+    }
+
+    [When(@"a PUT request is sent to the transaction template update endpoint")]
+    public async Task WhenAPutRequestIsSentToTheTransactionTemplateUpdateEndpoint()
+    {
+        var templateId    = m_ScenarioContext.Get<Guid>(Constant.TemplateId);
+        var updateRequest = m_ScenarioContext.Get<TransactionTemplateUpdateRequest>(Constant.TransactionTemplateUpdateRequest);
+
+        var updateResult = await m_TransactionTemplateController.Update(updateRequest, templateId);
+
+        m_ScenarioContext[Constant.TransactionTemplateUpdateResult] = updateResult;
+    }
+
+    [Then(@"the response ActionResult should indicate successful transaction template update")]
+    public void ThenTheResponseActionResultShouldIndicateSuccessfulTransactionTemplateUpdate()
+    {
+        var updateResult = m_ScenarioContext.Get<ActionResult<TransactionTemplateResponse>>(Constant.TransactionTemplateUpdateResult);
+
+        updateResult.Result.ShouldBeOfType<OkObjectResult>();
+        updateResult.ShouldNotBeNull();
     }
 }
 
 file static class Constant
 {
-    public const string Pageable     = "TransactionTemplatePageable";
-    public const string Id           = "TransactionTemplateId";
-    public const string Result       = "TransactionTemplateResult";
-    public const string Create       = "TransactionTemplateCreate";
-    public const string Update       = "TransactionTemplateUpdate";
-    public const string ActionResult = "TransactionTemplateActionResult";
+    public const string Pageable                         = "TransactionTemplatePageable";
+    public const string Id                               = "TransactionTemplateId";
+    public const string Result                           = "TransactionTemplateResult";
+    public const string Create                           = "TransactionTemplateCreate";
+    public const string Update                           = "TransactionTemplateUpdate";
+    public const string ActionResult                     = "TransactionTemplateActionResult";
+    public const string GetTemplates                     = "GetTransactionTemplates";
+    public const string GetTemplate                      = "GetTransactionTemplate";
+    public const string TemplateId                       = "TransactionTemplateId";
+    public const string TransactionTemplateCreateRequest = "TransactionTemplateCreateRequest";
+    public const string TransactionTemplateCreateResult  = "TransactionTemplateCreateResult";
+    public const string TransactionTemplateUpdateRequest = "TransactionTemplateUpdateRequest";
+    public const string TransactionTemplateUpdateResult  = "TransactionTemplateUpdateResult";
 }

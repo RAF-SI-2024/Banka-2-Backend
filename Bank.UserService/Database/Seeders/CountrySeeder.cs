@@ -1,4 +1,6 @@
-﻿using Bank.UserService.Models;
+﻿using System.Collections.Immutable;
+
+using Bank.UserService.Models;
 
 namespace Bank.UserService.Database.Seeders;
 
@@ -61,21 +63,10 @@ public static partial class Seeder
                                                                CreatedAt  = DateTime.UtcNow,
                                                                ModifiedAt = DateTime.UtcNow
                                                            };
-    }
-}
 
-public static class CountrySeederExtension
-{
-    public static async Task SeedCountry(this ApplicationContext context)
-    {
-        if (context.Countries.Any())
-            return;
-
-        await context.Countries.AddRangeAsync([
-                                                  Seeder.Country.Germany, Seeder.Country.Japan, Seeder.Country.Serbia, Seeder.Country.Switzerland,
-                                                  Seeder.Country.UnitedKingdom, Seeder.Country.UnitedStates
-                                              ]);
-
-        await context.SaveChangesAsync();
+        public static readonly ImmutableArray<CountryModel> All =
+        [
+            Germany, Japan, Serbia, Switzerland, UnitedKingdom, UnitedStates
+        ];
     }
 }

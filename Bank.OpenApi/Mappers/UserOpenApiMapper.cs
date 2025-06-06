@@ -70,6 +70,22 @@ internal static class UserOpenApiMapper
         return @object;
     }
 
+    public static OpenApiObject ToOpenApiObject(this UserUpdatePermissionRequest value)
+    {
+        return MapOpenApiObject(value, new OpenApiObject());
+    }
+
+    public static OpenApiObject MapOpenApiObject(this UserUpdatePermissionRequest value, OpenApiObject @object)
+    {
+        @object[nameof(value.Permission)
+                .ToCamelCase()] = new OpenApiInteger((int)value.Permission);
+
+        @object[nameof(value.Type)
+                .ToCamelCase()] = new OpenApiInteger((int)value.Type);
+
+        return @object;
+    }
+
     public static OpenApiObject ToOpenApiObject(this UserResponse value)
     {
         return MapOpenApiObject(value, new OpenApiObject());

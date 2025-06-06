@@ -1,4 +1,6 @@
-﻿using Bank.UserService.Models;
+﻿using System.Collections.Immutable;
+
+using Bank.UserService.Models;
 
 namespace Bank.UserService.Database.Seeders;
 
@@ -106,24 +108,12 @@ public static partial class Seeder
                                                                                      CreatedAt  = DateTime.UtcNow,
                                                                                      ModifiedAt = DateTime.UtcNow,
                                                                                  };
-    }
-}
 
-public static class AccountTypeSeederExtension
-{
-    public static async Task SeedAccountType(this ApplicationContext context)
-    {
-        if (context.AccountTypes.Any())
-            return;
-
-        await context.AccountTypes.AddRangeAsync([
-                                                     Seeder.AccountType.CheckingAccount, Seeder.AccountType.SavingsAccount, Seeder.AccountType.PensionAccount,
-                                                     Seeder.AccountType.YouthAccount, Seeder.AccountType.StudentAccount, Seeder.AccountType.UnemploymentAccount,
-                                                     Seeder.AccountType.BusinessLLCAccount, Seeder.AccountType.BusinessJointStockCompanyAccount,
-                                                     Seeder.AccountType.BusinessFoundationAccount, Seeder.AccountType.ForeignCurrencyAccount,
-                                                     Seeder.AccountType.BusinessForeignCurrencyAccount,
-                                                 ]);
-
-        await context.SaveChangesAsync();
+        public static readonly ImmutableArray<AccountTypeModel> All =
+        [
+            CheckingAccount, SavingsAccount, PensionAccount, YouthAccount, StudentAccount, UnemploymentAccount,
+            BusinessLLCAccount, BusinessJointStockCompanyAccount, BusinessFoundationAccount, ForeignCurrencyAccount,
+            BusinessForeignCurrencyAccount,
+        ];
     }
 }

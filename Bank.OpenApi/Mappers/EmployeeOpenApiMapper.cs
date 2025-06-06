@@ -51,9 +51,6 @@ internal static class EmployeeOpenApiMapper
         @object[nameof(value.Employed)
                 .ToCamelCase()] = new OpenApiBoolean(value.Employed);
 
-        @object[nameof(value.Permissions)
-                .ToCamelCase()] = new OpenApiLong(value.Permissions);
-
         return @object;
     }
 

@@ -34,20 +34,50 @@ public static partial class Example
         public const string Phone                      = "+38160000000000";
         public const string Department                 = "Department";
         public const string AccountNumber              = "2220000XXXXXXXXXXX";
+        public const string Office                     = "XXXX";
+        public const string ConfirmationCode           = "XXXXXX";
         public const string UniqueIdentificationNumber = "XXXXXXXXXXXXX";
         public const string Description                = "Description";
         public const string TemplateName               = "Template Name";
+        public const string Ticker                     = "ABCD";
+        public const string Acronym                    = "Acronym";
+        public const string MIC                        = "MIC";
+        public const string ForexPairName              = "Forex Pair Name";
+        public const string SecurityName              = "Security Name";
+        public const string FutureContractName         = "Future Contract Name";
+        public const string StockName                  = "Stock Name";
+        public const string OptionName                 = "Option Name";
 
-        public const decimal DailyLimit     = 2000.00m;
-        public const decimal Commission     = 0.5m;
-        public const decimal Rate           = 100.00m;
-        public const decimal Amount         = 200.00m;
-        public const decimal InverseRate    = 1 / Rate;
-        public const decimal MonthlyLimit   = 10000.00m;
-        public const decimal Balance        = 5000.00m;
-        public const decimal LoanTypeMargin = 3.5m;
+        public const decimal DailyLimit                   = 2000.00m;
+        public const decimal Commission                   = 0.5m;
+        public const decimal Rate                         = 100.00m;
+        public const decimal Amount                       = 200.00m;
+        public const decimal InverseRate                  = 1 / Rate;
+        public const decimal MonthlyLimit                 = 10000.00m;
+        public const decimal Balance                      = 5000.00m;
+        public const decimal LoanTypeMargin               = 3.5m;
+        public const decimal Price                        = 100.00m;
+        public const decimal OpeningPrice                 = 100.00m;
+        public const decimal ClosePrice                   = 100.00m;
+        public const decimal HighPrice                    = 100.00m;
+        public const decimal LowPrice                     = 100.00m;
+        public const decimal AskPrice                     = 100.00m;
+        public const int     AskSize                      = 1000;
+        public const decimal BidPrice                     = 100.00m;
+        public const int     BidSize                      = 1000;
+        public const decimal StrikePrice                  = 100.00m;
+        public const decimal MaintenanceDecimal           = 0.01m;
+        public const decimal PricePerUnit                 = 100.00m;
+        public const decimal PriceChangeInInterval        = 0.01m;
+        public const decimal PriceChangePercentInInterval = 0.01m;
+        public const decimal ImpliedVolatility            = 0.01m;
 
-        public const int Period = 64;
+        public const int Period            = 64;
+        public const int Volume            = 1000;
+        public const int ContractSize      = 1000;
+        public const int Quantity          = 1000;
+        public const int ContractCount     = 1;
+        public const int RemainingPortions = 1000;
 
         public const long Permissions = 0;
 
@@ -59,11 +89,19 @@ public static partial class Example
         public static readonly InterestType      InterestType      = InterestType.Variable;
         public static readonly LoanStatus        LoanStatus        = LoanStatus.Active;
         public static readonly TransactionStatus TransactionStatus = TransactionStatus.Completed;
+        public static readonly Liquidity         Liquidity         = Liquidity.Medium;
+        public static readonly ContractUnit      ContractUnit      = ContractUnit.Barrel;
+        public static readonly OptionType        OptionType        = OptionType.Call;
+        public static readonly OrderType         OrderType         = OrderType.Limit;
+        public static readonly OrderStatus       OrderStatus       = OrderStatus.NeedsApproval;
+        public static readonly Direction         Direction         = Direction.Buy;
+        public static readonly PermissionType    PermissionType    = PermissionType.Set;
 
         public static readonly Guid Id = Guid.Parse("12345678-1234-1234-1234-123456789abc");
 
         public static readonly DateOnly CreationDate = DateOnly.FromDateTime(DateTime.UtcNow);
         public static readonly DateTime CreatedAt    = DateTime.UtcNow;
         public static readonly DateTime ModifiedAt   = DateTime.UtcNow;
+        public static readonly TimeSpan TimeZone     = TimeSpan.Zero;
     }
 }

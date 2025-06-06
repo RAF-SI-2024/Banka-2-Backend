@@ -3,6 +3,7 @@ using Bank.Application.Endpoints;
 using Bank.Application.Queries;
 using Bank.Application.Requests;
 using Bank.Application.Responses;
+using Bank.UserService.Controllers;
 using Bank.UserService.Services;
 using Bank.UserService.Test.Examples.Entities;
 
@@ -13,10 +14,11 @@ using Shouldly;
 namespace Bank.UserService.Test.Steps;
 
 [Binding]
-public class ClientSteps(ScenarioContext scenarioContext, IClientService clientService)
+public class ClientSteps(ScenarioContext scenarioContext, IClientService clientService, ClientController clientController)
 {
-    private readonly IClientService  m_ClientService   = clientService;
-    private readonly ScenarioContext m_ScenarioContext = scenarioContext;
+    private readonly IClientService   m_ClientService    = clientService;
+    private readonly ScenarioContext  m_ScenarioContext  = scenarioContext;
+    private readonly ClientController m_ClientController = clientController;
 
     [Given(@"client create request")]
     public void GivenClientCreateRequest()
@@ -114,69 +116,115 @@ public class ClientSteps(ScenarioContext scenarioContext, IClientService clientS
         getClientsResult.Value.Items.ShouldAllBe(client => client.Role == Role.Client);
     }
 
-    [Given(@"client Id")]
-    public void GivenClientId()
+    [Given(@"a valid client create request")]
+    public void GivenAValidClientCreateRequest()
     {
-        m_ScenarioContext[Constant.IdForAccount] = Example.Entity.Client.Id2;
+        m_ScenarioContext[Constant.ClientCreateRequest] = Example.Entity.Client.CreateRequest;
     }
 
-    [When(@"all accounts are fetched from the database")]
-    public async Task WhenAllAccountsAreFetchedFromTheDatabase()
+    [When(@"a POST request is sent to the client creation endpoint")]
+    public async Task WhenAPostRequestIsSentToTheClientCreationEndpoint()
     {
-        var id                = m_ScenarioContext.Get<Guid>(Constant.IdForAccount);
-        var getAccountsResult = await m_ClientService.FindAllAccounts(id, new AccountFilterQuery(), new Pageable());
+        var createRequest = m_ScenarioContext.Get<ClientCreateRequest>(Constant.ClientCreateRequest);
 
-        m_ScenarioContext[Constant.AccountResult] = getAccountsResult;
+        var createResult = await m_ClientController.Create(createRequest);
+
+        m_ScenarioContext[Constant.ClientCreateResult] = createResult;
     }
 
-    [Then(@"all accounts  should be returned")]
-    public void ThenAllAccountsShouldBeReturned()
+    [Then(@"the response ActionResult should indicate successful client creation")]
+    public void ThenTheResponseActionResultShouldIndicateSuccessfulClientCreation()
     {
-        var accountResult = m_ScenarioContext.Get<Result<Page<AccountResponse>>>(Constant.AccountResult);
+        var createResult = m_ScenarioContext.Get<ActionResult<ClientResponse>>(Constant.ClientCreateResult);
 
-        accountResult.ActionResult.ShouldBeOfType<OkObjectResult>();
-        accountResult.Value.ShouldNotBeNull();
-        accountResult.Value.Items.ShouldNotBeEmpty();
-        accountResult.Value.Items.ShouldAllBe(account => account.Client.Id == m_ScenarioContext.Get<Guid>(Constant.IdForAccount));
+        createResult.Result.ShouldBeOfType<OkObjectResult>();
+        createResult.ShouldNotBeNull();
     }
 
-    [Given(@"client Id which has cards")]
-    public void GivenClientIdWhichHasCards()
+    [Given(@"a valid client update request and client Id")]
+    public void GivenAValidClientUpdateRequestAndClientId()
     {
-        m_ScenarioContext[Constant.Id] = Example.Entity.Client.Id2;
+        m_ScenarioContext[Constant.ClientId]            = Example.Entity.Client.Id2;
+        m_ScenarioContext[Constant.ClientUpdateRequest] = Example.Entity.Client.UpdateRequest;
     }
 
-    [When(@"all cards are fetched from the database for the client")]
-    public async Task WhenAllCardsAreFetchedFromTheDatabaseForTheClient()
+    [When(@"a PUT request is sent to the client update endpoint")]
+    public async Task WhenAPutRequestIsSentToTheClientUpdateEndpoint()
     {
-        var id = m_ScenarioContext.Get<Guid>(Constant.Id);
+        var clientId = m_ScenarioContext.Get<Guid>(Constant.ClientId);
 
-        var getCardsResult = await m_ClientService.FindAllCards(id);
+        var updateRequest = m_ScenarioContext.Get<ClientUpdateRequest>(Constant.ClientUpdateRequest);
 
-        m_ScenarioContext[Constant.CardsResult] = getCardsResult;
+        var updateResult = await m_ClientController.Update(updateRequest, clientId);
+
+        m_ScenarioContext[Constant.ClientUpdateResult] = updateResult;
     }
 
-    [Then(@"all cards  should be returned")]
-    public void ThenAllCardsShouldBeReturned()
+    [Then(@"the response ActionResult should indicate successful client update")]
+    public void ThenTheResponseActionResultShouldIndicateSuccessfulClientUpdate()
     {
-        var cardsResult = m_ScenarioContext.Get<Result<List<CardResponse>>>(Constant.CardsResult);
+        var updateResult = m_ScenarioContext.Get<ActionResult<ClientResponse>>(Constant.ClientUpdateResult);
 
-        cardsResult.ActionResult.ShouldBeOfType<OkObjectResult>();
-        cardsResult.Value.ShouldNotBeNull();
-        cardsResult.Value.ShouldNotBeEmpty();
-        cardsResult.Value.ShouldAllBe(card => card.Account.Client.Id == m_ScenarioContext.Get<Guid>(Constant.Id));
+        updateResult.Result.ShouldBeOfType<OkObjectResult>();
+        updateResult.ShouldNotBeNull();
+    }
+
+    [When(@"a GET request is sent to fetch all clients")]
+    public async Task WhenAGetRequestIsSentToFetchAllClients()
+    {
+        var getClientsResult = await m_ClientController.GetAll(new UserFilterQuery(), new Pageable());
+
+        m_ScenarioContext[Constant.GetClients] = getClientsResult;
+    }
+
+    [Then(@"the response ActionResult should indicate successful retrieval of all clients")]
+    public void ThenTheResponseActionResultShouldIndicateSuccessfulRetrievalOfAllClients()
+    {
+        var getClientsResult = m_ScenarioContext.Get<ActionResult<Page<ClientResponse>>>(Constant.GetClients);
+
+        getClientsResult.Result.ShouldBeOfType<OkObjectResult>();
+        getClientsResult.ShouldNotBeNull();
+    }
+
+    [Given(@"a client Id to fetch")]
+    public void GivenAClientIdToFetch()
+    {
+        m_ScenarioContext[Constant.ClientId] = Example.Entity.Client.Id2;
+    }
+
+    [When(@"a GET request is sent to fetch a client by Id")]
+    public async Task WhenAGetRequestIsSentToFetchAClientById()
+    {
+        var clientId = m_ScenarioContext.Get<Guid>(Constant.ClientId);
+
+        var getClientResult = await m_ClientController.GetOne(clientId);
+
+        m_ScenarioContext[Constant.GetClient] = getClientResult;
+    }
+
+    [Then(@"the response ActionResult should indicate successful retrieval of the client")]
+    public void ThenTheResponseActionResultShouldIndicateSuccessfulRetrievalOfTheClient()
+    {
+        var getClientResult = m_ScenarioContext.Get<ActionResult<ClientResponse>>(Constant.GetClient);
+
+        getClientResult.Result.ShouldBeOfType<OkObjectResult>();
+        getClientResult.ShouldNotBeNull();
     }
 }
 
 file static class Constant
 {
-    public const string CreateRequest = "ClientCreateRequest";
-    public const string CreateResult  = "ClientCreateResult";
-    public const string GetResult     = "ClienteGetResult";
-    public const string UpdateRequest = "ClientUpdateRequest";
-    public const string UpdateResult  = "ClientUpdateResult";
-    public const string Id            = "ClientId";
-    public const string IdForAccount  = "ClientIdForAccount";
-    public const string AccountResult = "AccountResult";
-    public const string CardsResult   = "CardsResult";
+    public const string CreateRequest       = "ClientCreateRequest";
+    public const string CreateResult        = "ClientCreateResult";
+    public const string GetResult           = "ClienteGetResult";
+    public const string UpdateRequest       = "ClientUpdateRequest";
+    public const string UpdateResult        = "ClientUpdateResult";
+    public const string Id                  = "ClientId";
+    public const string ClientCreateRequest = "ClientCreateRequest";
+    public const string ClientCreateResult  = "ClientCreateResult";
+    public const string ClientUpdateRequest = "ClientUpdateRequest";
+    public const string ClientUpdateResult  = "ClientUpdateResult";
+    public const string GetClients          = "GetClients";
+    public const string GetClient           = "GetClient";
+    public const string ClientId            = "ClientId";
 }

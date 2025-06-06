@@ -1,6 +1,4 @@
-﻿using Bank.Application.Domain;
-using Bank.Application.Requests;
-using Bank.UserService.Database.Sample;
+﻿using Bank.Application.Requests;
 using Bank.UserService.Database.Seeders;
 using Bank.UserService.Models;
 
@@ -14,9 +12,9 @@ public static partial class Example
     {
         public static class Employee
         {
-            public static readonly EmployeeCreateRequest CreateRequest = Sample.Employee.CreateRequest;
+            public static readonly EmployeeCreateRequest CreateRequest = Database.Examples.Example.Employee.CreateRequest;
 
-            public static readonly EmployeeUpdateRequest UpdateRequest = Sample.Employee.UpdateRequest;
+            public static readonly EmployeeUpdateRequest UpdateRequest = Database.Examples.Example.Employee.UpdateRequest;
 
             public static readonly EmployeeModel GetEmployee = new()
                                                                {
@@ -38,7 +36,7 @@ public static partial class Example
                                                                    ModifiedAt                 = Seeder.Employee.Employee02.ModifiedAt,
                                                                    Employed                   = Seeder.Employee.Employee02.Employed,
                                                                    Activated                  = Seeder.Employee.Employee02.Activated,
-                                                                   Permissions                = (long)Permission.Employee
+                                                                   Permissions                = Seeder.Employee.Employee02.Permissions
                                                                };
 
             public static readonly EmployeeModel UpdateEmployee = new()
@@ -61,7 +59,7 @@ public static partial class Example
                                                                       ModifiedAt                 = Seeder.Employee.Employee03.ModifiedAt,
                                                                       Employed                   = Seeder.Employee.Employee03.Employed,
                                                                       Activated                  = Seeder.Employee.Employee03.Activated,
-                                                                      Permissions                = (long)Permission.Employee
+                                                                      Permissions                = Seeder.Employee.Employee03.Permissions
                                                                   };
         }
     }

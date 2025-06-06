@@ -9,6 +9,10 @@ public class StockExchange
     public          string   Polity     { get; set; }
     public          Guid     CurrencyId { get; set; }
     public          TimeSpan TimeZone   { get; set; }
-    public required DateTime CreatedAt  { get; set; }
-    public required DateTime ModifiedAt { get; set; }
+
+    public TimeSpan MarketOpen { get; set; }
+
+    public          TimeSpan MarketClose { get; set; }
+    public required DateTime CreatedAt   { get; set; }
+    public required DateTime ModifiedAt  { get; set; }
 }

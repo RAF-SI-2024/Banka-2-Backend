@@ -10,10 +10,12 @@
       <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.4" />
       <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.4" />
       <PackageReference Include="Scalar.AspNetCore" Version="2.1.8" />
+      <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="8.1.1" />
     </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\Bank.Application\Bank.Application.csproj" />
+      <ProjectReference Include="..\Bank.Permissions\Bank.Permissions.csproj" />
     </ItemGroup>
 
 </Project>

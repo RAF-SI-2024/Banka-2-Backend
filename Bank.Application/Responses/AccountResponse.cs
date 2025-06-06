@@ -4,6 +4,7 @@ public class AccountResponse
 {
     public required Guid                          Id                { set;  get; }
     public required string                        AccountNumber     { set;  get; }
+    public required string                        Office            { set;  get; }
     public required string                        Name              { set;  get; }
     public required ClientSimpleResponse          Client            { set;  get; }
     public required decimal                       Balance           { set;  get; }

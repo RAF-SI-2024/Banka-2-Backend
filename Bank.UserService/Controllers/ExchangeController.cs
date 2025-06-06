@@ -2,6 +2,7 @@
 using Bank.Application.Queries;
 using Bank.Application.Requests;
 using Bank.Application.Responses;
+using Bank.Permissions.Core;
 using Bank.UserService.Services;
 
 using Microsoft.AspNetCore.Mvc;
@@ -13,6 +14,7 @@ public class ExchangeController(IExchangeService exchangeService) : ControllerBa
 {
     private readonly IExchangeService m_ExchangeService = exchangeService;
 
+    [Authorize]
     [HttpGet(Endpoints.Exchange.GetAll)]
     public async Task<ActionResult<List<ExchangeResponse>>> GetAll([FromQuery] ExchangeFilterQuery exchangeFilterQuery)
     {
@@ -21,6 +23,7 @@ public class ExchangeController(IExchangeService exchangeService) : ControllerBa
         return result.ActionResult;
     }
 
+    [Authorize]
     [HttpGet(Endpoints.Exchange.GetOne)]
     public async Task<ActionResult<ExchangeResponse>> GetOne([FromRoute] Guid id)
     {
@@ -29,6 +32,7 @@ public class ExchangeController(IExchangeService exchangeService) : ControllerBa
         return result.ActionResult;
     }
 
+    [Authorize]
     [HttpGet(Endpoints.Exchange.GetByCurrencies)]
     public async Task<ActionResult<ExchangeResponse>> GetByCurrencies([FromQuery] ExchangeBetweenQuery exchangeBetweenQuery)
     {
@@ -37,14 +41,16 @@ public class ExchangeController(IExchangeService exchangeService) : ControllerBa
         return result.ActionResult;
     }
 
+    [Authorize]
     [HttpPost(Endpoints.Exchange.MakeExchange)]
-    public async Task<ActionResult<ExchangeResponse>> MakeExchange([FromBody]  ExchangeMakeExchangeRequest exchangeMakeExchangeRequest)
+    public async Task<ActionResult<ExchangeResponse>> MakeExchange([FromBody] ExchangeMakeExchangeRequest exchangeMakeExchangeRequest)
     {
         var result = await m_ExchangeService.MakeExchange(exchangeMakeExchangeRequest);
 
         return result.ActionResult;
     }
 
+    [Authorize]
     [HttpPut(Endpoints.Exchange.Update)]
     public async Task<ActionResult<ExchangeResponse>> Update([FromRoute] Guid id, [FromBody] ExchangeUpdateRequest exchangeUpdateRequest)
     {

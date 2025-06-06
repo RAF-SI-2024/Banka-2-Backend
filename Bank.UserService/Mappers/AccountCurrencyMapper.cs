@@ -48,6 +48,5 @@ public static class AccountCurrencyMapper
         accountCurrency.ModifiedAt   = DateTime.UtcNow;
 
         return accountCurrency;
-        
     }
 }

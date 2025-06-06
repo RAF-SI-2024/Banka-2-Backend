@@ -2,12 +2,10 @@
 using Bank.Application.Endpoints;
 using Bank.Application.Requests;
 using Bank.Application.Responses;
+using Bank.Permissions.Core;
 using Bank.UserService.Services;
 
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-
-using Role = Bank.UserService.Configurations.Configuration.Policy.Role;
 
 namespace Bank.UserService.Controllers;
 
@@ -34,8 +32,8 @@ public class TransactionTemplateController(ITransactionTemplateService transacti
         return result.ActionResult;
     }
 
+    [Authorize(Permission.Client)]
     [HttpPost(Endpoints.TransactionTemplate.Create)]
-    [Authorize(Roles = $"{Role.Client}")]
     public async Task<ActionResult<TransactionTemplateResponse>> Create([FromBody] TransactionTemplateCreateRequest transactionTemplateCreateRequest)
     {
         var result = await m_TransactionTemplateService.Create(transactionTemplateCreateRequest);
@@ -43,8 +41,8 @@ public class TransactionTemplateController(ITransactionTemplateService transacti
         return result.ActionResult;
     }
 
+    [Authorize(Permission.Client)]
     [HttpPut(Endpoints.TransactionTemplate.Update)]
-    [Authorize(Roles = $"{Role.Client}")]
     public async Task<ActionResult<TransactionTemplateResponse>> Update([FromBody] TransactionTemplateUpdateRequest transactionTemplateUpdateRequest, [FromRoute] Guid id)
     {
         var result = await m_TransactionTemplateService.Update(transactionTemplateUpdateRequest, id);

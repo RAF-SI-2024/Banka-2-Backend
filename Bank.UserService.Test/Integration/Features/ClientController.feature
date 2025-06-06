@@ -1,26 +1,20 @@
 ﻿Feature: Client controller testing
 
-    Scenario: Create Client
-        Given client create request
-        When client is created in the database
-        And client is fetched by Id
-        Then client details should match the created client
+    Scenario: Create Client through API
+        Given a valid client create request
+        When a POST request is sent to the client creation endpoint
+        Then the response ActionResult should indicate successful client creation
 
-    Scenario: Update Client
-        Given client update request and Id
-        When client is updated in the database
-        Then client details should match the updated client
+    Scenario: Update Client through API
+        Given a valid client update request and client Id
+        When a PUT request is sent to the client update endpoint
+        Then the response ActionResult should indicate successful client update
 
-    Scenario: Get All Clients
-        When all clients are fetched from the database
-        Then all clients and only clients should be returned
+    Scenario: Get All Clients through API
+        When a GET request is sent to fetch all clients
+        Then the response ActionResult should indicate successful retrieval of all clients
 
-    Scenario: Get all Account from Client
-        Given client Id
-        When all accounts are fetched from the database
-        Then all accounts  should be returned
-
-    Scenario: Get all Cards from Client
-        Given client Id which has cards
-        When all cards are fetched from the database for the client
-        Then all cards  should be returned
+    Scenario: Get Client by Id through API
+        Given a client Id to fetch
+        When a GET request is sent to fetch a client by Id
+        Then the response ActionResult should indicate successful retrieval of the client

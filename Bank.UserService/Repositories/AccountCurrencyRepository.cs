@@ -1,8 +1,11 @@
 ﻿using System.Linq.Expressions;
 
 using Bank.Application.Domain;
+using Bank.Database.Core;
 using Bank.UserService.Database;
 using Bank.UserService.Models;
+
+using EFCore.BulkExtensions;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
@@ -15,26 +18,27 @@ public interface IAccountCurrencyRepository
 
     Task<AccountCurrency?> FindById(Guid id);
 
-    Task<bool> Exists(Guid id);
-
     Task<AccountCurrency> Add(AccountCurrency accountCurrency);
 
+    Task<bool> AddRange(IEnumerable<AccountCurrency> accountCurrencies);
+
     Task<AccountCurrency> Update(AccountCurrency accountCurrency);
+
+    Task<bool> Exists(Guid id);
+
+    Task<bool> IsEmpty();
 }
 
-public class AccountCurrencyRepository(ApplicationContext context, IDbContextFactory<ApplicationContext> contextFactory) : IAccountCurrencyRepository
+public class AccountCurrencyRepository(IDatabaseContextFactory<ApplicationContext> contextFactory) : IAccountCurrencyRepository
 {
-    private readonly ApplicationContext                    m_Context        = context;
-    private readonly IDbContextFactory<ApplicationContext> m_ContextFactory = contextFactory;
-
-    private Task<ApplicationContext> CreateContext => m_ContextFactory.CreateDbContextAsync();
+    private readonly IDatabaseContextFactory<ApplicationContext> m_ContextFactory = contextFactory;
 
     public async Task<Page<AccountCurrency>> FindAll(Pageable pageable)
     {
-        var x = m_Context.AccountCurrencies.Include(accountCurrency => accountCurrency.Employee);
+        await using var context = await m_ContextFactory.CreateContext;
 
-        var accountTypeQuery = m_Context.AccountCurrencies.IncludeAll()
-                                        .AsQueryable();
+        var accountTypeQuery = context.AccountCurrencies.IncludeAll()
+                                      .AsQueryable();
 
         var accountTypes = await accountTypeQuery.Skip((pageable.Page - 1) * pageable.Size)
                                                  .Take(pageable.Size)
@@ -47,32 +51,56 @@ public class AccountCurrencyRepository(ApplicationContext context, IDbContextFac
 
     public async Task<AccountCurrency?> FindById(Guid id)
     {
-        return await m_Context.AccountCurrencies.IncludeAll()
-                              .FirstOrDefaultAsync(accountCurrency => accountCurrency.Id == id);
-    }
+        await using var context = await m_ContextFactory.CreateContext;
 
-    public async Task<bool> Exists(Guid id)
-    {
-        return await m_Context.AccountCurrencies.AnyAsync(accountCurrency => accountCurrency.Id == id);
+        return await context.AccountCurrencies.IncludeAll()
+                            .FirstOrDefaultAsync(accountCurrency => accountCurrency.Id == id);
     }
 
     public async Task<AccountCurrency> Add(AccountCurrency accountCurrency)
     {
-        var addedAccountCurrency = await m_Context.AccountCurrencies.AddAsync(accountCurrency);
+        await using var context = await m_ContextFactory.CreateContext;
 
-        await m_Context.SaveChangesAsync();
+        var addedAccountCurrency = await context.AccountCurrencies.AddAsync(accountCurrency);
+
+        await context.SaveChangesAsync();
 
         return addedAccountCurrency.Entity;
     }
 
+    public async Task<bool> AddRange(IEnumerable<AccountCurrency> accountCurrencies)
+    {
+        await using var context = await m_ContextFactory.CreateContext;
+
+        await context.BulkInsertAsync(accountCurrencies, config => config.BatchSize = 2000);
+
+        return true;
+    }
+
     public async Task<AccountCurrency> Update(AccountCurrency accountCurrency)
     {
-        await m_Context.AccountCurrencies.Where(dbAccountCurrency => dbAccountCurrency.Id == accountCurrency.Id)
-                       .ExecuteUpdateAsync(setters => setters.SetProperty(dbAccountCurrency => dbAccountCurrency.DailyLimit, accountCurrency.DailyLimit)
-                                                             .SetProperty(dbAccountCurrency => dbAccountCurrency.MonthlyLimit, accountCurrency.MonthlyLimit)
-                                                             .SetProperty(dbAccountCurrency => dbAccountCurrency.ModifiedAt,   accountCurrency.ModifiedAt));
+        await using var context = await m_ContextFactory.CreateContext;
+
+        await context.AccountCurrencies.Where(dbAccountCurrency => dbAccountCurrency.Id == accountCurrency.Id)
+                     .ExecuteUpdateAsync(setters => setters.SetProperty(dbAccountCurrency => dbAccountCurrency.DailyLimit, accountCurrency.DailyLimit)
+                                                           .SetProperty(dbAccountCurrency => dbAccountCurrency.MonthlyLimit, accountCurrency.MonthlyLimit)
+                                                           .SetProperty(dbAccountCurrency => dbAccountCurrency.ModifiedAt,   accountCurrency.ModifiedAt));
 
         return accountCurrency;
+    }
+
+    public async Task<bool> Exists(Guid id)
+    {
+        await using var context = await m_ContextFactory.CreateContext;
+
+        return await context.AccountCurrencies.AnyAsync(accountCurrency => accountCurrency.Id == id);
+    }
+
+    public async Task<bool> IsEmpty()
+    {
+        await using var context = await m_ContextFactory.CreateContext;
+
+        return await context.AccountCurrencies.AnyAsync() is not true;
     }
 }
 
@@ -89,8 +117,8 @@ public static partial class RepositoryExtensions
     }
 
     public static IIncludableQueryable<TEntity, object?> ThenIncludeAll<TEntity>(this IIncludableQueryable<TEntity, AccountCurrency?> value,
-                                                                                 Expression<Func<TEntity, AccountCurrency?>> navigationExpression, params string[] excludeProperties)
-    where TEntity : class
+                                                                                 Expression<Func<TEntity, AccountCurrency?>>          navigationExpression,
+                                                                                 params string[]                                      excludeProperties) where TEntity : class
     {
         IIncludableQueryable<TEntity, object?> query = value;
 
@@ -110,8 +138,8 @@ public static partial class RepositoryExtensions
     }
 
     public static IIncludableQueryable<TEntity, object?> ThenIncludeAll<TEntity>(this IIncludableQueryable<TEntity, List<AccountCurrency>> value,
-                                                                                 Expression<Func<TEntity, List<AccountCurrency>>> navigationExpression, params string[] excludeProperties)
-    where TEntity : class
+                                                                                 Expression<Func<TEntity, List<AccountCurrency>>>          navigationExpression,
+                                                                                 params string[]                                           excludeProperties) where TEntity : class
     {
         IIncludableQueryable<TEntity, object?> query = value;
 

@@ -1,8 +1,11 @@
 ﻿using System.Linq.Expressions;
 
 using Bank.Application.Domain;
+using Bank.Database.Core;
 using Bank.UserService.Database;
 using Bank.UserService.Models;
+
+using EFCore.BulkExtensions;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
@@ -17,7 +20,13 @@ public interface IInstallmentRepository
 
     Task<Installment> Add(Installment installment);
 
+    Task<bool> AddRange(IEnumerable<Installment> installments);
+
     Task<Installment> Update(Installment oldInstallment, Installment installment);
+
+    Task<bool> Exists(Guid id);
+
+    Task<bool> IsEmpty();
 
     Task<List<Installment>> GetDueInstallmentsForLoanAsync(Guid loanId, DateTime dueDate);
 
@@ -30,15 +39,17 @@ public interface IInstallmentRepository
     Task<Installment?> GetLatestInstallmentForLoanAsync(Guid loanId);
 }
 
-public class InstallmentRepository(ApplicationContext context) : IInstallmentRepository
+public class InstallmentRepository(IDatabaseContextFactory<ApplicationContext> contextFactory) : IInstallmentRepository
 {
-    private readonly ApplicationContext m_Context = context;
+    private readonly IDatabaseContextFactory<ApplicationContext> m_ContextFactory = contextFactory;
 
     public async Task<Page<Installment>> FindAllByLoanId(Guid loanId, Pageable pageable)
     {
-        var query = m_Context.Installments.IncludeAll()
-                             .Where(installment => installment.LoanId == loanId)
-                             .OrderBy(i => i.ExpectedDueDate);
+        await using var context = await m_ContextFactory.CreateContext;
+
+        var query = context.Installments.IncludeAll()
+                           .Where(installment => installment.LoanId == loanId)
+                           .OrderBy(i => i.ExpectedDueDate);
 
         var total = await query.CountAsync();
 
@@ -51,60 +62,100 @@ public class InstallmentRepository(ApplicationContext context) : IInstallmentRep
 
     public async Task<Installment?> FindById(Guid id)
     {
-        return await m_Context.Installments.IncludeAll()
-                              .FirstOrDefaultAsync(installment => installment.Id == id);
+        await using var context = await m_ContextFactory.CreateContext;
+
+        return await context.Installments.IncludeAll()
+                            .FirstOrDefaultAsync(installment => installment.Id == id);
     }
 
     public async Task<Installment> Add(Installment installment)
     {
-        m_Context.Installments.Add(installment);
-        await m_Context.SaveChangesAsync();
-        return installment;
+        await using var context = await m_ContextFactory.CreateContext;
+
+        context.Installments.Add(installment);
+        await context.SaveChangesAsync();
+        return await context.Installments.IncludeAll()
+                                    .FirstAsync(i => i.Id == installment.Id);;
+    }
+
+    public async Task<bool> AddRange(IEnumerable<Installment> installments)
+    {
+        await using var context = await m_ContextFactory.CreateContext;
+
+        await context.BulkInsertAsync(installments, config => config.BatchSize = 2000);
+
+        return true;
     }
 
     public async Task<Installment> Update(Installment oldInstallment, Installment installment)
     {
-        m_Context.Entry(oldInstallment)
-                 .State = EntityState.Detached;
+        await using var context = await m_ContextFactory.CreateContext;
 
-        var updatedInstallment = m_Context.Installments.Update(installment);
+        context.Entry(oldInstallment)
+               .State = EntityState.Detached;
 
-        await m_Context.SaveChangesAsync();
+        var updatedInstallment = context.Installments.Update(installment);
+
+        await context.SaveChangesAsync();
 
         return updatedInstallment.Entity;
     }
 
+    public async Task<bool> Exists(Guid id)
+    {
+        await using var context = await m_ContextFactory.CreateContext;
+
+        return await context.Installments.AnyAsync(installment => installment.Id == id);
+    }
+
+    public async Task<bool> IsEmpty()
+    {
+        await using var context = await m_ContextFactory.CreateContext;
+
+        return await context.Installments.AnyAsync() is not true;
+    }
+
     public async Task<List<Installment>> GetDueInstallmentsForLoanAsync(Guid loanId, DateTime dueDate)
     {
-        return await m_Context.Installments.IncludeAll()
-                              .Where(installment => installment.LoanId == loanId && installment.ExpectedDueDate.Date <= dueDate.Date &&
-                                                    installment.Status == InstallmentStatus.Pending)
-                              .OrderBy(installment => installment.ExpectedDueDate)
-                              .ToListAsync();
+        await using var context = await m_ContextFactory.CreateContext;
+
+        return await context.Installments.IncludeAll()
+                            .Where(installment => installment.LoanId == loanId && installment.ExpectedDueDate.Date <= dueDate.Date &&
+                                                  installment.Status == InstallmentStatus.Pending)
+                            .OrderBy(installment => installment.ExpectedDueDate)
+                            .ToListAsync();
     }
 
     public async Task<int> GetInstallmentCountForLoanAsync(Guid loanId)
     {
-        return await m_Context.Installments.CountAsync(installment => installment.LoanId == loanId);
+        await using var context = await m_ContextFactory.CreateContext;
+
+        return await context.Installments.CountAsync(installment => installment.LoanId == loanId);
     }
 
     public async Task<int> GetPaidInstallmentsCountBeforeDateAsync(Guid loanId, DateTime date)
     {
-        return await m_Context.Installments.CountAsync(installment => installment.LoanId          == loanId && installment.Status == InstallmentStatus.Paid &&
-                                                                      installment.ExpectedDueDate < date);
+        await using var context = await m_ContextFactory.CreateContext;
+
+        return await context.Installments.CountAsync(installment => installment.LoanId          == loanId && installment.Status == InstallmentStatus.Paid &&
+                                                                    installment.ExpectedDueDate < date);
     }
 
     public async Task<bool> AreAllInstallmentsPaidAsync(Guid loanId)
     {
-        return !await m_Context.Installments.AnyAsync(installment => installment.LoanId == loanId && installment.Status == InstallmentStatus.Pending);
+        await using var context = await m_ContextFactory.CreateContext;
+
+        return !await context.Installments.AnyAsync(installment => installment.LoanId == loanId && installment.Status == InstallmentStatus.Pending);
     }
 
     public async Task<Installment?> GetLatestInstallmentForLoanAsync(Guid loanId)
     {
-        return await m_Context.Installments.IncludeAll()
-                              .Where(installment => installment.LoanId == loanId)
-                              .OrderByDescending(installment => installment.ExpectedDueDate)
-                              .FirstOrDefaultAsync();
+        await using var context = await m_ContextFactory.CreateContext;
+
+        return await context.Installments.IncludeAll()
+                            .Where(installment => installment.LoanId == loanId)
+                            .OrderByDescending(installment => installment.ExpectedDueDate)
+                            .FirstOrDefaultAsync();
     }
 }
 
@@ -117,7 +168,7 @@ public static partial class RepositoryExtensions
     }
 
     public static IIncludableQueryable<TEntity, object?> ThenIncludeAll<TEntity>(this IIncludableQueryable<TEntity, Installment?> value,
-                                                                                 Expression<Func<TEntity, Installment?>>          navigationExpression, params string[] excludeProperties)
+                                                                                 Expression<Func<TEntity, Installment?>> navigationExpression, params string[] excludeProperties)
     where TEntity : class
     {
         IIncludableQueryable<TEntity, object?> query = value;
@@ -130,8 +181,8 @@ public static partial class RepositoryExtensions
     }
 
     public static IIncludableQueryable<TEntity, object?> ThenIncludeAll<TEntity>(this IIncludableQueryable<TEntity, List<Installment>> value,
-                                                                                 Expression<Func<TEntity, List<Installment>>> navigationExpression, params string[] excludeProperties)
-    where TEntity : class
+                                                                                 Expression<Func<TEntity, List<Installment>>>          navigationExpression,
+                                                                                 params string[]                                       excludeProperties) where TEntity : class
     {
         IIncludableQueryable<TEntity, object?> query = value;
 

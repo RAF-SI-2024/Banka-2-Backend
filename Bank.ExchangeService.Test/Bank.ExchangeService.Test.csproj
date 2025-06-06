@@ -12,6 +12,7 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.0.0"/>
+        <PackageReference Include="Moq" Version="4.20.72" />
         <PackageReference Include="Reqnroll" Version="2.4.0" />
         <PackageReference Include="Reqnroll.Microsoft.Extensions.DependencyInjection" Version="2.4.0" />
         <PackageReference Include="Reqnroll.xUnit" Version="2.4.0" />
@@ -26,11 +27,6 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Bank.ExchangeService\Bank.ExchangeService.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Features\" />
-      <Folder Include="Steps\" />
     </ItemGroup>
 
 </Project>

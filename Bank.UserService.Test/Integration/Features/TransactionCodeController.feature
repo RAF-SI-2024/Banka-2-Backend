@@ -1,13 +1,11 @@
-Feature: Transaction Code controller testing
+﻿Feature: TransactionCode controller testing
 
-    Scenario: Get all Transaction codes
-        Given transaction code get request with query pageable
-        When transaction codes are fecthed from the database
-        Then the transaction code response code should be 200
-        And response should contain list of transaction codes matching pageable
+    Scenario: Get all transaction codes through API
+        Given a transaction code filter query and pageable parameters
+        When a GET request is sent to fetch all transaction codes
+        Then the response ActionResult should indicate successful retrieval of transaction codes matching pageable
 
-    Scenario: Get transaction code by id
-        Given given valid transaction code id
-        When transaction code is fecthed from the database
-        Then the transaction code response code should be 200
-        And response should contain transaction code with given id
+    Scenario: Get transaction code by Id through API
+        Given a valid transaction code Id
+        When a GET request is sent to fetch transaction code by Id
+        Then the response ActionResult should indicate successful retrieval of the transaction code

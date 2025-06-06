@@ -1,4 +1,6 @@
-﻿using Bank.UserService.Models;
+﻿using System.Collections.Immutable;
+
+using Bank.UserService.Models;
 
 namespace Bank.UserService.Database.Seeders;
 
@@ -52,24 +54,10 @@ public static partial class Seeder
                                                                 CreatedAt  = DateTime.UtcNow,
                                                                 ModifiedAt = DateTime.UtcNow,
                                                             };
-    }
-}
 
-public static class LoanTypeSeederExtension
-{
-    public static async Task SeedLoanTypes(this ApplicationContext context)
-    {
-        if (context.LoanTypes.Any())
-            return;
-
-        await context.LoanTypes.AddRangeAsync([
-                                                  Seeder.LoanType.Personal,
-                                                  Seeder.LoanType.Mortgage,
-                                                  Seeder.LoanType.AutoLoan,
-                                                  Seeder.LoanType.StudentLoan,
-                                                  Seeder.LoanType.BusinessLoan
-                                              ]);
-
-        await context.SaveChangesAsync();
+        public static readonly ImmutableArray<LoanTypeModel> All =
+        [
+            Personal, Mortgage, AutoLoan, StudentLoan, BusinessLoan
+        ];
     }
 }

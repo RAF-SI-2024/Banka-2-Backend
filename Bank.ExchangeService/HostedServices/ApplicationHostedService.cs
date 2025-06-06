@@ -1,39 +1,39 @@
 ﻿using Bank.ExchangeService.BackgroundServices;
+using Bank.ExchangeService.Database.Processors;
 
 namespace Bank.ExchangeService.HostedServices;
 
-public class ApplicationHostedService : IHostedService
+public class ApplicationHostedService(
+    DatabaseBackgroundService       databaseBackgroundService,
+    IEnumerable<IRealtimeProcessor> realtimeProcessors,
+    StockBackgroundService          stockBackgroundService,
+    ForexPairBackgroundService      forexPairBackgroundService,
+    OptionBackgroundService         optionBackgroundService
+) : IHostedService
 {
-    private readonly IHostApplicationLifetime  m_ApplicationLifetime;
-    private readonly DatabaseBackgroundService m_DatabaseBackgroundService;
-    private readonly DatabaseHostedService     m_DatabaseHostedService;
+    private readonly DatabaseBackgroundService       m_DatabaseBackgroundService  = databaseBackgroundService;
+    private readonly IEnumerable<IRealtimeProcessor> m_RealtimeProcessors         = realtimeProcessors;
+    private readonly StockBackgroundService          m_StockBackgroundService     = stockBackgroundService;
+    private readonly ForexPairBackgroundService      m_ForexPairBackgroundService = forexPairBackgroundService;
+    private readonly OptionBackgroundService         m_OptionBackgroundService    = optionBackgroundService;
 
-    public ApplicationHostedService(IHostApplicationLifetime applicationLifetime, DatabaseBackgroundService databaseBackgroundService, DatabaseHostedService databaseHostedService)
+    public async Task StartAsync(CancellationToken cancellationToken)
     {
-        m_ApplicationLifetime       = applicationLifetime;
-        m_DatabaseBackgroundService = databaseBackgroundService;
-        m_DatabaseHostedService     = databaseHostedService;
+        m_DatabaseBackgroundService.OnApplicationStarted();
+        await m_StockBackgroundService.OnApplicationStarted(cancellationToken);
+        await m_ForexPairBackgroundService.OnApplicationStarted(cancellationToken);
+        await m_OptionBackgroundService.OnApplicationStarted(cancellationToken);
+
+        await Task.WhenAll(m_RealtimeProcessors.Select(realtimeProcessor => realtimeProcessor.OnApplicationStarted(cancellationToken)));
     }
 
-    public Task StartAsync(CancellationToken cancellationToken)
+    public async Task StopAsync(CancellationToken cancellationToken)
     {
-        m_ApplicationLifetime.ApplicationStarted.Register(async () =>
-                                                          {
-                                                              m_DatabaseBackgroundService.OnApplicationStarted();
-                                                              await m_DatabaseHostedService.OnApplicationStarted();
-                                                          });
+        m_DatabaseBackgroundService.OnApplicationStopped();
+        await m_StockBackgroundService.OnApplicationStopped(cancellationToken);
+        await m_ForexPairBackgroundService.OnApplicationStopped(cancellationToken);
+        await m_OptionBackgroundService.OnApplicationStopped(cancellationToken);
 
-        m_ApplicationLifetime.ApplicationStopped.Register(() =>
-                                                          {
-                                                              m_DatabaseBackgroundService.OnApplicationStopped();
-                                                              m_DatabaseHostedService.OnApplicationStopped();
-                                                          });
-
-        return Task.CompletedTask;
-    }
-
-    public Task StopAsync(CancellationToken cancellationToken)
-    {
-        return Task.CompletedTask;
+        await Task.WhenAll(m_RealtimeProcessors.Select(realtimeProcessor => realtimeProcessor.OnApplicationStopped(cancellationToken)));
     }
 }

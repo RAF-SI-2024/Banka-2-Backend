@@ -3,11 +3,15 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
+namespace Bank.ExchangeService.Database.EntityConfigurations;
+
 public class StockExchangeEntityConfiguration : IEntityTypeConfiguration<StockExchange>
 {
     public void Configure(EntityTypeBuilder<StockExchange> builder)
     {
         builder.HasKey(exchange => exchange.Id);
+
+        builder.HasAlternateKey(nameof(StockExchange.Acronym));
 
         builder.Property(exchange => exchange.Id)
                .IsRequired();
@@ -31,6 +35,8 @@ public class StockExchangeEntityConfiguration : IEntityTypeConfiguration<StockEx
         builder.Property(exchange => exchange.CurrencyId);
 
         builder.Property(exchange => exchange.TimeZone);
+        builder.Property(exchange => exchange.MarketOpen);
+        builder.Property(exchange => exchange.MarketClose);
 
         builder.Property(exchange => exchange.CreatedAt)
                .IsRequired();

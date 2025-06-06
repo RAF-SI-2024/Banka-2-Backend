@@ -12,15 +12,11 @@ public interface IClientService
 {
     Task<Result<Page<ClientResponse>>> FindAll(UserFilterQuery userFilterQuery, Pageable pageable);
 
-    Task<Result<Page<AccountResponse>>> FindAllAccounts(Guid clientId, AccountFilterQuery filter, Pageable pageable);
-
     Task<Result<ClientResponse>> GetOne(Guid id);
 
     Task<Result<ClientResponse>> Create(ClientCreateRequest clientCreateRequest);
 
     Task<Result<ClientResponse>> Update(ClientUpdateRequest clientUpdateRequest, Guid id);
-
-    Task<Result<List<CardResponse>>> FindAllCards(Guid clientId);
 }
 
 public class ClientService(IUserRepository repository, IEmailService emailService, IAccountRepository accountRepository, ICardRepository cardRepository) : IClientService
@@ -42,16 +38,6 @@ public class ClientService(IUserRepository repository, IEmailService emailServic
                                   .ToList();
 
         return Result.Ok(new Page<ClientResponse>(clientResponses, page.PageNumber, page.PageSize, page.TotalElements));
-    }
-
-    public async Task<Result<Page<AccountResponse>>> FindAllAccounts(Guid clientId, AccountFilterQuery filter, Pageable pageable)
-    {
-        var page = await m_AccountRepository.FindAllByClientId(clientId, pageable);
-
-        var accountResponses = page.Items.Select(account => account.ToResponse())
-                                   .ToList();
-
-        return Result.Ok(new Page<AccountResponse>(accountResponses, page.PageNumber, page.PageSize, page.TotalElements));
     }
 
     public async Task<Result<ClientResponse>> GetOne(Guid id)
@@ -87,20 +73,5 @@ public class ClientService(IUserRepository repository, IEmailService emailServic
 
         return Result.Ok(user.ToClient()
                              .ToResponse());
-    }
-
-    public async Task<Result<List<CardResponse>>> FindAllCards(Guid clientId)
-    {
-        var client = await m_UserRepository.FindById(clientId);
-
-        if (client is null || client.Role != Role.Client)
-            return Result.NotFound<List<CardResponse>>($"No Client found with Id: {clientId}");
-
-        var cards = await m_CardRepository.FindAllByClientId(clientId);
-
-        var cardResponses = cards.Select(card => card.ToResponse())
-                                 .ToList();
-
-        return Result.Ok(cardResponses);
     }
 }

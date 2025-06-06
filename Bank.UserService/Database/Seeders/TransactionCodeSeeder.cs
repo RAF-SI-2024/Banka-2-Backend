@@ -1,4 +1,6 @@
-﻿using Bank.UserService.Models;
+﻿using System.Collections.Immutable;
+
+using Bank.UserService.Models;
 
 namespace Bank.UserService.Database.Seeders;
 
@@ -457,44 +459,19 @@ public static partial class Seeder
                                                                              CreatedAt  = DateTime.UtcNow,
                                                                              ModifiedAt = DateTime.UtcNow
                                                                          };
-    }
-}
 
-public static class TransactionCodeSeederExtension
-{
-    public static async Task SeedTransactionCode(this ApplicationContext context)
-    {
-        if (context.TransactionCodes.Any())
-            return;
-
-        await context.TransactionCodes.AddRangeAsync([
-                                                         Seeder.TransactionCode.TransactionCode220, Seeder.TransactionCode.TransactionCode221,
-                                                         Seeder.TransactionCode.TransactionCode222, Seeder.TransactionCode.TransactionCode223,
-                                                         Seeder.TransactionCode.TransactionCode224, Seeder.TransactionCode.TransactionCode225,
-                                                         Seeder.TransactionCode.TransactionCode226, Seeder.TransactionCode.TransactionCode227,
-                                                         Seeder.TransactionCode.TransactionCode228, Seeder.TransactionCode.TransactionCode231,
-                                                         Seeder.TransactionCode.TransactionCode240, Seeder.TransactionCode.TransactionCode241,
-                                                         Seeder.TransactionCode.TransactionCode242, Seeder.TransactionCode.TransactionCode244,
-                                                         Seeder.TransactionCode.TransactionCode245, Seeder.TransactionCode.TransactionCode246,
-                                                         Seeder.TransactionCode.TransactionCode247, Seeder.TransactionCode.TransactionCode248,
-                                                         Seeder.TransactionCode.TransactionCode249, Seeder.TransactionCode.TransactionCode253,
-                                                         Seeder.TransactionCode.TransactionCode254, Seeder.TransactionCode.TransactionCode257,
-                                                         Seeder.TransactionCode.TransactionCode258, Seeder.TransactionCode.TransactionCode260,
-                                                         Seeder.TransactionCode.TransactionCode261, Seeder.TransactionCode.TransactionCode262,
-                                                         Seeder.TransactionCode.TransactionCode263, Seeder.TransactionCode.TransactionCode264,
-                                                         Seeder.TransactionCode.TransactionCode265, Seeder.TransactionCode.TransactionCode266,
-                                                         Seeder.TransactionCode.TransactionCode270, Seeder.TransactionCode.TransactionCode271,
-                                                         Seeder.TransactionCode.TransactionCode272, Seeder.TransactionCode.TransactionCode273,
-                                                         Seeder.TransactionCode.TransactionCode275, Seeder.TransactionCode.TransactionCode276,
-                                                         Seeder.TransactionCode.TransactionCode277, Seeder.TransactionCode.TransactionCode278,
-                                                         Seeder.TransactionCode.TransactionCode279, Seeder.TransactionCode.TransactionCode280,
-                                                         Seeder.TransactionCode.TransactionCode281, Seeder.TransactionCode.TransactionCode282,
-                                                         Seeder.TransactionCode.TransactionCode283, Seeder.TransactionCode.TransactionCode284,
-                                                         Seeder.TransactionCode.TransactionCode285, Seeder.TransactionCode.TransactionCode286,
-                                                         Seeder.TransactionCode.TransactionCode287, Seeder.TransactionCode.TransactionCode288,
-                                                         Seeder.TransactionCode.TransactionCode289, Seeder.TransactionCode.TransactionCode290
-                                                     ]);
-
-        await context.SaveChangesAsync();
+        public static readonly ImmutableArray<TransactionCodeModel> All =
+        [
+            TransactionCode220, TransactionCode221, TransactionCode222, TransactionCode223, TransactionCode224,
+            TransactionCode225, TransactionCode226, TransactionCode227, TransactionCode228, TransactionCode231,
+            TransactionCode240, TransactionCode241, TransactionCode242, TransactionCode244, TransactionCode245,
+            TransactionCode246, TransactionCode247, TransactionCode248, TransactionCode249, TransactionCode253,
+            TransactionCode254, TransactionCode257, TransactionCode258, TransactionCode260, TransactionCode261,
+            TransactionCode262, TransactionCode263, TransactionCode264, TransactionCode265, TransactionCode266,
+            TransactionCode270, TransactionCode271, TransactionCode272, TransactionCode273, TransactionCode275,
+            TransactionCode276, TransactionCode277, TransactionCode278, TransactionCode279, TransactionCode280,
+            TransactionCode281, TransactionCode282, TransactionCode283, TransactionCode284, TransactionCode285,
+            TransactionCode286, TransactionCode287, TransactionCode288, TransactionCode289, TransactionCode290
+        ];
     }
 }

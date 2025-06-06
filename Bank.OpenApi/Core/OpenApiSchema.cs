@@ -3,6 +3,8 @@
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 
+using Swashbuckle.AspNetCore.SwaggerGen;
+
 namespace Bank.OpenApi.Core;
 
 internal interface IOpenApiSchema
@@ -58,6 +60,38 @@ public class OpenApiExample<TExample>(TExample example) : IOpenApiExample where 
     public Type Type => typeof(TExample);
 }
 
+internal abstract class AbstractSwaggerSchema<TExample> : ISchemaFilter where TExample : class
+{
+    protected readonly TExample            Example;
+    private            SchemaFilterContext m_Context = null!;
+
+    protected AbstractSwaggerSchema(OpenApiSchemaContext openApiContext)
+    {
+        if (!openApiContext.TryGetExample<TExample>(out var example))
+            throw new MissingMemberException($"Missing Example for type {typeof(TExample)}");
+
+        Example = example;
+    }
+
+    public void Apply(OpenApiSchema schema, SchemaFilterContext context)
+    {
+        if (context.Type != typeof(TExample))
+            return;
+
+        m_Context = context;
+
+        schema.Example = CreateExample();
+    }
+
+    protected IOpenApiAny? GetSchemaExample<TSchema>()
+    {
+        return m_Context.SchemaRepository.Schemas.GetValueOrDefault(typeof(TSchema).Name)
+                        ?.Example;
+    }
+
+    protected abstract IOpenApiAny CreateExample();
+}
+
 internal class OpenApiSchemaContext
 {
     public readonly Dictionary<Type, IOpenApiSchema> SchemaRepository;
@@ -68,7 +102,7 @@ internal class OpenApiSchemaContext
     {
         foreach (var defaultOpenApiExample in defaultOpenApiExamples)
             ExampleRepository[defaultOpenApiExample.Type] = defaultOpenApiExample.Example;
-        
+
         foreach (var openApiExample in openApiExamples)
             ExampleRepository[openApiExample.Type] = openApiExample.Example;
 

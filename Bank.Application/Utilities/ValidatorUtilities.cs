@@ -84,9 +84,9 @@ public static partial class ValidatorUtilities
 
     public static class Global
     {
-        public static bool ContainsOnlyNumbers(string value)
+        public static bool ContainsOnlyNumbers(string? value)
         {
-            return Regex.IsMatch(value, @"^\d+$");
+            return value is null || Regex.IsMatch(value, @"^\d+$");
         }
 
         public static bool ContainsOnlyLetters(string value)

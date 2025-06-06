@@ -1,4 +1,6 @@
-﻿using Bank.UserService.Models;
+﻿using System.Collections.Immutable;
+
+using Bank.UserService.Models;
 
 namespace Bank.UserService.Database.Seeders;
 
@@ -51,20 +53,10 @@ public static partial class Seeder
                                                             Address                 = "101 Future Rd, Progress Town",
                                                             MajorityOwnerId         = Client.Client04.Id,
                                                         };
-    }
-}
 
-public static class CompanySeederExtension
-{
-    public static async Task SeedCompany(this ApplicationContext context)
-    {
-        if (context.Companies.Any())
-            return;
-
-        await context.Companies.AddRangeAsync([
-                                                  Seeder.Company.Company01, Seeder.Company.Company02, Seeder.Company.Company03, Seeder.Company.Company04
-                                              ]);
-
-        await context.SaveChangesAsync();
+        public static readonly ImmutableArray<CompanyModel> All =
+        [
+            Company01, Company02, Company03, Company04
+        ];
     }
 }

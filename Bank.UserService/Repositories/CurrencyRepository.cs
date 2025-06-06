@@ -1,8 +1,11 @@
 ﻿using System.Linq.Expressions;
 
 using Bank.Application.Queries;
+using Bank.Database.Core;
 using Bank.UserService.Database;
 using Bank.UserService.Models;
+
+using EFCore.BulkExtensions;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
@@ -11,26 +14,32 @@ namespace Bank.UserService.Repositories;
 
 public interface ICurrencyRepository
 {
-    Task<List<Currency>> FindAll(CurrencyFilterQuery currencyFilterQuery);
+    Task<List<Currency>> FindAll(CurrencyFilterQuery currencyFilterQuery, bool includeForeignEntity = true);
 
-    Task<Currency?> FindById(Guid id);
+    Task<Currency?> FindById(Guid id, bool includeForeignEntity = true);
 
-    Task<Currency?> FindByCode(string currencyCode);
+    Task<Currency?> FindByCode(string currencyCode, bool includeForeignEntity = true);
 
-    Task<bool> Exists(Guid currencyId);
+    Task<bool> AddRange(IEnumerable<Currency> currencies);
+
+    Task<bool> Exists(Guid id);
+
+    Task<bool> IsEmpty();
 }
 
-public class CurrencyRepository(ApplicationContext context, IDbContextFactory<ApplicationContext> contextFactory) : ICurrencyRepository
+public class CurrencyRepository(IDatabaseContextFactory<ApplicationContext> contextFactory) : ICurrencyRepository
 {
-    private readonly ApplicationContext                    m_Context        = context;
-    private readonly IDbContextFactory<ApplicationContext> m_ContextFactory = contextFactory;
+    private readonly IDatabaseContextFactory<ApplicationContext> m_ContextFactory = contextFactory;
 
-    private Task<ApplicationContext> CreateContext => m_ContextFactory.CreateDbContextAsync();
-
-    public async Task<List<Currency>> FindAll(CurrencyFilterQuery currencyFilterQuery)
+    public async Task<List<Currency>> FindAll(CurrencyFilterQuery currencyFilterQuery, bool includeForeignEntity)
     {
-        var currencyQuery = m_Context.Currencies.IncludeAll()
-                                     .AsQueryable();
+        await using var context = await m_ContextFactory.CreateContext;
+
+        var currencyQuery = context.Currencies.AsQueryable();
+
+        if (includeForeignEntity)
+            currencyQuery = context.Currencies.IncludeAll()
+                                   .AsQueryable();
 
         if (!string.IsNullOrEmpty(currencyFilterQuery.Name))
             currencyQuery = currencyQuery.Where(currency => EF.Functions.ILike(currency.Name, $"%{currencyFilterQuery.Name}%"));
@@ -41,41 +50,67 @@ public class CurrencyRepository(ApplicationContext context, IDbContextFactory<Ap
         return await currencyQuery.ToListAsync();
     }
 
-    public async Task<Currency?> FindById(Guid id)
+    public async Task<Currency?> FindById(Guid id, bool includeForeignEntity)
     {
-        await using var context = await CreateContext;
+        await using var context = await m_ContextFactory.CreateContext;
 
-        return await FindById(id, context);
+        return await FindById(id, includeForeignEntity, context);
     }
 
-    public async Task<Currency?> FindByCode(string currencyCode)
+    public async Task<Currency?> FindByCode(string currencyCode, bool includeForeignEntity)
     {
-        await using var context = await CreateContext;
+        await using var context = await m_ContextFactory.CreateContext;
 
-        return await FindByCode(currencyCode, context);
+        return await FindByCode(currencyCode, includeForeignEntity, context);
     }
 
-    public async Task<bool> Exists(Guid currencyId)
+    public async Task<bool> Exists(Guid id)
     {
-        await using var context = await CreateContext;
+        await using var context = await m_ContextFactory.CreateContext;
 
-        return await Exists(currencyId, context);
+        return await context.Currencies.AnyAsync(currency => currency.Id == id);
+    }
+
+    public async Task<bool> IsEmpty()
+    {
+        await using var context = await m_ContextFactory.CreateContext;
+
+        return await context.Currencies.AnyAsync() is not true;
+    }
+
+    public async Task<bool> AddRange(IEnumerable<Currency> currencies)
+    {
+        await using var context = await m_ContextFactory.CreateContext;
+
+        await context.BulkInsertAsync(currencies, config => config.BatchSize = 2000);
+
+        return true;
     }
 
     #region Static Repository Calls
 
-    private static async Task<Currency?> FindById(Guid id, ApplicationContext context)
+    private static async Task<Currency?> FindById(Guid id, bool includeForeignEntity, ApplicationContext context)
     {
-        return await context.Currencies.IncludeAll()
-                            .Where(currency => currency.Id == id)
-                            .FirstOrDefaultAsync();
+        var currencyQuery = context.Currencies.AsQueryable();
+
+        if (includeForeignEntity)
+            currencyQuery = context.Currencies.IncludeAll()
+                                   .AsQueryable();
+
+        return await currencyQuery.Where(currency => currency.Id == id)
+                                  .FirstOrDefaultAsync();
     }
 
-    private static async Task<Currency?> FindByCode(string currencyCode, ApplicationContext context)
+    private static async Task<Currency?> FindByCode(string currencyCode, bool includeForeignEntity, ApplicationContext context)
     {
-        return await context.Currencies.IncludeAll()
-                            .Where(currency => EF.Functions.ILike(currency.Code, $"{currencyCode}"))
-                            .FirstOrDefaultAsync();
+        var currencyQuery = context.Currencies.AsQueryable();
+
+        if (includeForeignEntity)
+            currencyQuery = context.Currencies.IncludeAll()
+                                   .AsQueryable();
+
+        return await currencyQuery.Where(currency => EF.Functions.ILike(currency.Code, $"{currencyCode}"))
+                                  .FirstOrDefaultAsync();
     }
 
     private static Task<bool> Exists(Guid currencyId, ApplicationContext context)
@@ -95,7 +130,7 @@ public static partial class RepositoryExtensions
     }
 
     public static IIncludableQueryable<TEntity, object?> ThenIncludeAll<TEntity>(this IIncludableQueryable<TEntity, Currency?> value,
-                                                                                 Expression<Func<TEntity, Currency?>>          navigationExpression, params string[] excludeProperties)
+                                                                                 Expression<Func<TEntity, Currency?>> navigationExpression, params string[] excludeProperties)
     where TEntity : class
     {
         IIncludableQueryable<TEntity, object?> query = value;

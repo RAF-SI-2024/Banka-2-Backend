@@ -2,7 +2,6 @@
 using Bank.Application.Queries;
 using Bank.Application.Requests;
 using Bank.Application.Responses;
-using Bank.UserService.Database.Sample;
 using Bank.UserService.Mappers;
 
 using Seeder = Bank.UserService.Database.Seeders.Seeder;
@@ -15,7 +14,7 @@ public static partial class Example
     {
         public static class Company
         {
-            public static readonly CompanyCreateRequest CreateRequest = Sample.Company.CreateRequest;
+            public static readonly CompanyCreateRequest CreateRequest = Database.Examples.Example.Company.CreateRequest;
 
             public static readonly CompanyResponse CompanyResponse = new()
                                                                      {
@@ -39,7 +38,7 @@ public static partial class Example
                                                                           MajorityOwner           = Seeder.Company.Company02.MajorityOwner?.ToSimpleResponse()
                                                                       };
 
-            public static readonly CompanyUpdateRequest UpdateRequest = Sample.Company.UpdateRequest;
+            public static readonly CompanyUpdateRequest UpdateRequest = Database.Examples.Example.Company.UpdateRequest;
 
             public static readonly CompanyFilterQuery CompanyFilterQuery = new()
                                                                            {
@@ -53,6 +52,8 @@ public static partial class Example
                                                            Page = 1,
                                                            Size = 10
                                                        };
+
+            public static readonly Guid Id = Seeder.Company.Company02.Id;
         }
     }
 }

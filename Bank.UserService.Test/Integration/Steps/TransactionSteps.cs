@@ -3,6 +3,7 @@ using Bank.Application.Endpoints;
 using Bank.Application.Queries;
 using Bank.Application.Requests;
 using Bank.Application.Responses;
+using Bank.UserService.Controllers;
 using Bank.UserService.Services;
 using Bank.UserService.Test.Examples.Entities;
 
@@ -13,10 +14,11 @@ using Shouldly;
 namespace Bank.UserService.Test.Steps;
 
 [Binding]
-public class TransactionSteps(ScenarioContext scenarioContext, ITransactionService transactionService)
+public class TransactionSteps(ScenarioContext scenarioContext, ITransactionService transactionService, TransactionController transactionController)
 {
-    private readonly ScenarioContext     m_ScenarioContext    = scenarioContext;
-    private readonly ITransactionService m_TransactionService = transactionService;
+    private readonly ScenarioContext       m_ScenarioContext       = scenarioContext;
+    private readonly ITransactionService   m_TransactionService    = transactionService;
+    private readonly TransactionController m_TransactionController = transactionController;
 
     [Given(@"transaction get request with query filter parameters")]
     public void GivenTransactionGetRequestWithQueryFilterParameters()
@@ -225,16 +227,158 @@ public class TransactionSteps(ScenarioContext scenarioContext, ITransactionServi
         result.Value.Id.ShouldBe(id);
         result.Value.Status.ShouldBe(Example.Entity.Transaction.UpdateRequest.Status);
     }
+
+    [Given(@"a transaction filter query and pageable parameters")]
+    public void GivenATransactionFilterQueryAndPageableParameters()
+    {
+        m_ScenarioContext[Constant.TransactionFilterQuery] = new TransactionFilterQuery();
+        m_ScenarioContext[Constant.Pageable]               = new Pageable();
+    }
+
+    [When(@"a GET request is sent to fetch all transactions")]
+    public async Task WhenAGetRequestIsSentToFetchAllTransactions()
+    {
+        var filterQuery = m_ScenarioContext.Get<TransactionFilterQuery>(Constant.TransactionFilterQuery);
+        var pageable    = m_ScenarioContext.Get<Pageable>(Constant.Pageable);
+
+        var result = await m_TransactionController.GetAll(filterQuery, pageable);
+
+        m_ScenarioContext[Constant.GetTransactions] = result;
+    }
+
+    [Then(@"the response ActionResult should indicate successful retrieval of transactions matching the filter parameters")]
+    public void ThenTheResponseActionResultShouldIndicateSuccessfulRetrievalOfTransactionsMatchingTheFilterParameters()
+    {
+        var result = m_ScenarioContext.Get<ActionResult<Page<TransactionResponse>>>(Constant.GetTransactions);
+
+        result.Result.ShouldBeOfType<OkObjectResult>();
+        result.ShouldNotBeNull();
+    }
+
+    [Given(@"a valid account Id and a transaction filter query and pageable parameters")]
+    public void GivenAValidAccountIdAndTransactionFilterQueryAndPageableParameters()
+    {
+        m_ScenarioContext[Constant.AccountId]              = Example.Entity.Account.AccountId;
+        m_ScenarioContext[Constant.TransactionFilterQuery] = new TransactionFilterQuery();
+        m_ScenarioContext[Constant.Pageable]               = new Pageable();
+    }
+
+    [When(@"a GET request is sent to fetch transactions by account Id")]
+    public async Task WhenAGetRequestIsSentToFetchTransactionsByAccountId()
+    {
+        var accountId   = m_ScenarioContext.Get<Guid>(Constant.AccountId);
+        var filterQuery = m_ScenarioContext.Get<TransactionFilterQuery>(Constant.TransactionFilterQuery);
+        var pageable    = m_ScenarioContext.Get<Pageable>(Constant.Pageable);
+
+        var result = await m_TransactionController.GetAllByAccountId(accountId, filterQuery, pageable);
+
+        m_ScenarioContext[Constant.GetTransactionsForAccount] = result;
+    }
+
+    [Then(@"the response ActionResult should indicate successful retrieval of transactions for the account")]
+    public void ThenTheResponseActionResultShouldIndicateSuccessfulRetrievalOfTransactionsForTheAccount()
+    {
+        var result = m_ScenarioContext.Get<ActionResult<Page<TransactionResponse>>>(Constant.GetTransactionsForAccount);
+
+        result.Result.ShouldBeOfType<OkObjectResult>();
+        result.ShouldNotBeNull();
+    }
+
+    [Given(@"a valid transaction Id")]
+    public void GivenAValidTransactionId()
+    {
+        m_ScenarioContext[Constant.TransactionId] = Example.Entity.Transaction.TransactionId;
+    }
+
+    [When(@"a GET request is sent to fetch a transaction by Id")]
+    public async Task WhenAGetRequestIsSentToFetchATransactionById()
+    {
+        var transactionId = m_ScenarioContext.Get<Guid>(Constant.TransactionId);
+
+        var result = await m_TransactionController.GetOne(transactionId);
+
+        m_ScenarioContext[Constant.GetTransaction] = result;
+    }
+
+    [Then(@"the response ActionResult should indicate successful retrieval of the transaction")]
+    public void ThenTheResponseActionResultShouldIndicateSuccessfulRetrievalOfTheTransaction()
+    {
+        var result = m_ScenarioContext.Get<ActionResult<TransactionResponse>>(Constant.GetTransaction);
+
+        result.Result.ShouldBeOfType<OkObjectResult>();
+        result.ShouldNotBeNull();
+    }
+
+    [Given(@"a valid transaction create request")]
+    public void GivenAValidTransactionCreateRequest()
+    {
+        m_ScenarioContext[Constant.TransactionCreateRequest] = Example.Entity.Transaction.CreateRequest;
+    }
+
+    [When(@"a POST request is sent to the transaction creation endpoint")]
+    public async Task WhenAPostRequestIsSentToTheTransactionCreationEndpoint()
+    {
+        var createRequest = m_ScenarioContext.Get<TransactionCreateRequest>(Constant.TransactionCreateRequest);
+
+        var result = await m_TransactionController.Create(createRequest);
+
+        m_ScenarioContext[Constant.TransactionCreateResult] = result;
+    }
+
+    [Then(@"the response ActionResult should indicate successful transaction creation")]
+    public void ThenTheResponseActionResultShouldIndicateSuccessfulTransactionCreation()
+    {
+        var result = m_ScenarioContext.Get<ActionResult<TransactionCreateResponse>>(Constant.TransactionCreateResult);
+
+        result.Result.ShouldBeOfType<OkObjectResult>();
+        result.ShouldNotBeNull();
+    }
+
+    [Given(@"a valid transaction Id and update request")]
+    public void GivenAValidTransactionIdAndUpdateRequest()
+    {
+        m_ScenarioContext[Constant.TransactionId]            = Example.Entity.Transaction.TransactionId;
+        m_ScenarioContext[Constant.TransactionUpdateRequest] = Example.Entity.Transaction.UpdateRequest;
+    }
+
+    [When(@"a PUT request is sent to the transaction update endpoint")]
+    public async Task WhenAPutRequestIsSentToTheTransactionUpdateEndpoint()
+    {
+        var transactionId = m_ScenarioContext.Get<Guid>(Constant.TransactionId);
+        var updateRequest = m_ScenarioContext.Get<TransactionUpdateRequest>(Constant.TransactionUpdateRequest);
+
+        var result = await m_TransactionController.Update(updateRequest, transactionId);
+
+        m_ScenarioContext[Constant.TransactionUpdateResult] = result;
+    }
+
+    [Then(@"the response ActionResult should indicate successful transaction update")]
+    public void ThenTheResponseActionResultShouldIndicateSuccessfulTransactionUpdate()
+    {
+        var result = m_ScenarioContext.Get<ActionResult<TransactionResponse>>(Constant.TransactionUpdateResult);
+
+        result.Result.ShouldBeOfType<OkObjectResult>();
+        result.ShouldNotBeNull();
+    }
 }
 
 file static class Constant
 {
-    public const string FilterParam  = "TransactionFilterQuery";
-    public const string Pageable     = "TransactionPageable";
-    public const string Id           = "TransactionId";
-    public const string Result       = "TransactionResult";
-    public const string Create       = "TransactionCreate";
-    public const string Update       = "TransactionUpdate";
-    public const string ActionResult = "TransactionActionResult";
-    public const string AccountId    = "AccountId";
+    public const string FilterParam               = "TransactionFilterQuery";
+    public const string Pageable                  = "TransactionPageable";
+    public const string Id                        = "TransactionId";
+    public const string Result                    = "TransactionResult";
+    public const string Create                    = "TransactionCreate";
+    public const string Update                    = "TransactionUpdate";
+    public const string ActionResult              = "TransactionActionResult";
+    public const string AccountId                 = "AccountId";
+    public const string TransactionFilterQuery    = "TransactionFilterQuery";
+    public const string GetTransactions           = "GetTransactions";
+    public const string GetTransactionsForAccount = "GetTransactionsForAccount";
+    public const string GetTransaction            = "GetTransaction";
+    public const string TransactionCreateRequest  = "TransactionCreateRequest";
+    public const string TransactionCreateResult   = "TransactionCreateResult";
+    public const string TransactionUpdateRequest  = "TransactionUpdateRequest";
+    public const string TransactionUpdateResult   = "TransactionUpdateResult";
+    public const string TransactionId             = "TransactionId";
 }

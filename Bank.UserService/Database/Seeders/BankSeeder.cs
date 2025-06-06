@@ -1,5 +1,7 @@
 ﻿using System.Collections.Immutable;
 
+using Configuration = Bank.UserService.Configurations.Configuration;
+
 namespace Bank.UserService.Database.Seeders;
 
 using BankModel = Models.Bank;
@@ -13,7 +15,7 @@ public static partial class Seeder
                                                       Id         = Guid.Parse("d5b232ec-03a6-4b78-9479-6300787c2a0b"),
                                                       Name       = "Bank 1",
                                                       Code       = "111",
-                                                      BaseUrl    = "null",
+                                                      BaseUrl    = Configuration.ExternalBank.Bank1BaseUrl,
                                                       CreatedAt  = DateTime.UtcNow,
                                                       ModifiedAt = DateTime.UtcNow
                                                   };
@@ -33,7 +35,7 @@ public static partial class Seeder
                                                       Id         = Guid.Parse("f3f224ea-01c8-4a4b-80ea-8f4f492608be"),
                                                       Name       = "Bank 3",
                                                       Code       = "333",
-                                                      BaseUrl    = "null",
+                                                      BaseUrl    = Configuration.ExternalBank.Bank3BaseUrl,
                                                       CreatedAt  = DateTime.UtcNow,
                                                       ModifiedAt = DateTime.UtcNow
                                                   };
@@ -43,24 +45,11 @@ public static partial class Seeder
                                                       Id         = Guid.Parse("c2fd28d3-6757-4993-9665-2b999b1c6cc2"),
                                                       Name       = "Bank 4",
                                                       Code       = "444",
-                                                      BaseUrl    = "null",
+                                                      BaseUrl    = Configuration.ExternalBank.Bank4BaseUrl,
                                                       CreatedAt  = DateTime.UtcNow,
                                                       ModifiedAt = DateTime.UtcNow
                                                   };
 
-        public static readonly ImmutableList<BankModel> All = [Bank01, Bank02, Bank03, Bank04];
-    }
-}
-
-public static class BankSeederExtension
-{
-    public static async Task SeedBank(this ApplicationContext context)
-    {
-        if (context.Banks.Any())
-            return;
-
-        await context.Banks.AddRangeAsync(Seeder.Bank.All);
-
-        await context.SaveChangesAsync();
+        public static readonly ImmutableArray<BankModel> All = [Bank01, Bank02, Bank03, Bank04];
     }
 }

@@ -33,13 +33,13 @@ public static class LoanMapper
         return new LoanResponse
                {
                    Id           = loan.Id,
-                   Type         = loan.LoanType!.ToResponse(),
-                   Account      = loan.Account!.ToResponse(),
+                   Type         = loan.LoanType?.ToResponse()!,
+                   Account      = loan.Account?.ToResponse()!,
                    Amount       = loan.Amount,
                    Period       = loan.Period,
                    CreationDate = DateOnly.FromDateTime(loan.CreationDate),
                    MaturityDate = DateOnly.FromDateTime(loan.MaturityDate),
-                   Currency     = loan.Currency!.ToResponse(),
+                   Currency     = loan.Currency?.ToResponse()!,
                    Status       = loan.Status,
                    InterestType = loan.InterestType,
                    CreatedAt    = loan.CreatedAt,

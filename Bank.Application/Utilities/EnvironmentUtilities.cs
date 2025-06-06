@@ -10,6 +10,13 @@ public static class EnvironmentUtilities
                           .OrDefault(defaultValue);
     }
 
+    public static string[] GetStringArrayVariable(string variableName, char separator = ';')
+    {
+        return Environment.GetEnvironmentVariable(variableName)
+                          .OrDefault("")
+                          .Split(separator);
+    }
+
     public static int GetIntVariable(string variableName, int defaultValue = 0)
     {
         return Environment.GetEnvironmentVariable(variableName)

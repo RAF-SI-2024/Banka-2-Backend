@@ -3,25 +3,14 @@
 using Bank.Application.Domain;
 using Bank.Application.Extensions;
 using Bank.UserService.Configurations;
-using Bank.UserService.Database.Seeders;
 using Bank.UserService.Models;
-using Bank.UserService.Repositories;
 using Bank.UserService.Services;
 
 namespace Bank.UserService.BackgroundServices;
 
-using BankModel = Models.Bank;
-
-public class TransactionBackgroundService(IServiceProvider serviceProvider)
+public class TransactionBackgroundService(ITransactionService transactionService)
 {
-    private readonly IServiceProvider m_ServiceProvider = serviceProvider;
-
-    public BankModel Bank            { private set; get; } = null!;
-    public Currency  DefaultCurrency { private set; get; } = null!;
-    public Account   BankAccount     { private set; get; } = null!;
-
-    private IServiceScope       CreateScope        => m_ServiceProvider.CreateScope();
-    private ITransactionService TransactionService => CreateScope.ServiceProvider.GetRequiredService<ITransactionService>();
+    private readonly ITransactionService m_TransactionService = transactionService;
 
     public ConcurrentQueue<ProcessTransaction> InternalTransactions { get; } = new();
     public ConcurrentQueue<ProcessTransaction> ExternalTransactions { get; } = new();
@@ -29,23 +18,12 @@ public class TransactionBackgroundService(IServiceProvider serviceProvider)
     private Timer m_InternalTimer = null!;
     private Timer m_ExternalTimer = null!;
 
-    public void OnApplicationStarted()
+    public async Task OnApplicationStarted()
     {
-        var bankRepository     = CreateScope.ServiceProvider.GetRequiredService<IBankRepository>();
-        var currencyRepository = CreateScope.ServiceProvider.GetRequiredService<ICurrencyRepository>();
-        var accountRepository  = CreateScope.ServiceProvider.GetRequiredService<IAccountRepository>();
-
-        Bank = bankRepository.FindById(Seeder.Bank.Bank02.Id)
-                             .Result ?? throw new Exception("Invalid bank.");
-
-        DefaultCurrency = currencyRepository.FindByCode(Configuration.Exchange.DefaultCurrencyCode)
-                                            .Result ?? throw new Exception("Invalid default currency.");
-
-        BankAccount = accountRepository.FindById(Seeder.Account.BankAccount.Id)
-                                       .Result ?? throw new Exception("Invalid bank account.");
-
         if (Configuration.Application.Profile == Profile.Testing)
             return;
+
+        return;
 
         m_InternalTimer = new Timer(service => ProcessInternalTransactions(service)
                                     .Wait(), this, TimeSpan.Zero, TimeSpan.FromSeconds(15));
@@ -55,8 +33,9 @@ public class TransactionBackgroundService(IServiceProvider serviceProvider)
     }
 
     private bool m_ProcessingInternalTransaction = false;
+    private bool m_ProcessingExternalTransaction = false;
 
-    private async Task ProcessInternalTransactions(object? _)
+    public async Task ProcessInternalTransactions(object? _)
     {
         if (m_ProcessingInternalTransaction || InternalTransactions.IsEmpty)
             return;
@@ -68,22 +47,37 @@ public class TransactionBackgroundService(IServiceProvider serviceProvider)
         while (InternalTransactions.TryDequeue(out var processTransaction))
             processTransactions.Add(processTransaction);
 
-        var transactionService = TransactionService;
-
-        await Task.WhenAll(processTransactions.Select(transactionService.ProcessInternalTransaction)
+        await Task.WhenAll(processTransactions.Select(m_TransactionService.ProcessInternalTransaction)
                                               .ToList());
 
         m_ProcessingInternalTransaction = false;
     }
 
-    private async Task ProcessExternalTransactions(object? @object)
+    public async Task ProcessExternalTransactions(object? _)
     {
-        var transactionBackgroundService = @object as TransactionBackgroundService;
+        if (m_ProcessingExternalTransaction || ExternalTransactions.IsEmpty)
+            return;
+
+        m_ProcessingExternalTransaction = true;
+
+        var processTransactions = new List<ProcessTransaction>();
+
+        while (ExternalTransactions.TryDequeue(out var processTransaction))
+            processTransactions.Add(processTransaction);
+
+        await Task.WhenAll(processTransactions.Select(m_TransactionService.ProcessExternalTransaction)
+                                              .ToList());
+
+        m_ProcessingExternalTransaction = false;
     }
 
-    public void OnApplicationStopped()
+    public Task OnApplicationStopped()
     {
+        return Task.CompletedTask;
+
         m_InternalTimer.Cancel();
         m_ExternalTimer.Cancel();
+
+        return Task.CompletedTask;
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Bank.Application.Domain;
 using Bank.Application.Endpoints;
+using Bank.Application.Queries;
 using Bank.Application.Responses;
 using Bank.UserService.Mappers;
 using Bank.UserService.Repositories;
@@ -8,7 +9,7 @@ namespace Bank.UserService.Services;
 
 public interface ITransactionCodeService
 {
-    Task<Result<Page<TransactionCodeResponse>>> GetAll(Pageable pageable);
+    Task<Result<Page<TransactionCodeResponse>>> GetAll(TransactionCodeFilterQuery transactionCodeFilterQuery, Pageable pageable);
 
     Task<Result<TransactionCodeResponse>> GetOne(Guid id);
 }
@@ -17,9 +18,9 @@ public class TransactionCodeService(ITransactionCodeRepository transactionCodeRe
 {
     private readonly ITransactionCodeRepository m_TransactionCodeRepository = transactionCodeRepository;
 
-    public async Task<Result<Page<TransactionCodeResponse>>> GetAll(Pageable pageable)
+    public async Task<Result<Page<TransactionCodeResponse>>> GetAll(TransactionCodeFilterQuery transactionCodeFilterQuery, Pageable pageable)
     {
-        var page = await m_TransactionCodeRepository.FindAll(pageable);
+        var page = await m_TransactionCodeRepository.FindAll(transactionCodeFilterQuery, pageable);
 
         var transactionCodeResponses = page.Items.Select(transactionCode => transactionCode.ToResponse())
                                            .ToList();

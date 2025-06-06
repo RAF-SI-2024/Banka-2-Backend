@@ -13,6 +13,7 @@
     <ItemGroup>
         <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.4" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
+        <PackageReference Include="Moq" Version="4.20.72" />
         <PackageReference Include="Reqnroll" Version="2.4.0" />
         <PackageReference Include="Reqnroll.Microsoft.Extensions.DependencyInjection" Version="2.4.0" />
         <PackageReference Include="Reqnroll.xUnit" Version="2.4.0" />
@@ -30,10 +31,6 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Bank.UserService\Bank.UserService.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Integration\" />
     </ItemGroup>
 
     <ItemGroup>
@@ -74,6 +71,21 @@
       <UpToDateCheckBuild Remove="Features\TransactionController.feature.cs" />
       <UpToDateCheckBuild Remove="Features\TransactionTemplateController.feature.cs" />
       <UpToDateCheckBuild Remove="Features\UserController.feature.cs" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Update="Integration\Features\AccountService.feature.cs">
+        <DependentUpon>AccountService.feature</DependentUpon>
+      </Compile>
+      <Compile Update="Integration\Features\CardService.feature.cs">
+        <DependentUpon>CardService.feature</DependentUpon>
+      </Compile>
+      <Compile Update="Integration\Features\EmployeeService.feature.cs">
+        <DependentUpon>EmployeeService.feature</DependentUpon>
+      </Compile>
+      <Compile Update="Integration\Features\TransactionService.feature.cs">
+        <DependentUpon>TransactionService.feature</DependentUpon>
+      </Compile>
     </ItemGroup>
 
 </Project>

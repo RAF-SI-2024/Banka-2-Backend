@@ -4,9 +4,9 @@ using Bank.Application.Responses;
 using Bank.UserService.Database.Seeders;
 using Bank.UserService.Models;
 
-using EmployeeResponse = Bank.Application.Responses.EmployeeResponse;
-
 namespace Bank.UserService.Mappers;
+
+using Permissions = Permissions.Domain.Permissions;
 
 public static class UserMapper
 {
@@ -25,11 +25,12 @@ public static class UserMapper
                    PhoneNumber                = user.PhoneNumber,
                    Address                    = user.Address,
                    Role                       = user.Role,
+                   Permissions                = user.Permissions,
                    Department                 = user.Department,
                    Accounts                   = MapAccounts(user.Accounts),
                    CreatedAt                  = user.CreatedAt,
                    ModifiedAt                 = user.ModifiedAt,
-                   Activated                  = user.Activated
+                   Activated                  = user.Activated,
                };
     }
 
@@ -54,6 +55,7 @@ public static class UserMapper
                    PhoneNumber                = user.PhoneNumber,
                    Address                    = user.Address,
                    Role                       = user.Role,
+                   Permissions                = user.Permissions,
                    Department                 = user.Department,
                    CreatedAt                  = user.CreatedAt,
                    ModifiedAt                 = user.ModifiedAt,
@@ -129,6 +131,7 @@ public static class UserMapper
                    PhoneNumber                = employee.PhoneNumber,
                    Address                    = employee.Address,
                    Role                       = employee.Role,
+                   Permissions                = employee.Permissions,
                    Department                 = employee.Department,
                    CreatedAt                  = employee.CreatedAt,
                    ModifiedAt                 = employee.ModifiedAt,
@@ -152,6 +155,7 @@ public static class UserMapper
                    PhoneNumber                = employee.PhoneNumber,
                    Address                    = employee.Address,
                    Role                       = employee.Role,
+                   Permissions                = employee.Permissions,
                    Department                 = employee.Department,
                    CreatedAt                  = employee.CreatedAt,
                    ModifiedAt                 = employee.ModifiedAt,
@@ -181,7 +185,7 @@ public static class UserMapper
                    CreatedAt                  = DateTime.UtcNow,
                    ModifiedAt                 = DateTime.UtcNow,
                    Activated                  = false,
-                   Permissions                = employeeCreateRequest.Permissions
+                   Permissions                = new Permissions(Permission.Employee)
                };
     }
 
@@ -215,6 +219,7 @@ public static class UserMapper
                    PhoneNumber                = client.PhoneNumber,
                    Address                    = client.Address,
                    Role                       = client.Role,
+                   Permissions                = client.Permissions,
                    Accounts                   = MapAccounts(client.Accounts),
                    CreatedAt                  = client.CreatedAt,
                    ModifiedAt                 = client.ModifiedAt,
@@ -236,6 +241,7 @@ public static class UserMapper
                    PhoneNumber                = client.PhoneNumber,
                    Address                    = client.Address,
                    Role                       = client.Role,
+                   Permissions                = client.Permissions,
                    CreatedAt                  = client.CreatedAt,
                    ModifiedAt                 = client.ModifiedAt,
                    Activated                  = client.Activated
@@ -261,7 +267,7 @@ public static class UserMapper
                    CreatedAt                  = DateTime.UtcNow,
                    ModifiedAt                 = DateTime.UtcNow,
                    Activated                  = false,
-                   Permissions                = clientCreateRequest.Permissions
+                   Permissions                = new Permissions(Permission.Client)
                };
     }
 
@@ -273,6 +279,18 @@ public static class UserMapper
         user.Address     = updateRequest.Address;
         user.Activated   = updateRequest.Activated;
         user.ModifiedAt  = DateTime.UtcNow;
+
+        return user;
+    }
+
+    public static User Update(this User user, UserUpdatePermissionRequest updateRequest)
+    {
+        if (updateRequest.Type == PermissionType.Set)
+            user.Permissions += updateRequest.Permission;
+        else
+            user.Permissions -= updateRequest.Permission;
+
+        user.ModifiedAt = DateTime.UtcNow;
 
         return user;
     }
@@ -325,6 +343,31 @@ public static class UserMapper
                    ModifiedAt                 = user.ModifiedAt,
                    Activated                  = user.Activated,
                    Permissions                = user.Permissions
+               };
+    }
+
+    public static User ToUser(this AccountResponse response)
+    {
+        return new User
+               {
+                   Id                         = Guid.NewGuid(),
+                   FirstName                  = response.Client.FirstName,
+                   LastName                   = response.Client.LastName,
+                   DateOfBirth                = response.Client.DateOfBirth,
+                   Gender                     = response.Client.Gender,
+                   UniqueIdentificationNumber = response.Client.UniqueIdentificationNumber,
+                   Email                      = response.Client.Email,
+                   Username                   = string.Empty,
+                   PhoneNumber                = response.Client.PhoneNumber,
+                   Address                    = response.Client.Address,
+                   Role                       = response.Client.Role,
+                   Permissions                = new Permissions(response.Client.Permissions),
+                   BankId = Seeder.Bank.All.First(bank => bank.Code == response.AccountNumber[..3])
+                                  .Id,
+                   CreatedAt  = DateTime.UtcNow,
+                   ModifiedAt = DateTime.UtcNow,
+                   Employed   = null,
+                   Activated  = false
                };
     }
 }

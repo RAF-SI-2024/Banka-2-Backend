@@ -12,6 +12,6 @@ public class UnitTest
         int a = 1;
         int b = 2;
         // what the fuck is this
-        (a+b).ShouldBe(3);
+        (a + b).ShouldBe(3);
     }
 }

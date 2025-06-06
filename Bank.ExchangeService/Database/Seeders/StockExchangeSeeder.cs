@@ -1,6 +1,6 @@
 ﻿using Bank.ExchangeService.Model;
 
-namespace Bank.ExchangeService.Database.Seeders.Resource;
+namespace Bank.ExchangeService.Database.Seeders;
 
 using StockExchangeModel = StockExchange;
 
@@ -16,22 +16,43 @@ public static partial class Seeder
                                                                MIC        = "XNAS",
                                                                Polity     = "USA",
                                                                CurrencyId = Guid.Parse("81bf331a-0a35-4716-ad12-d1d1bcf66627"), // USD
-                                                               TimeZone   = TimeSpan.Zero,
-                                                               CreatedAt  = DateTime.UtcNow,
-                                                               ModifiedAt = DateTime.UtcNow
+                                                               TimeZone   = TimeSpan.FromHours(-5),                             // EST/EDT
+                                                               MarketOpen = TimeSpan.FromHours(13)
+                                                                                    .Add(TimeSpan.FromMinutes(30)), // 13:30 UTC (EDT) / 14:30 UTC (EST)
+                                                               MarketClose = TimeSpan.FromHours(20),                // 20:00 UTC (EDT) / 21:00 UTC (EST)
+                                                               CreatedAt   = DateTime.UtcNow,
+                                                               ModifiedAt  = DateTime.UtcNow
                                                            };
+
+        public static readonly StockExchangeModel IEX = new()
+                                                        {
+                                                            Id         = Guid.Parse("1f2e3d4c-5b6a-4978-8c9d-0e1f2a3b4c5d"),
+                                                            Name       = "Investors Exchange",
+                                                            Acronym    = "IEX",
+                                                            MIC        = "IEXG",
+                                                            Polity     = "USA",
+                                                            CurrencyId = Guid.Parse("81bf331a-0a35-4716-ad12-d1d1bcf66627"), // USD
+                                                            TimeZone   = TimeSpan.FromHours(-5),                             // EST/EDT
+                                                            MarketOpen = TimeSpan.FromHours(13)
+                                                                                 .Add(TimeSpan.FromMinutes(30)), // 13:30 UTC (EDT) / 14:30 UTC (EST)
+                                                            MarketClose = TimeSpan.FromHours(20),                // 20:00 UTC (EDT) / 21:00 UTC (EST)
+                                                            CreatedAt   = DateTime.UtcNow,
+                                                            ModifiedAt  = DateTime.UtcNow
+                                                        };
 
         public static readonly StockExchangeModel ASX = new()
                                                         {
-                                                            Id         = Guid.Parse("f92a6507-e8d5-4cb2-bac5-3b40fdc3bbaf"),
-                                                            Name       = "Asx - Trade24",
-                                                            Acronym    = "SFE",
-                                                            MIC        = "XSFE",
-                                                            Polity     = "Australia",
-                                                            CurrencyId = Guid.Parse("895ab6f9-8a9a-4532-bea7-b3361d0dc936"), // AUD
-                                                            TimeZone   = TimeSpan.Zero,
-                                                            CreatedAt  = DateTime.UtcNow,
-                                                            ModifiedAt = DateTime.UtcNow
+                                                            Id          = Guid.Parse("f92a6507-e8d5-4cb2-bac5-3b40fdc3bbaf"),
+                                                            Name        = "Asx - Trade24",
+                                                            Acronym     = "SFE",
+                                                            MIC         = "XSFE",
+                                                            Polity      = "Australia",
+                                                            CurrencyId  = Guid.Parse("895ab6f9-8a9a-4532-bea7-b3361d0dc936"), // AUD
+                                                            TimeZone    = TimeSpan.FromHours(10),                             // AEST/AEDT
+                                                            MarketOpen  = TimeSpan.FromHours(23),                             // 23:00 UTC (AEDT) / 00:00 UTC (AEST)
+                                                            MarketClose = TimeSpan.FromHours(5),                              // 05:00 UTC (AEDT) / 06:00 UTC (AEST)
+                                                            CreatedAt   = DateTime.UtcNow,
+                                                            ModifiedAt  = DateTime.UtcNow
                                                         };
 
         public static readonly StockExchangeModel EDGADark = new()
@@ -42,9 +63,12 @@ public static partial class Seeder
                                                                  MIC        = "EDGD",
                                                                  Polity     = "United States",
                                                                  CurrencyId = Guid.Parse("81bf331a-0a35-4716-ad12-d1d1bcf66627"), // USD
-                                                                 TimeZone   = TimeSpan.Zero,
-                                                                 CreatedAt  = DateTime.UtcNow,
-                                                                 ModifiedAt = DateTime.UtcNow
+                                                                 TimeZone   = TimeSpan.FromHours(-5),                             // EST/EDT
+                                                                 MarketOpen = TimeSpan.FromHours(13)
+                                                                                      .Add(TimeSpan.FromMinutes(30)), // 13:30 UTC (EDT) / 14:30 UTC (EST)
+                                                                 MarketClose = TimeSpan.FromHours(20),                // 20:00 UTC (EDT) / 21:00 UTC (EST)
+                                                                 CreatedAt   = DateTime.UtcNow,
+                                                                 ModifiedAt  = DateTime.UtcNow
                                                              };
 
         public static readonly StockExchangeModel ClearStreet = new()
@@ -55,9 +79,12 @@ public static partial class Seeder
                                                                     MIC        = "CLST",
                                                                     Polity     = "United States",
                                                                     CurrencyId = Guid.Parse("81bf331a-0a35-4716-ad12-d1d1bcf66627"), // USD
-                                                                    TimeZone   = TimeSpan.Zero,
-                                                                    CreatedAt  = DateTime.UtcNow,
-                                                                    ModifiedAt = DateTime.UtcNow
+                                                                    TimeZone   = TimeSpan.FromHours(-5),                             // EST/EDT
+                                                                    MarketOpen = TimeSpan.FromHours(13)
+                                                                                         .Add(TimeSpan.FromMinutes(30)), // 13:30 UTC (EDT) / 14:30 UTC (EST)
+                                                                    MarketClose = TimeSpan.FromHours(20),                // 20:00 UTC (EDT) / 21:00 UTC (EST)
+                                                                    CreatedAt   = DateTime.UtcNow,
+                                                                    ModifiedAt  = DateTime.UtcNow
                                                                 };
 
         public static readonly StockExchangeModel MarexIreland = new()
@@ -68,7 +95,10 @@ public static partial class Seeder
                                                                      MIC        = "MSEL",
                                                                      Polity     = "Ireland",
                                                                      CurrencyId = Guid.Parse("6842a5fa-eee4-4438-bcff-5217b6ac6ace"), // Euro
-                                                                     TimeZone   = TimeSpan.Zero,
+                                                                     TimeZone   = TimeSpan.Zero,                                      // GMT/BST
+                                                                     MarketOpen = TimeSpan.FromHours(8),                              // 08:00 UTC (GMT) / 07:00 UTC (BST)
+                                                                     MarketClose = TimeSpan.FromHours(16)
+                                                                                           .Add(TimeSpan.FromMinutes(30)), // 16:30 UTC (GMT) / 15:30 UTC (BST)
                                                                      CreatedAt  = DateTime.UtcNow,
                                                                      ModifiedAt = DateTime.UtcNow
                                                                  };
@@ -81,10 +111,91 @@ public static partial class Seeder
                                                                       MIC        = "MTAH",
                                                                       Polity     = "Italy",
                                                                       CurrencyId = Guid.Parse("6842a5fa-eee4-4438-bcff-5217b6ac6ace"), // Euro
-                                                                      TimeZone   = TimeSpan.Zero,
+                                                                      TimeZone   = TimeSpan.FromHours(1),                              // CET/CEST
+                                                                      MarketOpen = TimeSpan.FromHours(8),                              // 08:00 UTC (CET) / 07:00 UTC (CEST)
+                                                                      MarketClose = TimeSpan.FromHours(17)
+                                                                                            .Add(TimeSpan.FromMinutes(30)), // 17:30 UTC (CET) / 16:30 UTC (CEST)
                                                                       CreatedAt  = DateTime.UtcNow,
                                                                       ModifiedAt = DateTime.UtcNow
                                                                   };
+
+        public static readonly StockExchangeModel ForexMarket = new()
+                                                                {
+                                                                    Id          = Guid.Parse("a1b2c3d4-e5f6-4718-9a0b-cd1e2f3a4b5c"),
+                                                                    Name        = "Global Forex Market",
+                                                                    Acronym     = "FOREX",
+                                                                    MIC         = "XXXX",
+                                                                    Polity      = "International",
+                                                                    CurrencyId  = Guid.Parse("81bf331a-0a35-4716-ad12-d1d1bcf66627"), // USD
+                                                                    TimeZone    = TimeSpan.Zero,
+                                                                    MarketOpen  = TimeSpan.FromHours(22), // Sunday 22:00 UTC
+                                                                    MarketClose = TimeSpan.FromHours(22), // Friday 22:00 UTC (24/7 except weekends)
+                                                                    CreatedAt   = DateTime.UtcNow,
+                                                                    ModifiedAt  = DateTime.UtcNow
+                                                                };
+
+        public static readonly StockExchangeModel CME = new()
+                                                        {
+                                                            Id         = Guid.Parse("c3d8d466-22c0-487c-8247-c229efda2a03"),
+                                                            Name       = "Chicago Mercantile Exchange",
+                                                            Acronym    = "CME",
+                                                            MIC        = "XCME",
+                                                            Polity     = "United States",
+                                                            CurrencyId = Guid.Parse("81bf331a-0a35-4716-ad12-d1d1bcf66627"), // USD
+                                                            TimeZone   = TimeSpan.FromHours(-6),                             // CST/CDT
+                                                            MarketOpen = TimeSpan.FromHours(14)
+                                                                                 .Add(TimeSpan.FromMinutes(30)), // 14:30 UTC (CDT) / 15:30 UTC (CST)
+                                                            MarketClose = TimeSpan.FromHours(21),                // 21:00 UTC (CDT) / 22:00 UTC (CST)
+                                                            CreatedAt   = DateTime.UtcNow,
+                                                            ModifiedAt  = DateTime.UtcNow
+                                                        };
+
+        public static readonly StockExchangeModel ICE = new()
+                                                        {
+                                                            Id         = Guid.Parse("bdeb3a2c-831c-44a3-8ce0-81bc7a9c3773"),
+                                                            Name       = "Intercontinental Exchange",
+                                                            Acronym    = "ICE",
+                                                            MIC        = "IEPA",
+                                                            Polity     = "United States",
+                                                            CurrencyId = Guid.Parse("81bf331a-0a35-4716-ad12-d1d1bcf66627"), // USD
+                                                            TimeZone   = TimeSpan.FromHours(-5),                             // EST/EDT
+                                                            MarketOpen = TimeSpan.FromHours(13)
+                                                                                 .Add(TimeSpan.FromMinutes(30)), // 13:30 UTC (EDT) / 14:30 UTC (EST)
+                                                            MarketClose = TimeSpan.FromHours(20),                // 20:00 UTC (EDT) / 21:00 UTC (EST)
+                                                            CreatedAt   = DateTime.UtcNow,
+                                                            ModifiedAt  = DateTime.UtcNow
+                                                        };
+
+        public static readonly StockExchangeModel LME = new()
+                                                        {
+                                                            Id          = Guid.Parse("030500c4-f824-4662-a77e-799d22863381"),
+                                                            Name        = "London Metal Exchange",
+                                                            Acronym     = "LME",
+                                                            MIC         = "XLME",
+                                                            Polity      = "United Kingdom",
+                                                            CurrencyId  = Guid.Parse("8e8e9283-4ced-4d9e-aa4a-1036d0174c8c"), // GBP
+                                                            TimeZone    = TimeSpan.Zero,                                      // GMT/BST
+                                                            MarketOpen  = TimeSpan.FromHours(8),                              // 08:00 UTC (GMT) / 07:00 UTC (BST)
+                                                            MarketClose = TimeSpan.FromHours(17),                             // 17:00 UTC (GMT) / 16:00 UTC (BST)
+                                                            CreatedAt   = DateTime.UtcNow,
+                                                            ModifiedAt  = DateTime.UtcNow
+                                                        };
+
+        public static readonly StockExchangeModel TOCOM = new()
+                                                          {
+                                                              Id         = Guid.Parse("0e6b8da5-ef55-442b-af78-7bf8040980e1"),
+                                                              Name       = "Tokyo Commodity Exchange",
+                                                              Acronym    = "TOCOM",
+                                                              MIC        = "XTKM",
+                                                              Polity     = "Japan",
+                                                              CurrencyId = Guid.Parse("1a77ed84-d984-4410-85ec-ffde69508625"), // JPY
+                                                              TimeZone   = TimeSpan.FromHours(9),                              // JST
+                                                              MarketOpen = TimeSpan.FromHours(0),                              // 00:00 UTC (Morning session)
+                                                              MarketClose = TimeSpan.FromHours(22)
+                                                                                    .Add(TimeSpan.FromMinutes(30)), // 22:30 UTC (Evening session)
+                                                              CreatedAt  = DateTime.UtcNow,
+                                                              ModifiedAt = DateTime.UtcNow
+                                                          };
     }
 }
 
@@ -94,111 +205,23 @@ public static class StockExchangeSeederExtension
     {
         if (context.StockExchanges.Any())
             return;
+        
+        // Only seed IEX in production
+        await context.StockExchanges.AddRangeAsync(Seeder.StockExchange.IEX, Seeder.StockExchange.ForexMarket);
+        await context.SaveChangesAsync();
+    }
 
-        await context.StockExchanges.AddRangeAsync(Seeder.StockExchange.Nasdaq, Seeder.StockExchange.ASX, Seeder.StockExchange.EDGADark, Seeder.StockExchange.ClearStreet,
-                                                   Seeder.StockExchange.MarexIreland, Seeder.StockExchange.BorsaItaliana);
+    public static async Task SeedHardcodedStockExchanges(this DatabaseContext context)
+    {
+        if (context.StockExchanges.Any())
+            return;
+        
+        // Seed all exchanges in development/staging
+        await context.StockExchanges.AddRangeAsync(Seeder.StockExchange.Nasdaq, Seeder.StockExchange.IEX, Seeder.StockExchange.ASX, Seeder.StockExchange.EDGADark,
+                                                   Seeder.StockExchange.ClearStreet, Seeder.StockExchange.MarexIreland, Seeder.StockExchange.BorsaItaliana,
+                                                   Seeder.StockExchange.ForexMarket, Seeder.StockExchange.CME, Seeder.StockExchange.ICE, Seeder.StockExchange.LME,
+                                                   Seeder.StockExchange.TOCOM);
 
         await context.SaveChangesAsync();
     }
 }
-// public static class StockExchangeSeeder
-// {
-//     public static async Task SeedStockExchanges(this DatabaseContext context)
-//     {
-//         if (context.StockExchanges.Any())
-//             return;
-//
-//         var exchanges = ReadExchangesFromCsv();
-//         await context.StockExchanges.AddRangeAsync(exchanges);
-//         await context.SaveChangesAsync();
-//     }
-//
-//     private static List<StockExchangeModel> ReadExchangesFromCsv()
-//     {
-//         var exchanges = new List<StockExchangeModel>();
-//         var now = DateTime.UtcNow;
-//
-//         var currencyMap = new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase)
-//         {
-//             { "Euro", Guid.Parse("6842a5fa-eee4-4438-bcff-5217b6ac6ace") },
-//             { "Swiss Franc", Guid.Parse("6665627e-be4d-48f2-9dd3-a01cbbd1dfa3") },
-//             { "US Dollar", Guid.Parse("81bf331a-0a35-4716-ad12-d1d1bcf66627") },
-//             { "British Pound", Guid.Parse("8e8e9283-4ced-4d9e-aa4a-1036d0174c8c") },
-//             { "Japanese Yen", Guid.Parse("1a77ed84-d984-4410-85ec-ffde69508625") },
-//             { "Canadian Dollar", Guid.Parse("3834d8f4-1703-4091-859c-07225b9ce2a6") },
-//             { "Australian Dollar", Guid.Parse("895ab6f9-8a9a-4532-bea7-b3361d0dc936") },
-//             { "Serbian Dinar", Guid.Parse("88bfe7f0-8f74-42f7-b6ba-07b3145da989") }
-//         };
-//
-//         var baseDirectory    = AppContext.BaseDirectory;
-//         var projectDirectory = Directory.GetParent(baseDirectory)!.Parent!.Parent!.Parent!.FullName;
-//         var filePath         = Path.Combine(projectDirectory, "Database", "Seeders", "resource", "exchanges.csv");
-//
-//         string[] lines = File.ReadAllLines(filePath);
-//
-//         // Skip header
-//         for (var i = 1; i < lines.Length; i++)
-//         {
-//             var line = lines[i];
-//             string[] fields = ParseCsvLine(line);
-//
-//             if (fields.Length >= 5)
-//             {
-//                 var name     = fields[0];
-//                 var acronym  = fields[1];
-//                 var mic      = string.IsNullOrWhiteSpace(fields[2]) ? "XXXX" : fields[2];
-//                 var polity   = string.IsNullOrWhiteSpace(fields[3]) ? "Unknown" : fields[3];
-//                 var currency = fields[4];
-//
-//                 if (!currencyMap.TryGetValue(currency, out var currencyId))
-//                     continue;
-//
-//                 var exchange = new StockExchangeModel
-//                 {
-//                     Id         = Guid.NewGuid(),
-//                     Name       = name,
-//                     Acronym    = acronym,
-//                     MIC        = mic,
-//                     Polity     = polity,
-//                     CurrencyId = currencyId,
-//                     TimeZone   = TimeSpan.Zero,
-//                     CreatedAt  = now,
-//                     ModifiedAt = now
-//                 };
-//
-//                 exchanges.Add(exchange);
-//             }
-//         }
-//
-//         return exchanges;
-//     }
-//
-//     private static string[] ParseCsvLine(string line)
-//     {
-//         var result = new List<string>();
-//         var inQuotes = false;
-//         var field = "";
-//
-//         for (var i = 0; i < line.Length; i++)
-//         {
-//             var c = line[i];
-//
-//             if (c == '"')
-//             {
-//                 inQuotes = !inQuotes;
-//             }
-//             else if (c == ',' && !inQuotes)
-//             {
-//                 result.Add(field);
-//                 field = "";
-//             }
-//             else
-//             {
-//                 field += c;
-//             }
-//         }
-//
-//         result.Add(field);
-//         return result.ToArray();
-//     }
-// }

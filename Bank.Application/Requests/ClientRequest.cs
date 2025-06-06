@@ -12,7 +12,6 @@ public class ClientCreateRequest
     public required string   Email                      { set; get; }
     public required string   PhoneNumber                { set; get; }
     public required string   Address                    { set; get; }
-    public required long     Permissions                { set; get; } = (long)Permission.Client;
 }
 
 public class ClientUpdateRequest

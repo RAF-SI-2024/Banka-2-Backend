@@ -1,29 +1,23 @@
-﻿Feature: Transaction template controller testing
+﻿Feature: TransactionTemplate controller testing
 
-    Scenario: Get all Transaction templates
-        Given transaction template get request with query pageable
+    Scenario: Get all transaction templates through API
+        Given a pageable query for transaction templates
+        When a GET request is sent to fetch all transaction templates
+        Then the response ActionResult should indicate successful retrieval of transaction templates
+
+    Scenario: Get transaction template by Id through API
+        Given a valid transaction template Id
         And authorization for transaction template
-        When transactions template are fetched from the database
-        Then transaction template response should be 200
-        And response should contain the list of transactions template matching the filter parameters
+        When a GET request is sent to fetch a transaction template by Id
+        Then the response ActionResult should indicate successful retrieval of the transaction template
 
-    Scenario: Get Transaction template by Id
-        Given transaction template get request with Id
+    Scenario: Create transaction template through API
+        Given a valid transaction template create request
         And authorization for transaction template
-        When transaction template is fetched by Id from the database
-        Then transaction template response should be 200
-        And response should contain the transaction template with the given Id
+        When a POST request is sent to the transaction template creation endpoint
+        Then the response ActionResult should indicate successful transaction template creation
 
-    Scenario: Create Transaction template
-        Given transaction template create request
-        And authorization for transaction template
-        When transaction template is created in the database
-        Then transaction template response should be 200
-        And transaction template details should match the created transaction template
-
-    Scenario: Update Transaction
-        Given a valid transaction template Id for update
-        And update request transaction template
-        When transaction template is updated in the database
-        Then transaction template response should be 200
-        And transaction template details should match the updated transaction template
+    Scenario: Update transaction template through API
+        Given a valid transaction template Id and an update request
+        When a PUT request is sent to the transaction template update endpoint
+        Then the response ActionResult should indicate successful transaction template update

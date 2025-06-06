@@ -1,4 +1,5 @@
-﻿using Bank.Application.Requests;
+﻿using Bank.Application.Domain;
+using Bank.Application.Requests;
 using Bank.Application.Responses;
 
 namespace Bank.OpenApi.Examples;
@@ -17,7 +18,6 @@ public static partial class Example
                                                                               Email                      = Constant.Email,
                                                                               PhoneNumber                = Constant.Phone,
                                                                               Address                    = Constant.Address,
-                                                                              Permissions                = Constant.Permissions,
                                                                           };
 
         public static readonly ClientUpdateRequest DefaultUpdateRequest = new()
@@ -41,6 +41,7 @@ public static partial class Example
                                                                     PhoneNumber                = Constant.Phone,
                                                                     Address                    = Constant.Address,
                                                                     Role                       = Constant.Role,
+                                                                    Permissions                = (long)Permission.Client,
                                                                     Accounts                   = [Account.DefaultSimpleResponse],
                                                                     Activated                  = Constant.Boolean,
                                                                     CreatedAt                  = Constant.CreatedAt,
@@ -59,6 +60,7 @@ public static partial class Example
                                                                                 PhoneNumber                = Constant.Phone,
                                                                                 Address                    = Constant.Address,
                                                                                 Role                       = Constant.Role,
+                                                                                Permissions                = (long)Permission.Client,
                                                                                 Activated                  = Constant.Boolean,
                                                                                 CreatedAt                  = Constant.CreatedAt,
                                                                                 ModifiedAt                 = Constant.ModifiedAt,

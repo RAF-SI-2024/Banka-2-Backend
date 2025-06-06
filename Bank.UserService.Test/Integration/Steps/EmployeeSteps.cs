@@ -3,6 +3,7 @@ using Bank.Application.Endpoints;
 using Bank.Application.Queries;
 using Bank.Application.Requests;
 using Bank.Application.Responses;
+using Bank.UserService.Controllers;
 using Bank.UserService.Services;
 using Bank.UserService.Test.Examples.Entities;
 
@@ -13,10 +14,11 @@ using Shouldly;
 namespace Bank.UserService.Test.Steps;
 
 [Binding]
-public class EmployeeSteps(ScenarioContext scenarioContext, IEmployeeService employeeService)
+public class EmployeeSteps(ScenarioContext scenarioContext, IEmployeeService employeeService, EmployeeController employeeController)
 {
-    private readonly IEmployeeService m_EmployeeService = employeeService;
-    private readonly ScenarioContext  m_ScenarioContext = scenarioContext;
+    private readonly IEmployeeService   m_EmployeeService    = employeeService;
+    private readonly ScenarioContext    m_ScenarioContext    = scenarioContext;
+    private readonly EmployeeController m_EmployeeController = employeeController;
 
     [Given(@"employee create request")]
     public void GivenEmployeeCreateRequest()
@@ -157,18 +159,130 @@ public class EmployeeSteps(ScenarioContext scenarioContext, IEmployeeService emp
         getEmployeeResult.Value.Department.ShouldBe(Example.Entity.Employee.UpdateRequest.Department);
         getEmployeeResult.Value.Employed.ShouldBe(Example.Entity.Employee.UpdateRequest.Employed);
     }
+
+    [Given(@"a valid employee filter request and pageable parameters")]
+    public void GivenAValidEmployeeFilterRequestAndPageableParameters()
+    {
+        m_ScenarioContext[Constant.UserFilterQuery] = new UserFilterQuery();
+        m_ScenarioContext[Constant.Pageable]        = new Pageable();
+    }
+
+    [When(@"a GET request is sent to fetch all employees")]
+    public async Task WhenAGetRequestIsSentToFetchAllEmployees()
+    {
+        var userFilterQuery = m_ScenarioContext.Get<UserFilterQuery>(Constant.UserFilterQuery);
+        var pageable        = m_ScenarioContext.Get<Pageable>(Constant.Pageable);
+
+        var getEmployeesResult = await m_EmployeeController.GetAll(userFilterQuery, pageable);
+
+        m_ScenarioContext[Constant.GetEmployees] = getEmployeesResult;
+    }
+
+    [Then(@"the response ActionResult should indicate successful retrieval of all employees")]
+    public void ThenTheResponseActionResultShouldIndicateSuccessfulRetrievalOfAllEmployees()
+    {
+        var getEmployeesResult = m_ScenarioContext.Get<ActionResult<Page<EmployeeResponse>>>(Constant.GetEmployees);
+
+        getEmployeesResult.Result.ShouldBeOfType<OkObjectResult>();
+        getEmployeesResult.ShouldNotBeNull();
+    }
+
+    [Given(@"a valid employee create request")]
+    public void GivenAValidEmployeeCreateRequest()
+    {
+        m_ScenarioContext[Constant.EmployeeCreateRequest] = Example.Entity.Employee.CreateRequest;
+    }
+
+    [When(@"a POST request is sent to the employee creation endpoint")]
+    public async Task WhenAPostRequestIsSentToTheEmployeeCreationEndpoint()
+    {
+        var createRequest = m_ScenarioContext.Get<EmployeeCreateRequest>(Constant.EmployeeCreateRequest);
+
+        var createResult = await m_EmployeeController.Create(createRequest);
+
+        m_ScenarioContext[Constant.EmployeeCreateResult] = createResult;
+    }
+
+    [Then(@"the response ActionResult should indicate successful employee creation")]
+    public void ThenTheResponseActionResultShouldIndicateSuccessfulEmployeeCreation()
+    {
+        var createResult = m_ScenarioContext.Get<ActionResult<EmployeeResponse>>(Constant.EmployeeCreateResult);
+
+        createResult.Result.ShouldBeOfType<OkObjectResult>();
+        createResult.ShouldNotBeNull();
+    }
+
+    [Given(@"a valid employee Id and update request")]
+    public void GivenAValidEmployeeIdAndUpdateRequest()
+    {
+        m_ScenarioContext[Constant.EmployeeId]            = Example.Entity.Employee.GetEmployee.Id;
+        m_ScenarioContext[Constant.EmployeeUpdateRequest] = Example.Entity.Employee.UpdateRequest;
+    }
+
+    [When(@"a PUT request is sent to the employee update endpoint")]
+    public async Task WhenAPutRequestIsSentToTheEmployeeUpdateEndpoint()
+    {
+        var employeeId    = m_ScenarioContext.Get<Guid>(Constant.EmployeeId);
+        var updateRequest = m_ScenarioContext.Get<EmployeeUpdateRequest>(Constant.EmployeeUpdateRequest);
+
+        var updateResult = await m_EmployeeController.Update(updateRequest, employeeId);
+
+        m_ScenarioContext[Constant.EmployeeUpdateResult] = updateResult;
+    }
+
+    [Then(@"the response ActionResult should indicate successful employee update")]
+    public void ThenTheResponseActionResultShouldIndicateSuccessfulEmployeeUpdate()
+    {
+        var updateResult = m_ScenarioContext.Get<ActionResult<EmployeeResponse>>(Constant.EmployeeUpdateResult);
+
+        updateResult.Result.ShouldBeOfType<OkObjectResult>();
+        updateResult.ShouldNotBeNull();
+    }
+
+    [When(@"a GET request is sent to fetch the employee by Id")]
+    public async Task WhenAGetRequestIsSentToFetchTheEmployeeById()
+    {
+        var employeeId = m_ScenarioContext.Get<Guid>(Constant.EmployeeId);
+
+        var getEmployeeResult = await m_EmployeeController.GetOne(employeeId);
+
+        m_ScenarioContext[Constant.GetEmployee] = getEmployeeResult;
+    }
+
+    [Then(@"the response ActionResult should indicate successful retrieval of the employee")]
+    public void ThenTheResponseActionResultShouldIndicateSuccessfulRetrievalOfTheEmployee()
+    {
+        var getEmployeeResult = m_ScenarioContext.Get<ActionResult<EmployeeResponse>>(Constant.GetEmployee);
+
+        getEmployeeResult.Result.ShouldBeOfType<OkObjectResult>();
+        getEmployeeResult.ShouldNotBeNull();
+    }
+
+    [Given(@"a valid employee Id that exists")]
+    public void GivenAValidEmployeeIdThatExists()
+    {
+        m_ScenarioContext[Constant.EmployeeId] = Example.Entity.Employee.UpdateEmployee.Id;
+    }
 }
 
 file static class Constant
 {
-    public const string FilterQuery         = "EmployeeFilterQuery";
-    public const string CreateRequest       = "EmployeeCreateRequest";
-    public const string CreateResult        = "EmployeeCreateResult";
-    public const string GetResult           = "EmployeeGetResult";
-    public const string UpdateResult        = "EmployeeUpdateResult";
-    public const string UpdateRequest       = "EmployeeUpdateRequest";
-    public const string GetById             = "EmployeeGetById";
-    public const string Pageable            = "EmployeePageable";
-    public const string GetAllResult        = "EmployeeGetAllResult";
-    public const string EmployeeToBeUpdated = "EmployeeToBeUpdated";
+    public const string FilterQuery           = "EmployeeFilterQuery";
+    public const string CreateRequest         = "EmployeeCreateRequest";
+    public const string CreateResult          = "EmployeeCreateResult";
+    public const string GetResult             = "EmployeeGetResult";
+    public const string UpdateResult          = "EmployeeUpdateResult";
+    public const string UpdateRequest         = "EmployeeUpdateRequest";
+    public const string GetById               = "EmployeeGetById";
+    public const string Pageable              = "EmployeePageable";
+    public const string GetAllResult          = "EmployeeGetAllResult";
+    public const string EmployeeToBeUpdated   = "EmployeeToBeUpdated";
+    public const string EmployeeId            = "EmployeeId";
+    public const string EmployeeUpdateRequest = "EmployeeUpdateRequest";
+    public const string EmployeeCreateRequest = "EmployeeCreateRequest";
+    public const string EmployeeCreateResult  = "EmployeeCreateResult";
+    public const string EmployeeUpdateResult  = "EmployeeUpdateResult";
+    public const string GetEmployees          = "GetEmployees";
+    public const string GetEmployee           = "GetEmployee";
+    public const string UserFilterQuery       = "UserFilterQuery";
 }

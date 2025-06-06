@@ -1,6 +1,4 @@
-﻿using Bank.Application.Domain;
-using Bank.Application.Requests;
-using Bank.UserService.Database.Sample;
+﻿using Bank.Application.Requests;
 using Bank.UserService.Database.Seeders;
 using Bank.UserService.Models;
 
@@ -14,7 +12,7 @@ public static partial class Example
     {
         public static class User
         {
-            public static readonly UserLoginRequest LoginRequest = Sample.User.LoginRequest;
+            public static readonly UserLoginRequest LoginRequest = Database.Examples.Example.User.LoginRequest;
 
             public static readonly UserModel GetEmployee = new()
                                                            {
@@ -37,7 +35,7 @@ public static partial class Example
                                                                ModifiedAt                 = Seeder.Employee.Employee01.ModifiedAt,
                                                                Employed                   = Seeder.Employee.Employee01.Employed,
                                                                Activated                  = Seeder.Employee.Employee01.Activated,
-                                                               Permissions                = (long)Permission.Employee
+                                                               Permissions                = Seeder.Employee.Employee01.Permissions
                                                            };
 
             public static readonly UserModel UpdateEmployee = new()
@@ -61,10 +59,18 @@ public static partial class Example
                                                                   ModifiedAt                 = Seeder.Employee.Employee02.ModifiedAt,
                                                                   Employed                   = Seeder.Employee.Employee02.Employed,
                                                                   Activated                  = Seeder.Employee.Employee02.Activated,
-                                                                  Permissions                = (long)Permission.Employee
+                                                                  Permissions                = Seeder.Employee.Employee02.Permissions
                                                               };
 
-            public static readonly UserActivationRequest UserActivationRequest = Sample.User.ActivationRequest;
+            public static readonly UserActivationRequest UserActivationRequest = Database.Examples.Example.User.ActivationRequest;
+
+            public static readonly UserUpdatePermissionRequest UserUpdatePermissionRequest = Database.Examples.Example.User.UpdatePermissionRequest;
+
+            public static readonly UserPasswordResetRequest UserPasswordResetRequest = Database.Examples.Example.User.PasswordResetRequest;
+
+            public static readonly Guid Id = Seeder.Client.Client01.Id;
+
+            public static readonly UserRequestPasswordResetRequest UserRequestPasswordResetRequest = Database.Examples.Example.User.RequestPasswordResetRequest;
         }
     }
 }

@@ -3,24 +3,17 @@ using Bank.Application.Endpoints;
 using Bank.Application.Queries;
 using Bank.Application.Requests;
 using Bank.Application.Responses;
+using Bank.Permissions.Core;
 using Bank.UserService.Services;
 
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-
-using Role = Bank.UserService.Configurations.Configuration.Policy.Role;
 
 namespace Bank.UserService.Controllers;
 
 [ApiController]
-public class LoanController : ControllerBase
+public class LoanController(ILoanService loanService) : ControllerBase
 {
-    private readonly ILoanService m_LoanService;
-
-    public LoanController(ILoanService loanService)
-    {
-        m_LoanService = loanService;
-    }
+    private readonly ILoanService m_LoanService = loanService;
 
     [Authorize]
     [HttpGet(Endpoints.Loan.GetAll)]
@@ -41,7 +34,7 @@ public class LoanController : ControllerBase
     }
 
     [Authorize]
-    [HttpGet(Endpoints.Loan.GetByClient)]
+    [HttpGet(Endpoints.Loan.GetAllForClient)]
     public async Task<ActionResult<Page<LoanResponse>>> GetByClient([FromRoute] Guid clientId, [FromQuery] Pageable pageable)
     {
         var result = await m_LoanService.GetByClient(clientId, pageable);
@@ -49,8 +42,8 @@ public class LoanController : ControllerBase
         return result.ActionResult;
     }
 
-    [HttpPost(Endpoints.Loan.Create)]
     [Authorize]
+    [HttpPost(Endpoints.Loan.Create)]
     public async Task<ActionResult<LoanResponse>> Create([FromBody] LoanCreateRequest loanCreateRequest)
     {
         var result = await m_LoanService.Create(loanCreateRequest);
@@ -58,20 +51,11 @@ public class LoanController : ControllerBase
         return result.ActionResult;
     }
 
+    [Authorize(Permission.Admin, Permission.Employee)]
     [HttpPut(Endpoints.Loan.Update)]
-    [Authorize(Roles = $"{Role.Admin}, {Role.Employee}")]
     public async Task<ActionResult<LoanResponse>> Update([FromBody] LoanUpdateRequest loanRequest, [FromRoute] Guid id)
     {
         var result = await m_LoanService.Update(loanRequest, id);
-
-        return result.ActionResult;
-    }
-
-    [Authorize]
-    [HttpGet(Endpoints.Loan.GetInstallments)]
-    public async Task<ActionResult<Page<InstallmentResponse>>> GetInstallments([FromRoute] Guid id, [FromQuery] Pageable pageable)
-    {
-        var result = await m_LoanService.GetAllInstallments(id, pageable);
 
         return result.ActionResult;
     }

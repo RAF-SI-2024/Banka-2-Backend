@@ -17,6 +17,7 @@ public static partial class Example
                                                                                    CodeId            = Constant.Id,
                                                                                    ReferenceNumber   = Constant.UniqueIdentificationNumber,
                                                                                    Purpose           = Constant.Description,
+                                                                                   ConfirmationCode  = Constant.ConfirmationCode,
                                                                                };
 
         public static readonly TransactionUpdateRequest DefaultUpdateRequest = new()

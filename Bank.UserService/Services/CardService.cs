@@ -16,6 +16,10 @@ public interface ICardService
 {
     Task<Result<Page<CardResponse>>> GetAll(CardFilterQuery userFilterQuery, Pageable pageable);
 
+    Task<Result<Page<CardResponse>>> GetAllForAccount(Guid accountId, CardFilterQuery filter, Pageable pageable);
+
+    Task<Result<Page<CardResponse>>> GetAllForClient(Guid clientId, CardFilterQuery filter, Pageable pageable);
+
     Task<Result<CardResponse>> GetOne(Guid id);
 
     Task<Result<CardResponse>> Create(CardCreateRequest request);
@@ -39,6 +43,26 @@ public class CardService(ICardRepository repository, ICardTypeRepository cardTyp
                           .ToList();
 
         return Result.Ok(new Page<CardResponse>(result, cards.PageNumber, cards.PageSize, cards.TotalElements));
+    }
+
+    public async Task<Result<Page<CardResponse>>> GetAllForAccount(Guid accountId, CardFilterQuery filter, Pageable pageable)
+    {
+        var page = await m_CardRepository.FindAllByAccountId(accountId, pageable);
+
+        var cardResponses = page.Items.Select(card => card.ToResponse())
+                                .ToList();
+
+        return Result.Ok(new Page<CardResponse>(cardResponses, page.PageNumber, page.PageSize, page.TotalElements));
+    }
+
+    public async Task<Result<Page<CardResponse>>> GetAllForClient(Guid clientId, CardFilterQuery filter, Pageable pageable)
+    {
+        var page = await m_CardRepository.FindAllByClientId(clientId, pageable);
+
+        var cardResponses = page.Items.Select(card => card.ToResponse())
+                                .ToList();
+
+        return Result.Ok(new Page<CardResponse>(cardResponses, page.PageNumber, page.PageSize, page.TotalElements));
     }
 
     public async Task<Result<CardResponse>> GetOne(Guid id)
@@ -74,7 +98,7 @@ public class CardService(ICardRepository repository, ICardTypeRepository cardTyp
 
                 card.Type    = cardType;
                 card.Account = account;
-                
+
                 return Result.Ok(card.ToResponse());
             }
             catch (DbUpdateException ex) when (IsDuplicateKeyException(ex))
@@ -114,7 +138,6 @@ public class CardService(ICardRepository repository, ICardTypeRepository cardTyp
 
     private bool IsDuplicateKeyException(DbUpdateException ex)
     {
-        // For PostgreSQL
         return ex.InnerException is PostgresException pgEx && pgEx.SqlState == "23505";
     }
 }

@@ -1,4 +1,6 @@
-﻿using Bank.Application.Responses;
+﻿using System.Collections.Immutable;
+
+using Bank.Application.Responses;
 using Bank.UserService.Configurations;
 using Bank.UserService.Mappers;
 using Bank.UserService.Models;
@@ -89,6 +91,11 @@ public static partial class Seeder
                                                              CreatedAt      = DateTime.UtcNow,
                                                              ModifiedAt     = DateTime.UtcNow
                                                          };
+
+        public static readonly ImmutableArray<ExchangeModel> All =
+        [
+            RsdAndAud, RsdAndCad, RsdAndChf, RsdAndEur, RsdAndGbp, RsdAndJpy, RsdAndUsd
+        ];
     }
 }
 

@@ -2,12 +2,10 @@
 using Bank.Application.Endpoints;
 using Bank.Application.Requests;
 using Bank.Application.Responses;
+using Bank.Permissions.Core;
 using Bank.UserService.Services;
 
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-
-using Role = Bank.UserService.Configurations.Configuration.Policy.Role;
 
 namespace Bank.UserService.Controllers;
 
@@ -34,8 +32,8 @@ public class AccountCurrencyController(IAccountCurrencyService accountCurrencySe
         return result.ActionResult;
     }
 
+    [Authorize(Permission.Admin, Permission.Employee)]
     [HttpPost(Endpoints.AccountCurrency.Create)]
-    [Authorize(Roles = $"{Role.Admin}, {Role.Employee}")]
     public async Task<ActionResult<AccountCurrencyResponse>> Create([FromBody] AccountCurrencyCreateRequest accountCurrencyCreateRequest)
     {
         var result = await m_AccountCurrencyService.Create(accountCurrencyCreateRequest);
@@ -43,7 +41,7 @@ public class AccountCurrencyController(IAccountCurrencyService accountCurrencySe
         return result.ActionResult;
     }
 
-    [Authorize(Roles = $"{Role.Client}")]
+    [Authorize(Permission.Client)]
     [HttpPut(Endpoints.AccountCurrency.UpdateClient)]
     public async Task<ActionResult<AccountCurrencyResponse>> Update([FromBody] AccountCurrencyClientUpdateRequest accountCurrencyClientUpdateRequest, [FromRoute] Guid id)
     {

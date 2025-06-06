@@ -1,4 +1,6 @@
-﻿using Bank.UserService.Models;
+﻿using System.Collections.Immutable;
+
+using Bank.UserService.Models;
 
 namespace Bank.UserService.Database.Seeders;
 
@@ -82,20 +84,10 @@ public static partial class Seeder
                                                       CreatedAt  = DateTime.UtcNow,
                                                       ModifiedAt = DateTime.UtcNow
                                                   };
-    }
-}
 
-public static class CardSeederExtension
-{
-    public static async Task SeedCard(this ApplicationContext context)
-    {
-        if (context.Cards.Any())
-            return;
-
-        await context.Cards.AddRangeAsync([
-                                              Seeder.Card.Card01, Seeder.Card.Card02, Seeder.Card.Card03, Seeder.Card.Card04, Seeder.Card.Card05
-                                          ]);
-
-        await context.SaveChangesAsync();
+        public static readonly ImmutableArray<CardModel> All =
+        [
+            Card01, Card02, Card03, Card04, Card05
+        ];
     }
 }
