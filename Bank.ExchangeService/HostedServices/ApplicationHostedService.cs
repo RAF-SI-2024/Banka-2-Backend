@@ -1,21 +1,25 @@
-﻿using Bank.ExchangeService.BackgroundServices;
+﻿using Bank.Application;
+using Bank.ExchangeService.BackgroundServices;
+using Bank.ExchangeService.Configurations;
 using Bank.ExchangeService.Database.Processors;
 
 namespace Bank.ExchangeService.HostedServices;
 
 public class ApplicationHostedService(
-    DatabaseBackgroundService       databaseBackgroundService,
-    IEnumerable<IRealtimeProcessor> realtimeProcessors,
-    StockBackgroundService          stockBackgroundService,
-    ForexPairBackgroundService      forexPairBackgroundService,
-    OptionBackgroundService         optionBackgroundService
+    DatabaseBackgroundService         databaseBackgroundService,
+    IEnumerable<IRealtimeProcessor>   realtimeProcessors,
+    StockBackgroundService            stockBackgroundService,
+    ForexPairBackgroundService        forexPairBackgroundService,
+    OptionBackgroundService           optionBackgroundService,
+    ILogger<ApplicationHostedService> logger
 ) : IHostedService
 {
-    private readonly DatabaseBackgroundService       m_DatabaseBackgroundService  = databaseBackgroundService;
-    private readonly IEnumerable<IRealtimeProcessor> m_RealtimeProcessors         = realtimeProcessors;
-    private readonly StockBackgroundService          m_StockBackgroundService     = stockBackgroundService;
-    private readonly ForexPairBackgroundService      m_ForexPairBackgroundService = forexPairBackgroundService;
-    private readonly OptionBackgroundService         m_OptionBackgroundService    = optionBackgroundService;
+    private readonly DatabaseBackgroundService         m_DatabaseBackgroundService  = databaseBackgroundService;
+    private readonly IEnumerable<IRealtimeProcessor>   m_RealtimeProcessors         = realtimeProcessors;
+    private readonly StockBackgroundService            m_StockBackgroundService     = stockBackgroundService;
+    private readonly ForexPairBackgroundService        m_ForexPairBackgroundService = forexPairBackgroundService;
+    private readonly OptionBackgroundService           m_OptionBackgroundService    = optionBackgroundService;
+    private readonly ILogger<ApplicationHostedService> m_Logger                     = logger;
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
@@ -25,6 +29,8 @@ public class ApplicationHostedService(
         await m_OptionBackgroundService.OnApplicationStarted(cancellationToken);
 
         await Task.WhenAll(m_RealtimeProcessors.Select(realtimeProcessor => realtimeProcessor.OnApplicationStarted(cancellationToken)));
+        
+        m_Logger.LogInformation("{} | {} | {}", Configuration.Application.Profile, ApplicationInfo.Build.BuildDate, ApplicationInfo.Build.SourceRevisionId);
     }
 
     public async Task StopAsync(CancellationToken cancellationToken)

@@ -29,14 +29,15 @@ public static partial class Configuration
 
         public static class InMemory
         {
-            public static readonly string Host            = EnvironmentUtilities.GetStringVariable("BANK_DATABASE_IN_MEMORY_HOST");
-            public static readonly int    Port            = EnvironmentUtilities.GetIntVariable("BANK_DATABASE_IN_MEMORY_PORT");
+            public static readonly string Host            = EnvironmentUtilities.GetStringVariable("BANK_DATABASE_IN_MEMORY_HOST", "localhost");
+            public static readonly int    Port            = EnvironmentUtilities.GetIntVariable("BANK_DATABASE_IN_MEMORY_PORT", 6379);
             public static readonly string Scheme          = EnvironmentUtilities.GetStringVariable("BANK_DATABASE_IN_MEMORY_SCHEME");
+            public static readonly string Password        = EnvironmentUtilities.GetStringVariable("BANK_DATABASE_IN_MEMORY_PASSWORD");
             public static readonly bool   AbortConnection = EnvironmentUtilities.GetBoolVariable("BANK_DATABASE_IN_MEMORY_ABORT_CONNECTION");
 
             public static string GetConnectionString()
             {
-                return $"{Host}:{Port},abortConnect={AbortConnection},name={Scheme}";
+                return $"{Host}:{Port},name={Scheme},password={Password},abortConnect={AbortConnection}";
             }
         }
     }

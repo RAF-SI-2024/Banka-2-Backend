@@ -4,6 +4,9 @@
         <TargetFramework>net9.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
+
+        <InformationalVersion Condition="'$(Configuration)' == 'Debug'"  >Debug   | $([System.DateTime]::UtcNow.ToString("yyyyMMdd.HHmmss"))</InformationalVersion>
+        <InformationalVersion Condition="'$(Configuration)' == 'Release'">Release | $([System.DateTime]::UtcNow.ToString("yyyyMMdd.HHmmss"))</InformationalVersion>
     </PropertyGroup>
 
     <ItemGroup>

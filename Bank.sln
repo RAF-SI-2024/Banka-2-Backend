@@ -68,10 +68,4 @@ Global
 		{F4937F18-83E4-405C-B80D-054969393F59}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F4937F18-83E4-405C-B80D-054969393F59}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{C328B3D2-9265-42A4-81F5-CF9D941F8234}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C328B3D2-9265-42A4-81F5-CF9D941F8234}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C328B3D2-9265-42A4-81F5-CF9D941F8234}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C328B3D2-9265-42A4-81F5-CF9D941F8234}.Release|Any CPU.Build.0 = Release|Any CPU
-	EndGlobalSection
 EndGlobal
