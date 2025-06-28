@@ -30,7 +30,7 @@ public class ApplicationHostedService(
 
         await Task.WhenAll(m_RealtimeProcessors.Select(realtimeProcessor => realtimeProcessor.OnApplicationStarted(cancellationToken)));
         
-        m_Logger.LogInformation("{} | {} | {}", Configuration.Application.Profile, ApplicationInfo.Build.BuildDate, ApplicationInfo.Build.SourceRevisionId);
+        m_Logger.LogInformation("{@Profile} | {@BuildDate} | {@RevisionId}", Configuration.Application.Profile, ApplicationInfo.Build.BuildDate, ApplicationInfo.Build.SourceRevisionId);
     }
 
     public async Task StopAsync(CancellationToken cancellationToken)

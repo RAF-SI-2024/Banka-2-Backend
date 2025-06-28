@@ -14,19 +14,21 @@ using Bank.Http.Clients.User;
 namespace Bank.ExchangeService.BackgroundServices;
 
 public class ForexPairBackgroundService(
-    IEnumerable<IRealtimeProcessor> realtimeProcessors,
-    IHttpClientFactory              httpClientFactory,
-    IUserServiceHttpClient          userServiceHttpClient,
-    ISecurityRepository             securityRepository
+    IEnumerable<IRealtimeProcessor>     realtimeProcessors,
+    IHttpClientFactory                  httpClientFactory,
+    IUserServiceHttpClient              userServiceHttpClient,
+    ISecurityRepository                 securityRepository,
+    ILogger<ForexPairBackgroundService> logger
 )
 {
-    private          Timer                           m_Timer                 = null!;
-    private readonly IEnumerable<IRealtimeProcessor> m_RealtimeProcessors    = realtimeProcessors;
-    private readonly IHttpClientFactory              m_HttpClientFactory     = httpClientFactory;
-    private readonly IUserServiceHttpClient          m_UserServiceHttpClient = userServiceHttpClient;
-    private readonly ISecurityRepository             m_SecurityRepository    = securityRepository;
-    private          List<CurrencySimpleResponse>    m_Currencies            = [];
-    private          Dictionary<string, Security>    m_ForexPairDictionary   = [];
+    private readonly ILogger<ForexPairBackgroundService> m_Logger                = logger;
+    private          Timer                               m_Timer                 = null!;
+    private readonly IEnumerable<IRealtimeProcessor>     m_RealtimeProcessors    = realtimeProcessors;
+    private readonly IHttpClientFactory                  m_HttpClientFactory     = httpClientFactory;
+    private readonly IUserServiceHttpClient              m_UserServiceHttpClient = userServiceHttpClient;
+    private readonly ISecurityRepository                 m_SecurityRepository    = securityRepository;
+    private          List<CurrencySimpleResponse>        m_Currencies            = [];
+    private          Dictionary<string, Security>        m_ForexPairDictionary   = [];
 
     public async Task OnApplicationStarted(CancellationToken cancellationToken)
     {
@@ -47,6 +49,8 @@ public class ForexPairBackgroundService(
         var httpClient = m_HttpClientFactory.CreateClient();
         var apiKey     = Configuration.Security.Keys.ApiKeyForex;
         var quotes     = new List<Quote>();
+
+        m_Logger.LogInformation("Realtime | Quotes | ForexPair | Start");
 
         foreach (var currencyFrom in m_Currencies)
         {
@@ -82,14 +86,19 @@ public class ForexPairBackgroundService(
                     return;
 
                 var ticker = $"{currencyFrom.Code}{currencyTo.Code}";
-                var quote  = body.ToQuote(m_ForexPairDictionary[ticker]);
+
+                if (!m_ForexPairDictionary.TryGetValue(ticker, out var security))
+                    continue;
+
+                var quote = body.ToQuote(security);
                 quotes.Add(quote);
             }
         }
 
-        //notify
         await Task.WhenAll(m_RealtimeProcessors.Select(realtimeProcessor => realtimeProcessor.ProcessForexQuotes(quotes))
                                                .ToList());
+
+        m_Logger.LogInformation("Realtime | Quotes | ForexPair | Complete | Count: {Count}", quotes.Count);
     }
 
     public Task OnApplicationStopped(CancellationToken _)

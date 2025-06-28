@@ -8,32 +8,35 @@ using Bank.ExchangeService.Database.Processors;
 using Bank.ExchangeService.Mappers;
 using Bank.ExchangeService.Models;
 using Bank.ExchangeService.Repositories;
-using Bank.Http.Clients.User;
 
 namespace Bank.ExchangeService.BackgroundServices;
 
 public class StockBackgroundService(
     IEnumerable<IRealtimeProcessor> realtimeProcessors,
     IHttpClientFactory              httpClientFactory,
-    IUserServiceHttpClient          userServiceHttpClient,
-    ISecurityRepository             securityRepository
+    ISecurityRepository             securityRepository,
+    ILogger<StockBackgroundService> logger
 )
 
 {
+    private readonly ILogger<StockBackgroundService> m_Logger             = logger;
     private          Timer                           m_Timer              = null!;
     private readonly IEnumerable<IRealtimeProcessor> m_RealtimeProcessors = realtimeProcessors;
     private readonly IHttpClientFactory              m_HttpClientFactory  = httpClientFactory;
     private readonly ISecurityRepository             m_SecurityRepository = securityRepository;
     private          Dictionary<string, Security>    m_StockDictionary    = null!;
-    private          List<string>                    m_StockSymbols       = [];
+    private          string[]                        m_SymbolsArray       = [];
+    private const    int                             c_ReadAmount         = 1000;
 
     public async Task OnApplicationStarted(CancellationToken cancellationToken)
     {
-        // init
         m_StockDictionary = (await m_SecurityRepository.FindAll(SecurityType.Stock)).ToDictionary(stock => stock.Ticker, stock => stock);
 
-        m_StockSymbols = m_StockDictionary.Values.Select(stock => stock.Ticker)
-                                          .ToList();
+        m_SymbolsArray = m_StockDictionary.Values.Select((value, index) => new { Index = index, Value = value })
+                                          .GroupBy(pair => pair.Index / c_ReadAmount)
+                                          .Select(group => string.Join(",", group.Select(pair => pair.Value.Ticker)
+                                                                                 .ToList()))
+                                          .ToArray();
 
         m_Timer = new Timer(_ => FetchQuotes()
                             .Wait(cancellationToken), null, TimeSpan.FromMinutes(Configuration.Security.Global.LatestTimeFrameInMinutes),
@@ -42,16 +45,16 @@ public class StockBackgroundService(
 
     private async Task FetchQuotes()
     {
-        //fetch
         var httpClient = m_HttpClientFactory.CreateClient();
 
-        var quotes  = new List<Quote>();
-        var query   = HttpUtility.ParseQueryString(string.Empty);
-        var batches = m_StockSymbols.Chunk(1000);
+        var quotes = new List<Quote>();
+        var query  = HttpUtility.ParseQueryString(string.Empty);
 
-        foreach (var batch in batches)
+        m_Logger.LogInformation("Realtime | Quotes | Stock | Start");
+        
+        foreach (var symbols in m_SymbolsArray)
         {
-            query["symbols"] = string.Join(",", batch);
+            query["symbols"] = symbols;
 
             var (apiKey, apiSecret) = Configuration.Security.Keys.AlpacaApiKeyAndSecret;
 
@@ -82,13 +85,18 @@ public class StockBackgroundService(
                 if (pair.Value is not { DailyBar: not null, LatestQuote: not null, MinuteBar: not null })
                     continue;
 
-                var quote = pair.Value.ToQuote(m_StockDictionary[pair.Key]);
+                if (!m_StockDictionary.TryGetValue(pair.Key, out var security))
+                    continue;
+
+                var quote = pair.Value.ToQuote(security);
                 quotes.Add(quote);
             }
         }
 
         await Task.WhenAll(m_RealtimeProcessors.Select(realtimeProcessor => realtimeProcessor.ProcessStockQuotes(quotes))
                                                .ToList());
+        
+        m_Logger.LogInformation("Realtime | Quotes | Stock | Complete | Count: {Count}", quotes.Count);
     }
 
     public Task OnApplicationStopped(CancellationToken cancellationToken)

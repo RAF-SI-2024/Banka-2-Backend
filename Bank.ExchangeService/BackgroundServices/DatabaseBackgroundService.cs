@@ -8,20 +8,20 @@ using Bank.Http.Clients.User;
 namespace Bank.ExchangeService.BackgroundServices;
 
 public class DatabaseBackgroundService(
-    IServiceProvider       serviceProvider,
-    IHttpClientFactory     httpClientFactory,
-    IUserServiceHttpClient userServiceHttpClient,
-    IRedisRepository       redisRepository
+    IServiceProvider                   serviceProvider,
+    IHttpClientFactory                 httpClientFactory,
+    IUserServiceHttpClient             userServiceHttpClient,
+    IRedisRepository                   redisRepository,
+    ILogger<DatabaseBackgroundService> logger
 )
 {
-    private readonly IServiceProvider       m_ServiceProvider       = serviceProvider;
-    private readonly IHttpClientFactory     m_HttpClientFactory     = httpClientFactory;
-    private readonly IUserServiceHttpClient m_UserServiceHttpClient = userServiceHttpClient;
-    private readonly IRedisRepository       m_RedisRepository       = redisRepository;
-    private          ISecurityRepository    m_SecurityRepository    = null!;
-    private          IQuoteRepository       m_QuoteRepository       = null!;
-    private          bool                   m_IsProcessRunning      = false;
-    private          int                    m_IterationCount        = 0;
+    private readonly ILogger<DatabaseBackgroundService> m_Logger                = logger;
+    private readonly IServiceProvider                   m_ServiceProvider       = serviceProvider;
+    private readonly IHttpClientFactory                 m_HttpClientFactory     = httpClientFactory;
+    private readonly IUserServiceHttpClient             m_UserServiceHttpClient = userServiceHttpClient;
+    private readonly IRedisRepository                   m_RedisRepository       = redisRepository;
+    private          ISecurityRepository                m_SecurityRepository    = null!;
+    private          IQuoteRepository                   m_QuoteRepository       = null!;
 
     private DatabaseContext Context =>
     m_ServiceProvider.CreateScope()
@@ -69,33 +69,53 @@ public class DatabaseBackgroundService(
 
             return;
         }
-
-        Console.WriteLine("Wait for 'Seeding Completed' message");
-
+        
         m_RedisRepository.Clear();
 
+        m_Logger.LogInformation("Persistent Seeding | Start");
+        m_Logger.LogInformation("Persistent Seeding | Security | Stock Exchange | Start");
+        
         Context.SeedStockExchanges()
                .Wait();
 
+        m_Logger.LogInformation("Persistent Seeding | Security | Stock Exchange | Complete");
+        m_Logger.LogInformation("Persistent Seeding | Security & Quotes | Future Contract | Start");
+        
         Context.SeedFutureContractsAndQuotes(m_SecurityRepository, m_QuoteRepository)
                .Wait();
+        
+        m_Logger.LogInformation("Persistent Seeding | Security & Quotes | Future Contract | Complete");
+        m_Logger.LogInformation("Persistent Seeding | Security | Stock | Start");
         
         Context.SeedStock(client)
                .Wait();
         
+        m_Logger.LogInformation("Persistent Seeding | Security | Stock | Complete");
+        m_Logger.LogInformation("Persistent Seeding | Security | ForexPair | Start");
+        
         Context.SeedForexPair(client, m_UserServiceHttpClient, m_SecurityRepository)
                .Wait();
+
+        m_Logger.LogInformation("Persistent Seeding | Security | ForexPair | Complete");
+        m_Logger.LogInformation("Persistent Seeding | Security & Quotes | Options | Start");
         
         Context.SeedOptionsAndQuotes(client, m_SecurityRepository, m_QuoteRepository)
                .Wait();
+
+        m_Logger.LogInformation("Persistent Seeding | Security & Quotes | Options  | Complete");
+        m_Logger.LogInformation("Persistent Seeding | Quotes | ForexPair | Start");
         
         Context.SeedForexPairQuotes(client, m_UserServiceHttpClient, m_SecurityRepository, m_QuoteRepository)
                .Wait();
+
+        m_Logger.LogInformation("Persistent Seeding | Quotes | ForexPair | Complete");
+        m_Logger.LogInformation("Persistent Seeding | Quotes | Stock | Start");
         
         Context.SeedStockQuotes(client, m_SecurityRepository, m_QuoteRepository)
                .Wait();
-
-        Console.WriteLine("Seeding Completed");
+        
+        m_Logger.LogInformation("Persistent Seeding | Quotes | Stock | Complete");
+        m_Logger.LogInformation("Persistent Seeding | Complete");
     }
 
     public void OnApplicationStopped() { }

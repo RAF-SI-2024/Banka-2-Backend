@@ -11,17 +11,31 @@ using Bank.ExchangeService.Repositories;
 
 namespace Bank.ExchangeService.BackgroundServices;
 
-public class OptionBackgroundService(IEnumerable<IRealtimeProcessor> realtimeProcessors, IHttpClientFactory httpClientFactory, ISecurityRepository securityRepository)
+public class OptionBackgroundService(
+    IEnumerable<IRealtimeProcessor>  realtimeProcessors,
+    IHttpClientFactory               httpClientFactory,
+    ISecurityRepository              securityRepository,
+    ILogger<OptionBackgroundService> logger
+)
 {
-    private          Timer                           m_Timer              = null!;
-    private readonly IEnumerable<IRealtimeProcessor> m_RealtimeProcessors = realtimeProcessors;
-    private readonly IHttpClientFactory              m_HttpClientFactory  = httpClientFactory;
-    private readonly ISecurityRepository             m_SecurityRepository = securityRepository;
-    private          List<Security>                  m_Options            = [];
+    private readonly ILogger<OptionBackgroundService> m_Logger             = logger;
+    private          Timer                            m_Timer              = null!;
+    private readonly IEnumerable<IRealtimeProcessor>  m_RealtimeProcessors = realtimeProcessors;
+    private readonly IHttpClientFactory               m_HttpClientFactory  = httpClientFactory;
+    private readonly ISecurityRepository              m_SecurityRepository = securityRepository;
+    private          string[]                         m_SymbolsArray       = [];
+    private          Dictionary<string, Security>     m_OptionsDictionary  = [];
+    private const    int                              c_ReadAmount         = 100;
 
     public async Task OnApplicationStarted(CancellationToken cancellationToken)
     {
-        m_Options = (await m_SecurityRepository.FindAll(SecurityType.Option)).ToList();
+        m_OptionsDictionary = (await m_SecurityRepository.FindAll(SecurityType.Option)).ToDictionary(option => option.Ticker, option => option);
+
+        m_SymbolsArray = m_OptionsDictionary.Values.Select((value, index) => new { Index = index, Value = value })
+                                            .GroupBy(pair => pair.Index / c_ReadAmount)
+                                            .Select(group => string.Join(",", group.Select(pair => pair.Value.Ticker)
+                                                                                   .ToList()))
+                                            .ToArray();
 
         m_Timer = new Timer(_ => FetchQuotes()
                             .Wait(cancellationToken), null, TimeSpan.FromMinutes(Configuration.Security.Global.LatestTimeFrameInMinutes),
@@ -30,24 +44,19 @@ public class OptionBackgroundService(IEnumerable<IRealtimeProcessor> realtimePro
 
     private async Task FetchQuotes()
     {
-        var       httpClient = m_HttpClientFactory.CreateClient();
-        const int readAmount = 100;
-        string?   nextPage   = null;
-        var       quotes     = new List<Quote>();
-        var       query      = HttpUtility.ParseQueryString(string.Empty);
+        var httpClient = m_HttpClientFactory.CreateClient();
+
+        string? nextPage = null;
+        var     quotes   = new List<Quote>();
+        var     query    = HttpUtility.ParseQueryString(string.Empty);
         query["feed"]  = "indicative";
         query["limit"] = "1000";
 
-        for (int i = 1; i * readAmount < m_Options.Count + readAmount; i++)
+        m_Logger.LogInformation("Realtime | Quotes | Options | Start");
+
+        foreach (var symbols in m_SymbolsArray)
         {
             var (apiKey, apiSecret) = Configuration.Security.Keys.AlpacaApiKeyAndSecret;
-
-            var currOptionsDictionary = m_Options.Skip((i - 1) * readAmount)
-                                                 .Take(readAmount)
-                                                 .ToDictionary(option => option.Ticker, option => option);
-
-            var symbols = string.Join(",", currOptionsDictionary.Values.Select(option => option.Ticker)
-                                                                .ToList());
 
             query["symbols"] = symbols;
 
@@ -85,16 +94,12 @@ public class OptionBackgroundService(IEnumerable<IRealtimeProcessor> realtimePro
 
                 foreach (var pair in body.Snapshots)
                 {
-                    if (pair.Value is not { DailyBar: not null, LatestQuote: not null })
+                    if (pair.Value is not { DailyBar: not null, LatestQuote: not null } || !m_OptionsDictionary.TryGetValue(pair.Key, out var security))
                         continue;
-
-                    var quote = pair.Value.ToQuote(currOptionsDictionary[pair.Key]);
+                    
+                    var quote = pair.Value.ToQuote(security);
                     quotes.Add(quote);
                 }
-
-                quotes.AddRange(body.Snapshots.Where(pair => pair.Value is { DailyBar: not null, LatestQuote: not null })
-                                    .Select(pair => pair.Value.ToQuote(currOptionsDictionary[pair.Key]))
-                                    .ToList());
 
                 nextPage = body.NextPage;
             } while (!string.IsNullOrEmpty(nextPage));
@@ -102,6 +107,8 @@ public class OptionBackgroundService(IEnumerable<IRealtimeProcessor> realtimePro
 
         await Task.WhenAll(m_RealtimeProcessors.Select(realtimeProcessor => realtimeProcessor.ProcessOptionQuotes(quotes))
                                                .ToList());
+        
+        m_Logger.LogInformation("Realtime | Quotes | Options | Complete | Count: {Count}", quotes.Count);
     }
 
     public Task OnApplicationStopped(CancellationToken _)

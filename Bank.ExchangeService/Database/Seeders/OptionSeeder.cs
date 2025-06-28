@@ -8,6 +8,8 @@ using Bank.ExchangeService.Mappers;
 using Bank.ExchangeService.Models;
 using Bank.ExchangeService.Repositories;
 
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
+
 namespace Bank.ExchangeService.Database.Seeders;
 
 using SecurityModel = Security;
@@ -156,6 +158,9 @@ public static class OptionSeederExtension
 
                     var (expirationDate, strikePrice, optionType) = ParseOptionTracker(pair.Key);
 
+                    if (expirationDate == default)
+                        continue;
+
                     var security = pair.Value.ToOption(stock, pair.Key, expirationDate, strikePrice, optionType)
                                        .ToSecurity();
 
@@ -175,10 +180,8 @@ public static class OptionSeederExtension
     {
         var withoutStockTracker = optionTracker[optionTracker.IndexOfAny("0123456789".ToCharArray())..];
 
-        var year           = int.Parse(withoutStockTracker[..2]) + 2000;
-        var month          = int.Parse(withoutStockTracker.Substring(2, 2));
-        var day            = int.Parse(withoutStockTracker.Substring(4, 2));
-        var expirationDate = new DateOnly(year, month, day);
+        if (!DateOnly.TryParseExact(withoutStockTracker[..6], "yyMMdd", null, DateTimeStyles.None, out var expirationDate))
+            return (default, 0, OptionType.Call);
 
         var optionType = withoutStockTracker[6] == 'C' ? OptionType.Call : OptionType.Put;
 

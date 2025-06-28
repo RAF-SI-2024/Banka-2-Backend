@@ -176,7 +176,6 @@ public class SecurityRepository(IDatabaseContextFactory<DatabaseContext> context
     {
         await using var context = await m_ContextFactory.CreateContext;
 
-        Console.WriteLine($"--- Security | Count: {securities.Count}");
         await context.Securities.AddRangeAsync(securities);
 
         return await context.SaveChangesAsync() == securities.Count;

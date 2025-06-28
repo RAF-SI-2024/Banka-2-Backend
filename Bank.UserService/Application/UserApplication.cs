@@ -31,6 +31,7 @@ public class UserApplication
 
         Env.Load();
 
+        builder.AddLogging();
         builder.Services.AddValidation();
         builder.Services.AddServices();
         builder.Services.AddDatabaseServices<ApplicationContext>();
@@ -63,6 +64,25 @@ public class UserApplication
 
 public static class ServiceCollectionExtensions
 {
+    public static WebApplicationBuilder AddLogging(this WebApplicationBuilder builder)
+    {
+        builder.Logging.ClearProviders();
+        
+        builder.Logging.AddSimpleConsole(options => 
+                                         {
+                                             options.TimestampFormat = "HH:mm:ss.fff ";
+                                             options.IncludeScopes   = true;
+                                             options.SingleLine      = false;
+                                             options.UseUtcTimestamp = false;
+                                         });
+        
+        builder.Logging.AddFilter(nameof(Microsoft), LogLevel.Warning);
+        builder.Logging.AddFilter(nameof(System), LogLevel.Warning);
+        builder.Logging.AddFilter(nameof(Bank), LogLevel.Information);
+        
+        return builder;
+    }
+    
     public static IServiceCollection AddServices(this IServiceCollection services)
     {
         services.AddSingleton<IBankRepository, BankRepository>();
