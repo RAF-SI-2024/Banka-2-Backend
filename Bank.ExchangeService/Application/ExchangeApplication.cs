@@ -167,7 +167,7 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddCors(this IServiceCollection services)
     {
-        services.AddCors(options => options.AddPolicy(Configuration.Policy.FrontendApplication, policy => policy.WithOrigins(Configuration.Frontend.BaseUrl)
+        services.AddCors(options => options.AddPolicy(Configuration.Policy.FrontendApplication, policy => policy.WithOrigins(Configuration.Application.CorsOrigins)
                                                                                                                 .AllowAnyHeader()
                                                                                                                 .AllowAnyMethod()
                                                                                                                 .AllowCredentials()));
